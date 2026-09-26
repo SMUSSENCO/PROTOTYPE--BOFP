@@ -44,7 +44,7 @@ const FLAGS = {
 
 /* ================= virtual clock: prototype lives on Wed 21 Aug 2024 ================= */
 const TODAY = '2024-08-21';
-const T0 = Date.parse('2024-08-21T18:42:10+03:00');
+const T0 = Date.parse('2024-08-21T21:12:10+03:00');
 const boot = Date.now();
 const now = () => T0 + (Date.now() - boot);
 const at = (date, hm = '00:00') => Date.parse(`${date}T${hm}:00+03:00`);
@@ -111,7 +111,7 @@ const league = (start, end, rounds) => [
   { n: 'Последний тур', f: end, t: end, ms: ['Чемпион, еврокубки, вылет'], final: true },
 ];
 const BIG5_STAGES = [
-  { n: 'Осенний круг', f: '2024-08-17', t: '2024-12-08', ms: ['7 туров, дома и в гостях', 'West играет в субботу, East — в воскресенье'] },
+  { n: 'Осенний круг', f: '2024-08-17', t: '2024-12-08', ms: ['7 туров, дома и в гостях', 'West и East играют в один день'] },
   { n: 'Зимняя пауза', f: '2024-12-09', t: '2025-01-17', ms: ['Трансферный аукцион открыт'] },
   { n: 'Весенний круг', f: '2025-01-18', t: '2025-05-11', ms: [] },
   { n: 'Стыки', f: '2025-05-17', t: '2025-05-18', ms: ['Топ-2 каждой лиги поднимаются выше', 'Два последних — вниз'] },
@@ -179,51 +179,78 @@ function pairUp(teams, dayKey, times, comp, round, me) {
 }
 
 const BOFP = [
-  { code: 'acl', name: 'Alliance Champions League', kind: 'Альянсы', icon: A + 'alliance-champions-league-avatar.webp', bg: A + 'alliance-champions-league-calendar.webp', stages: UCL_STAGES, basedOn: 'ucl',
+  { code: 'bcl', name: 'BofP Champions League', short: 'BofP CL', kind: 'Фан-клубы', icon: A + 'bofp-champions-league-logo.webp', iconLogo: true, bg: A + 'bofp-champions-league-calendar.webp', stages: UCL_STAGES,
+    days: ['2024-08-20', '2024-08-21', '2024-08-27', '2024-08-28'], clubs: true },
+  { code: 'acl', name: 'Alliance Champions League', short: 'Alliance CL', kind: 'Альянсы', icon: A + 'alliance-champions-league-avatar.webp', bg: A + 'alliance-champions-league-calendar.webp', stages: UCL_STAGES,
     days: ['2024-08-20', '2024-08-21', '2024-08-27', '2024-08-28'], mine: { team: ME.alliance, days: ['2024-08-21', '2024-08-28'] } },
-  { code: 'ael', name: 'Alliance Europe League', kind: 'Альянсы', icon: A + 'alliance-europe-league-avatar.webp', bg: A + 'alliance-europe-league-calendar.webp', stages: UEL_STAGES, basedOn: 'uel', days: ['2024-08-22'] },
-  { code: 'acol', name: 'Alliance Conference League', kind: 'Альянсы', icon: A + 'alliance-conference-league-avatar.webp', bg: A + 'alliance-conference-league-calendar.webp', stages: UECL_STAGES, basedOn: 'uecl', days: ['2024-08-22'] },
-  { code: 'rnd', name: 'Random Cup', kind: 'Кубок · команды', iconSvg: I.dice, bgTint: 'linear-gradient(120deg,#3b2a6b,#8a3d7a 55%,#d8914a)', stages: RANDOM_STAGES,
+  { code: 'ael', name: 'Alliance Europe League', short: 'Alliance EL', kind: 'Альянсы', icon: A + 'alliance-europe-league-avatar.webp', bg: A + 'alliance-europe-league-calendar.webp', stages: UEL_STAGES, days: ['2024-08-22'] },
+  { code: 'acol', name: 'Alliance Conference League', short: 'Alliance ECL', kind: 'Альянсы', icon: A + 'alliance-conference-league-avatar.webp', bg: A + 'alliance-conference-league-calendar.webp', stages: UECL_STAGES, days: ['2024-08-22'] },
+  { code: 'rnd', name: 'Random Cup', short: 'Random Cup', kind: 'Кубок', iconSvg: I.dice, bgTint: 'linear-gradient(120deg,#3b2a6b,#8a3d7a 55%,#d8914a)', stages: RANDOM_STAGES,
     days: ['2024-08-18', '2024-08-24'], mine: { team: ME.team, days: ['2024-08-18', '2024-08-24'] } },
 ];
+/* fan clubs that play BofP Champions League (crest slugs for clubs absent from the real August fixtures) */
+const BCL_CLUBS = ['Галатасарай', 'Фенербахче', 'Бешикташ', 'Реал Мадрид', 'Барселона', 'Бавария', 'Боруссия Дортмунд', 'Ливерпуль',
+  'Арсенал', 'Милан', 'Интер', 'Ювентус', 'ПСЖ', 'Бенфика', 'Порту', 'Аякс'];
+const EXTRA_CRESTS = { 'Фенербахче': 'fenerbahce', 'Бешикташ': 'besiktasjk', 'Бенфика': 'sl-benfica', 'Порту': 'fc-porto', 'Аякс': 'ajax',
+  'Боруссия Дортмунд': 'borussia-dortmund', 'Бавария': 'fc-bayern-munchen', 'ПСЖ': 'paris-saint-germain', 'Реал Мадрид': 'real-madrid',
+  'Барселона': 'fc-barcelona', 'Ливерпуль': 'liverpool', 'Арсенал': 'arsenal', 'Милан': 'milan', 'Интер': 'inter', 'Ювентус': 'juventus', 'Галатасарай': 'galatasaray-as' };
+
 const BIG5 = [
-  { code: 'g5', color: 'Green', img: 'green-big-5', mine: { side: 'West', liga: 2, team: ME.team } },
+  { code: 'g5', color: 'Green', img: 'green-big-5', mine: { side: 'West', liga: 2, team: ME.team, place: 5 } },
   { code: 'r5', color: 'Red', img: 'red-big-5' },
   { code: 'y5', color: 'Yellow', img: 'yellow-big-5' },
   { code: 'b5', color: 'Blue', img: 'blue-big-5' },
 ];
-const BIG5_DAYS = { West: ['2024-08-17', '2024-08-24'], East: ['2024-08-18', '2024-08-25'] };
+const BIG5_DAYS = ['2024-08-17', '2024-08-24'];
 
-/* per-day player situations (drive the calendar frames and the action chips) */
+/* the player's situation per tournament and day; BofP tournaments never have a lineup problem */
 const STATUS = {
   'ucl|2024-08-21': { kind: 'predict' },
-  'ucl|2024-08-27': { kind: 'squad', deadlineHm: '20:00', text: 'Фан-клуб не выставил тебя в состав' },
+  'ucl|2024-08-27': { kind: 'squad', deadlineHm: '20:00', text: 'Фан-клуб не выставил тебя в состав. Открыт аукцион.' },
   'acl|2024-08-21': { kind: 'predict' },
   'acl|2024-08-28': { kind: 'predict' },
   'rnd|2024-08-24': { kind: 'predict' },
-  'g5|2024-08-24': { kind: 'in', pick: [2, 1] },
-  'rnd|2024-08-18': { kind: 'done', pick: [2, 0], pts: 5 },
-  'g5|2024-08-17': { kind: 'done', pick: [1, 1], pts: 1 },
+  'g5|2024-08-24': { kind: 'in' },
 };
 const AUCTION_DAYS = new Set(['2024-08-24', '2024-08-27']);
 const ALERT_DAY = '2024-08-27';
+const SHORT = { ucl: 'Лига чемпионов', usc: 'Суперкубок УЕФА', uel: 'Лига Европы', uecl: 'Лига конференций' };
 
 /* ================= state ================= */
 let REAL = null;
-const state = { day: TODAY, open: new Set(), mode: {}, big5Side: {}, lgOpen: new Set(), stage: {}, stars: new Set() };
+let CRESTS = {};
+const state = { day: TODAY, open: new Set(), mode: {}, big5Side: {}, lgOpen: new Set(), stage: {}, stars: new Set(), folded: new Set() };
 
-/* ================= builders ================= */
+/* ================= helpers ================= */
 function crest(name) {
+  const slug = CRESTS[name];
+  if (slug) return `<img class="crest-img" src="${A}clubs/${slug}.webp" alt="" loading="lazy">`;
   const w = name.replace(/[^\p{L}\p{N} -]/gu, '').split(/[\s-]+/).filter(Boolean);
   const ini = (w.length > 1 ? w[0][0] + w[1][0] : w[0].slice(0, 2)).toUpperCase();
   return `<span class="crest" style="--h:${hash(name) % 360}" aria-hidden="true">${esc(ini)}</span>`;
 }
-const isMine = (m, team) => team && (m.home === team || m.away === team);
+const isMine = (m, team) => !!team && (m.home === team || m.away === team);
+const shortRound = r => (r || '').replace(/,\s*\d-й матч/, '');
+
+/* scheduled / live / finished, with a live score that grows as the virtual clock runs */
+function matchState(m, day, playersMode) {
+  const ko = at(day, m.kickoff), el = (now() - ko) / 60000;
+  const final = m.bofp || playersMode ? fakeScore((playersMode && !m.bofp ? 'p' : '') + m.id) : m.score;
+  if (day < TODAY || (day === TODAY && el > 112)) return { s: 'done', score: final };
+  if (day > TODAY || el < 0) return { s: 'sched' };
+  const min = el <= 45 ? Math.max(1, Math.ceil(el)) : el < 60 ? 'HT' : Math.min(90, Math.ceil(el - 15));
+  const cur = typeof min === 'number' ? min : 45;
+  const score = (final || [0, 0]).map((g, k) => {
+    let n = 0;
+    for (let i = 0; i < g; i++) if (1 + hash(`${m.id}|${k}|${i}`) % 90 <= cur) n++;
+    return n;
+  });
+  return { s: 'live', min, score };
+}
 
 function realMatchesFor(day) {
-  const list = (REAL && REAL.days[day]) || [];
   const by = {};
-  for (const m of list) (by[m.comp] ||= []).push(m);
+  for (const m of (REAL && REAL.days[day]) || []) (by[m.comp] ||= []).push(m);
   return by;
 }
 
@@ -234,195 +261,169 @@ function tournamentsFor(day) {
     if (!by[code]) continue;
     const c = REAL.competitions[code] || {};
     const meta = REAL_META[code];
-    const matches = [...by[code]].sort((a, b) => a.kickoff.localeCompare(b.kickoff));
-    const mineTeam = matches.some(m => isMine(m, ME.fanClub)) ? ME.fanClub : null;
-    if (mineTeam) matches.sort((a, b) => isMine(b, mineTeam) - isMine(a, mineTeam));
-    out.real.push({ id: code, type: 'real', name: c.name || code, sub: [c.country, matches[0].round].filter(Boolean).join(' · '),
-      iconSvg: meta.icon, flag: meta.bg, stages: meta.stages, matches, mineTeam, mineLabel: mineTeam ? 'Фан-клуб' : '' });
+    const mineTeam = by[code].some(m => isMine(m, ME.fanClub)) ? ME.fanClub : null;
+    const matches = [...by[code]].sort((a, b) => isMine(b, mineTeam) - isMine(a, mineTeam) || a.kickoff.localeCompare(b.kickoff));
+    out.real.push({ id: code, type: 'real', name: c.name || code, short: SHORT[code] || c.name || code,
+      sub: [c.country, shortRound(matches[0].round)].filter(Boolean).join(' · '),
+      iconSvg: meta.icon, flag: meta.bg, stages: meta.stages, matches, mineTeam });
   }
   for (const t of BOFP) {
     if (!t.days.includes(day)) continue;
     const mineTeam = t.mine && t.mine.days.includes(day) ? t.mine.team : null;
-    const teams = t.code === 'rnd' ? teamPool('rnd', 16, ME.team) : ALLIANCE_TEAMS.slice(0, t.code === 'acl' ? 12 : 10);
-    const round = t.code === 'rnd' ? (day === '2024-08-18' ? '1/16 финала' : '1/8 финала') : 'Плей-офф';
-    const times = t.code === 'rnd' ? ['16:00', '18:30', '21:00'] : ['19:45', '22:00'];
-    const matches = pairUp(t.code === 'rnd' && day === '2024-08-24' ? teams.slice(0, 16) : teams, day, times, t.code, round, mineTeam);
-    out.series.push({ id: t.code, type: 'bofp', name: t.name, sub: `${t.kind} · ${round}`, icon: t.icon, iconSvg: t.iconSvg, bg: t.bg, bgTint: t.bgTint,
-      stages: t.stages, matches, mineTeam, mineLabel: mineTeam === ME.alliance ? 'Альянс' : 'Команда', basedOn: t.basedOn });
+    let teams, round, times;
+    if (t.clubs) { teams = BCL_CLUBS; round = 'Плей-офф'; times = ['19:45', '22:00']; }
+    else if (t.code === 'rnd') { teams = teamPool('rnd', 16, ME.team); round = day === '2024-08-18' ? '1/16' : '1/8'; times = ['16:00', '18:30', '21:00']; }
+    else { teams = ALLIANCE_TEAMS.slice(0, t.code === 'acl' ? 12 : 10); round = 'Плей-офф'; times = ['19:45', '22:00']; }
+    const matches = pairUp(teams, day + t.code, times, t.code, round, mineTeam);
+    out.series.push({ id: t.code, type: 'bofp', name: t.name, short: t.short, sub: `${t.kind} · ${round}`, icon: t.icon, iconLogo: t.iconLogo, iconSvg: t.iconSvg,
+      bg: t.bg, bgTint: t.bgTint, stages: t.stages, matches, mineTeam });
   }
-  for (const b of BIG5) {
-    const sides = Object.keys(BIG5_DAYS).filter(s => BIG5_DAYS[s].includes(day));
-    if (!sides.length) continue;
-    const struct = {};
-    let total = 0;
-    for (const side of ['West', 'East']) {
-      struct[side] = [1, 2, 3].map(liga => {
-        const forced = b.mine && b.mine.side === side && b.mine.liga === liga ? b.mine.team : null;
-        const teams = teamPool(`${b.code}${side}${liga}`, 8, forced);
-        const playing = sides.includes(side);
-        const matches = playing ? pairUp(teams, day + side + liga, ['15:00', '17:30', '20:00'], b.code, `Тур ${BIG5_DAYS[side].indexOf(day) + 1}`, forced) : [];
-        total += matches.length;
-        const next = BIG5_DAYS[side].find(d => d > day);
-        return { liga, matches, mine: !!forced, team: forced, next };
-      });
+  if (BIG5_DAYS.includes(day)) {
+    const tour = BIG5_DAYS.indexOf(day) + 1;
+    for (const b of BIG5) {
+      const struct = {};
+      for (const side of ['West', 'East']) {
+        struct[side] = [1, 2, 3].map(liga => {
+          const forced = b.mine && b.mine.side === side && b.mine.liga === liga ? b.mine.team : null;
+          const matches = pairUp(teamPool(`${b.code}${side}${liga}`, 8, forced), day + side + liga, ['15:00', '17:30', '20:00'], `${b.code}${side[0]}${liga}`, `Тур ${tour}`, forced);
+          return { liga, matches, mine: !!forced, team: forced };
+        });
+      }
+      const mineTeam = b.mine ? b.mine.team : null;
+      const sub = b.mine ? `${{ West: 'Wst', East: 'Est' }[b.mine.side]} · L${b.mine.liga} · Pls ${b.mine.place}` : `Лиги BofP · Тур ${tour}`;
+      out.series.push({ id: b.code, type: 'big5', name: `${b.color} BIG 5`, short: `${b.color} BIG 5`, sub,
+        icon: `${A}${b.img}-logo.webp`, iconLogo: true, bg: `${A}${b.img}-calendar.webp`, stages: BIG5_STAGES, struct, mineTeam,
+        mineSide: b.mine && b.mine.side, color: b.color });
     }
-    const mineHere = b.mine && sides.includes(b.mine.side) ? b.mine.team : null;
-    out.series.push({ id: b.code, type: 'big5', name: `${b.color} BIG 5`, sub: `Лиги BofP · ${sides.map(s => s).join(' / ')}`, icon: `${A}${b.img}-logo.webp`, iconLogo: true,
-      bg: `${A}${b.img}-calendar.webp`, stages: BIG5_STAGES, struct, count: total, mineTeam: mineHere, mineLabel: 'Команда', mineSide: b.mine && b.mine.side, mineLiga: b.mine && b.mine.liga, color: b.color });
   }
   const mineFirst = (a, b) => !!b.mineTeam - !!a.mineTeam;
   out.real.sort(mineFirst);
   out.series.sort(mineFirst);
   return out;
 }
+const allMatches = t => t.type === 'big5' ? [...t.struct.West, ...t.struct.East].flatMap(l => l.matches) : t.matches;
 
 function playerMatchCount(day) {
   const t = tournamentsFor(day);
-  let n = 0;
-  for (const x of [...t.real, ...t.series]) {
-    if (!x.mineTeam) continue;
-    n += x.type === 'big5' ? 1 : x.matches.filter(m => isMine(m, x.mineTeam)).length;
-  }
-  return n;
+  return [...t.real, ...t.series].reduce((n, x) => n + (x.mineTeam ? allMatches(x).filter(m => isMine(m, x.mineTeam)).length : 0), 0);
 }
 
-/* ---------- action chip next to the title ---------- */
+function myMatch(t) { return t.mineTeam ? allMatches(t).find(m => isMine(m, t.mineTeam)) : null; }
+function needsAction(t, day) { const st = t.mineTeam && STATUS[`${t.id}|${day}`]; return !!st && (st.kind === 'predict' || st.kind === 'squad'); }
+
+/* ---------- chip in the middle of the row ---------- */
 function actionChip(t, day) {
   const st = t.mineTeam && STATUS[`${t.id}|${day}`];
   if (!st) return '';
-  const mm = findMyMatch(t);
+  const mm = myMatch(t);
   const ko = mm ? at(day, mm.kickoff) : at(day, '20:00');
-  if (st.kind === 'predict') return `<button class="act predict" data-act="predict" data-deadline="${ko}"><span class="l">Прогноз</span><span class="tm num" data-left></span></button>`;
+  if (st.kind === 'predict') return `<button class="act predict" data-act="predict" data-deadline="${ko}"><span class="l">+ прогноз</span><span class="tm num" data-left></span></button>`;
   if (st.kind === 'squad') return `<button class="act squad" data-act="squad" data-deadline="${at(day, st.deadlineHm)}"><span class="l">Не в составе</span><span class="tm num" data-left></span></button>`;
   if (st.kind === 'in') return `<span class="act in">${I.check}<span class="l">В составе</span></span>`;
-  if (st.kind === 'done') return `<span class="act done"><span class="l num">${st.pick.join(':')}</span><span class="pts num">+${st.pts}</span></span>`;
   return '';
 }
-function findMyMatch(t) {
-  if (!t.mineTeam) return null;
-  if (t.type === 'big5') {
-    for (const lg of t.struct[t.mineSide]) if (lg.mine) return lg.matches.find(m => isMine(m, t.mineTeam));
-    return null;
-  }
-  return t.matches.find(m => isMine(m, t.mineTeam));
-}
 
-/* ---------- timeline ---------- */
-function timelineHTML(t) {
+/* ---------- timeline: white; accent only where an action is waiting ---------- */
+function timelineHTML(t, day) {
   const st = t.stages;
   const start = at(st[0].f), end = at(st[st.length - 1].t);
   const span = Math.max(1, end - start);
-  const nowT = at(state.day, '12:00');
+  const nowT = at(day, '12:00');
   const pct = x => Math.min(100, Math.max(0, (x - start) / span * 100));
-  let pos = st.map(s => pct(at(s.f)));
+  const pos = st.map(s => pct(at(s.f)));
   for (let i = 1; i < pos.length; i++) if (pos[i] - pos[i - 1] < 8) pos[i] = Math.min(100, pos[i - 1] + 8);
   for (let i = pos.length - 2; i >= 0; i--) if (pos[i + 1] - pos[i] < 8) pos[i] = Math.max(0, pos[i + 1] - 8);
   let cur = st.findIndex(s => nowT >= at(s.f) && nowT <= at(s.t, '23:59'));
   if (cur < 0) cur = Math.max(0, st.findIndex(s => at(s.f) > nowT) - 1);
   const picked = state.stage[t.id];
-  const sel = picked ?? cur;
-  const fill = pct(nowT);
+  const act = needsAction(t, day);
   const nodes = st.map((s, i) => {
-    const cls = ['tl-node', s.final ? 'final' : '', i === cur ? 'now' : (at(s.t, '23:59') < nowT ? 'passed' : '')].join(' ');
-    return `<button class="${cls}" style="left:${pos[i]}%" data-stage="${i}" aria-pressed="${i === sel}" aria-label="${esc(s.n)}"><i>${s.final ? I.trophy : ''}</i></button>`;
+    const cls = ['tl-node', s.final ? 'final' : '', i === cur ? 'now' : (at(s.t, '23:59') < nowT ? 'passed' : ''), i === cur && act ? 'act' : ''].join(' ');
+    return `<button class="${cls}" style="left:${pos[i]}%" data-stage="${i}" aria-pressed="${i === picked}" aria-label="${esc(s.n)}"><i>${s.final ? I.trophy : ''}</i></button>`;
   }).join('');
-  const s = st[sel];
-  const dates = s.f === s.t ? ddmmyy(s.f) : `${ddmmyy(s.f)} — ${ddmmyy(s.t)}`;
+  let card = '';
+  if (picked != null) {
+    const s = st[picked];
+    const dates = s.f === s.t ? ddmmyy(s.f) : `${ddmmyy(s.f)} — ${ddmmyy(s.t)}`;
+    card = `<div class="tl-card"><div class="n">${esc(s.n)}${picked === cur ? ' · сейчас' : ''}</div><div class="d num">${dates}</div>${s.ms.length ? `<ul>${s.ms.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>`;
+  }
   return `<div class="tl">
-    <div class="tl-h"><span>Путь турнира · <b>${esc(st[cur].n)}</b></span><button class="tl-info" data-info aria-label="Как устроен турнир">${I.info}</button></div>
-    <div class="tl-track"><div class="tl-line"></div><div class="tl-fill" style="width:${fill}%"></div>${nodes}</div>
-    <div class="tl-dates num"><span>${ddmm(st[0].f)}</span><span>${ddmm(st[st.length - 1].t)}</span></div>
-    <div class="tl-card" ${picked == null ? 'hidden' : ''}><div class="n">${esc(s.n)}${sel === cur ? ' · сейчас' : ''}</div><div class="d num">${dates}</div>${s.ms.length ? `<ul>${s.ms.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
+    <div class="tl-track"><div class="tl-line"></div><div class="tl-fill" style="width:${pct(nowT)}%"></div>${nodes}</div>
+    <div class="tl-dates num"><span>${ddmm(st[0].f)}</span><span>${ddmm(st[st.length - 1].t)}</span></div>${card}
   </div>`;
 }
 
-/* ---------- match rows ---------- */
+/* ---------- match row: time/status top-right, score beside the teams ---------- */
 function matchRow(m, day, mineTeam, t, playersMode) {
   const me = isMine(m, mineTeam);
-  const ko = at(day, m.kickoff), n = now();
-  const finished = day < TODAY || n > ko + 115 * 60000;
-  let score = finished ? m.score : null;
-  if (playersMode && !m.bofp && score) score = fakeScore('p' + m.id);
-  let side;
-  if (score) {
-    const [h, a] = score;
-    side = `<div class="m-side num"><span class="${h < a ? 'lose' : ''}">${h}</span><span class="${a < h ? 'lose' : ''}">${a}</span>${m.pens ? `<span class="pen">пен. ${m.pens.join(':')}</span>` : ''}</div>`;
-  } else if (n >= ko && n < ko + 115 * 60000) {
-    side = `<div class="m-side num"><span class="live">${Math.min(90, Math.floor((n - ko) / 60000))}'</span></div>`;
-  } else side = `<div class="m-side time num">${esc(m.kickoff)}</div>`;
-  const hw = score && score[0] < score[1] ? 'lose' : '', aw = score && score[1] < score[0] ? 'lose' : '';
-  const starred = state.stars.has(m.id);
-  const row = `<button class="m-star" data-star="${esc(m.id)}" aria-pressed="${starred}" aria-label="В избранное">${I.star}</button>
-    <div class="m-teams"><div class="m-team ${hw}">${crest(m.home)}<span>${esc(m.home)}</span></div><div class="m-team ${aw}">${crest(m.away)}<span>${esc(m.away)}</span></div></div>${side}`;
-  if (!me) return `<div class="m">${row}</div>`;
-  const st = STATUS[`${t.id}|${day}`] || {};
+  const ms = matchState(m, day, playersMode);
+  let status, score = '';
+  if (ms.s === 'sched') status = `<span class="m-st num">${esc(m.kickoff)}</span>`;
+  else if (ms.s === 'live') status = `<span class="m-st live num"><i></i>${ms.min === 'HT' ? 'Перерыв' : ms.min + "'"}</span>`;
+  else status = `<span class="m-st num">Завершён</span>`;
+  if (ms.score) {
+    const [h, a] = ms.score, fin = ms.s === 'done';
+    score = `<div class="m-sc num ${ms.s}"><span class="${fin && h < a ? 'lose' : ''}">${h}</span><span class="${fin && a < h ? 'lose' : ''}">${a}</span>${m.pens ? `<span class="pen">пен. ${m.pens.join(':')}</span>` : ''}</div>`;
+  }
+  const lose = k => ms.s === 'done' && ms.score && ms.score[k] < ms.score[1 - k] ? 'lose' : '';
+  const row = `${status}<button class="m-star" data-star="${esc(m.id)}" aria-pressed="${state.stars.has(m.id)}" aria-label="В избранное">${I.star}</button>
+    <div class="m-teams"><div class="m-team ${lose(0)}">${crest(m.home)}<span>${esc(m.home)}</span></div><div class="m-team ${lose(1)}">${crest(m.away)}<span>${esc(m.away)}</span></div></div>${score}`;
+  if (!me) return `<div class="m ${ms.s}">${row}</div>`;
+  const st = ms.s === 'sched' ? STATUS[`${t.id}|${day}`] || {} : {};
   let cta = '';
-  if (st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${ko}"><span class="l">Сделать прогноз</span><span class="tm num" data-left></span></button>`;
-  else if (st.kind === 'squad') cta = `<button class="act squad" data-act="squad" data-deadline="${at(day, st.deadlineHm)}"><span class="l">Попасть в состав</span><span class="tm num" data-left></span></button><span class="hint">${esc(st.text)}. Открыт аукцион.</span>`;
-  else if (st.kind === 'in') cta = `<span class="hint">Ты в составе · твой прогноз <b class="num">${st.pick.join(':')}</b></span>`;
-  else if (st.kind === 'done') cta = `<span class="hint">Твой прогноз <b class="num">${st.pick.join(':')}</b> · <b style="color:var(--accent)">+${st.pts} очка</b></span>`;
-  return `<div class="m me"><div class="me-tag"><span class="who">Твой матч <em>· ${esc(t.mineLabel)} ${esc(mineTeam)}</em></span></div>${row}${cta ? `<div class="me-cta">${cta}</div>` : ''}</div>`;
+  if (st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${at(day, m.kickoff)}"><span class="l">+ прогноз</span><span class="tm num" data-left></span></button>`;
+  else if (st.kind === 'squad') cta = `<button class="act squad" data-act="squad" data-deadline="${at(day, st.deadlineHm)}"><span class="l">Попасть в состав</span><span class="tm num" data-left></span></button><span class="hint">${esc(st.text)}</span>`;
+  return `<div class="m me ${ms.s}">${row}${cta ? `<div class="me-cta">${cta}</div>` : ''}</div>`;
 }
 
-function big5Body(t, day, playersMode) {
-  const side = state.big5Side[t.id] || (t.mineTeam ? t.mineSide : (t.struct.West.some(l => l.matches.length) ? 'West' : 'East'));
+function big5Body(t, day) {
+  const side = state.big5Side[t.id] || t.mineSide || 'West';
   const tabs = ['West', 'East'].map(s => `<button role="tab" data-side="${s}" aria-selected="${s === side}">${s}${t.mineSide === s ? '<span class="me-dot" aria-label="твоя конференция"></span>' : ''}</button>`).join('');
   const lgs = [...t.struct[side]].sort((a, b) => b.mine - a.mine).map(lg => {
     const key = `${t.id}|${side}|${lg.liga}`;
     const open = state.lgOpen.has(key) || (lg.mine && !state.lgOpen.has('x' + key));
-    const body = lg.matches.length
-      ? lg.matches.map(m => matchRow(m, day, lg.team, t, playersMode)).join('') + `<button class="row-link" data-table>${I.table}<span class="sp">Таблица</span>${I.right}</button>`
-      : `<div class="lg-empty">В этот день матчей нет${lg.next ? ` · следующий тур ${ddmm(lg.next)}` : ''}</div>`;
+    const live = lg.matches.filter(m => matchState(m, day).s === 'live').length;
     return `<section class="lg ${open ? 'open' : ''} ${lg.mine ? 'me' : ''}">
       <button class="lg-h" data-lg="${key}" aria-expanded="${open}"><span class="ico"><img src="${esc(t.icon)}" alt=""></span>
-        <span class="tx"><div class="nm">${t.color} BIG 5 ${side} — Лига ${lg.liga}</div><div class="sb ${lg.mine ? 'you' : ''}">${lg.mine ? 'Твоя лига · ' + esc(lg.team) : 'BofP'}</div></span>
-        <span class="c num">${lg.matches.length || ''}</span>${I.chevron}</button>
-      <div class="lg-b"><div>${body}</div></div></section>`;
+        <span class="nm">${t.color} BIG 5 ${side} — Лига ${lg.liga}</span>${countHTML(lg.matches.length, live)}${I.chevron}</button>
+      <div class="lg-b"><div>${lg.matches.map(m => matchRow(m, day, lg.team, t, false)).join('')}<button class="row-link" data-table>${I.table}<span class="sp">Таблица</span>${I.right}</button></div></div></section>`;
   }).join('');
-  return `<div class="seg" role="tablist" data-seg="${t.id}">${tabs}</div>${lgs}`;
+  return `<div class="seg" role="tablist">${tabs}</div>${lgs}`;
 }
+
+const countHTML = (n, live) => `<span class="cnt-wrap num">${live ? `${n}/<b class="lv">${live}</b>` : n}</span>`;
 
 function cardHTML(t, day) {
   const open = state.open.has(t.id);
-  const playersMode = state.mode[t.id] ?? (t.type !== 'real');
-  const count = t.type === 'big5' ? t.count : t.matches.length;
+  const real = t.type === 'real';
+  const playersMode = real && !!state.mode[t.id];
+  const ms = allMatches(t);
+  const live = ms.filter(m => matchState(m, day, playersMode).s === 'live').length;
   let art = '';
   if (t.bg) art = `<img src="${esc(t.bg)}" alt="">`;
   else if (t.flag) art = FLAGS[t.flag];
   else if (t.bgTint) art = `<div style="background:${t.bgTint}"></div>`;
   const icon = t.icon ? `<img class="${t.iconLogo ? 'logo' : ''}" src="${esc(t.icon)}" alt="">` : (t.iconSvg || I.ball);
-  const knob = playersMode ? `<img src="${A}bofp-champions-league-logo.webp" alt="">` : I.globe;
 
-  let listHTML;
-  if (t.type === 'big5') listHTML = big5Body(t, day, playersMode);
-  else {
-    let matches = t.matches;
-    if (!playersMode && t.type === 'bofp') {
-      const base = t.basedOn && realMatchesFor(day)[t.basedOn];
-      matches = base || [];
+  let body = '';
+  if (open) {
+    if (real) {
+      body += `<div class="sw-row"><button class="sw" role="switch" data-sw aria-checked="${playersMode}" aria-label="Результаты игроков BofP"><span class="k">${playersMode ? `<img src="${A}switch-on.webp" alt="">` : I.globe}</span></button>
+        <span class="sw-note ${playersMode ? 'on' : ''}">${playersMode ? 'Результаты игроков BofP' : 'Реальные результаты'}</span></div>`;
     }
-    listHTML = matches.length
-      ? `<div class="matches">${matches.map(m => matchRow(m, day, playersMode || t.type === 'real' ? t.mineTeam : null, t, playersMode && t.type === 'real')).join('')}</div>`
-      : `<div class="lg-empty">Реальных матчей этой стадии в этот день нет</div>`;
-    listHTML += `<button class="row-link" data-table>${I.table}<span class="sp">${t.stages.length > 6 ? 'Сетка и таблица' : 'Таблица'}</span>${I.right}</button>`;
+    body += timelineHTML(t, day);
+    body += t.type === 'big5' ? big5Body(t, day)
+      : `<div class="matches">${t.matches.map(m => matchRow(m, day, t.mineTeam, t, playersMode)).join('')}</div><button class="row-link" data-table>${I.table}<span class="sp">${t.stages.length > 6 ? 'Сетка и таблица' : 'Таблица'}</span>${I.right}</button>`;
   }
-  const note = playersMode
-    ? `<div class="mode-note">Счёт — <b>результаты игроков BofP</b>, не реальный матч</div>`
-    : (t.type !== 'real' ? `<div class="mode-note">Реальные матчи, на которых строится турнир</div>` : '');
-
-  return `<article class="t glass ${t.mineTeam ? 'mine' : ''} ${open ? 'open' : ''}" data-id="${t.id}">
+  return `<article class="t glass ${t.mineTeam ? 'mine' : ''} ${open ? 'open' : ''} ${real ? '' : 'series'}" data-id="${t.id}">
     <div class="t-art" aria-hidden="true">${art}</div>
     <div class="t-head" data-toggle>
-      <span class="t-icon">${icon}</span>
-      <div class="t-main">
-        <div class="t-row1"><span class="t-title">${esc(t.name)}</span>${actionChip(t, day)}</div>
-        <div class="t-row2"><span class="t-meta">${esc(t.sub)}</span>
-          <button class="sw" role="switch" data-sw aria-checked="${playersMode}" aria-label="${playersMode ? 'Сейчас: результаты игроков BofP. Переключить на реальные матчи' : 'Сейчас: реальные матчи. Переключить на результаты игроков BofP'}" ${open ? '' : 'hidden'}><span class="k">${knob}</span></button>
-</div>
-      </div>
-      <button class="t-rail" data-rail aria-expanded="${open}" aria-label="${open ? 'Свернуть' : 'Развернуть'}: ${esc(t.name)}">${I.chevron}<span class="c num">${count}</span></button>
+      <button class="t-icon" data-screen aria-label="Открыть турнир ${esc(t.name)}">${icon}</button>
+      <div class="t-main"><span class="t-title" title="${esc(t.name)}">${esc(t.short)}</span><span class="t-meta">${esc(t.sub)}</span></div>
+      <div class="t-act">${actionChip(t, day)}</div>
+      <button class="t-rail" data-rail aria-expanded="${open}" aria-label="${open ? 'Свернуть' : 'Развернуть'}: ${esc(t.name)}${live ? `, в эфире ${live}` : ''}">${I.chevron}${countHTML(ms.length, live)}</button>
     </div>
-    <div class="t-body"><div class="in">${open ? timelineHTML(t) + note + listHTML : ''}</div></div>
+    <div class="t-body"><div class="in">${body}</div></div>
   </article>`;
 }
 
@@ -431,7 +432,7 @@ const $ = s => document.querySelector(s);
 
 function renderDates() {
   const nav = $('#dates');
-  const items = [];
+  const items = ['<span class="pad glass" id="pad" aria-hidden="true"></span>'];
   for (let i = -7; i <= 7; i++) {
     const d = addDays(TODAY, i);
     const past = d < TODAY, today = d === TODAY;
@@ -440,7 +441,7 @@ function renderDates() {
     let frame = '', badge = '';
     if (cnt) {
       const gavel = AUCTION_DAYS.has(d);
-      // mask cuts the stroke under the count (top) and under the gavel (bottom)
+      // the mask cuts the stroke under the count (top) and under the gavel (bottom)
       frame = `<svg class="frame" viewBox="0 0 60 62" aria-hidden="true"><defs><mask id="mk${i}"><rect x="-4" y="-4" width="68" height="70" fill="#fff"/><rect x="21" y="-4" width="18" height="9" fill="#000"/>${gavel ? '<rect x="20" y="57" width="20" height="9" fill="#000"/>' : ''}</mask></defs>
         <rect class="base" x="1.3" y="1.3" width="57.4" height="59.4" rx="15" mask="url(#mk${i})"/>${alert ? `<rect class="runner" x="1.3" y="1.3" width="57.4" height="59.4" rx="15" pathLength="200" mask="url(#mk${i})"/>` : ''}</svg>`;
       badge = `<span class="cnt num">${cnt}</span>${gavel ? `<span class="gavel">${I.gavel}</span>` : ''}`;
@@ -451,20 +452,30 @@ function renderDates() {
       ${frame}<span class="wd">${today ? 'Сегодня' : wd(d)}</span><span class="dd num">${ddmm(d)}</span>${badge}${pastMine}</button>`);
   }
   nav.innerHTML = items.join('');
+  movePad(false);
+}
+
+function movePad(animate) {
+  const pad = $('#pad'), el = $(`#dates [data-day="${state.day}"]`);
+  if (!pad || !el) return;
+  pad.style.transition = animate ? '' : 'none';
+  pad.style.transform = `translateX(${el.offsetLeft}px)`;
+  if (!animate) { void pad.offsetWidth; pad.style.transition = ''; }
+}
+
+function section(key, title, cards, day, series) {
+  const hot = cards.some(c => c.mineTeam || needsAction(c, day));
+  const folded = state.folded.has(key);
+  return `<button class="section-h ${hot ? 'hot' : ''}" data-fold="${key}" aria-expanded="${!folded}"><span>${title}</span><span class="n num">${cards.length}</span><span class="rule"></span>${I.chevron}</button>
+    <div class="cards ${folded ? 'folded' : ''}" ${folded ? 'hidden' : ''}>${cards.map(x => cardHTML(x, day)).join('')}</div>`;
 }
 
 function renderList() {
   const day = state.day;
   const t = tournamentsFor(day);
   const parts = [];
-  if (t.real.length) {
-    parts.push(`<div class="section-h"><span>Турниры</span><span class="n num">${t.real.length}</span><span class="rule"></span></div>`);
-    parts.push(`<div class="cards">${t.real.map(x => cardHTML(x, day)).join('')}</div>`);
-  }
-  if (t.series.length) {
-    parts.push(`<div class="section-h series"><span>BofP Series</span><span class="n num">${t.series.length}</span><span class="rule"></span></div>`);
-    parts.push(`<div class="cards">${t.series.map(x => cardHTML(x, day)).join('')}</div>`);
-  }
+  if (t.real.length) parts.push(section('real', 'Турниры', t.real, day));
+  if (t.series.length) parts.push(section('series', 'BofP Series', t.series, day, true));
   if (!parts.length) parts.push(`<p class="empty">В этот день матчей нет.<br>Выбери другую дату в календаре.</p>`);
   $('#list').innerHTML = parts.join('');
   tick();
@@ -473,9 +484,8 @@ function renderList() {
 function tick() {
   const n = now();
   document.querySelectorAll('[data-deadline]').forEach(el => {
-    const left = +el.dataset.deadline - n;
     const out = el.querySelector('[data-left]');
-    if (out) out.textContent = fmtLeft(left);
+    if (out) out.textContent = fmtLeft(+el.dataset.deadline - n);
   });
 }
 
@@ -490,42 +500,65 @@ function toast(msg) {
 function centerDay(smooth) {
   const nav = $('#dates');
   const el = nav.querySelector(`[data-day="${state.day}"]`);
-  if (!el) return;
-  nav.scrollTo({ left: el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2, behavior: smooth ? 'smooth' : 'auto' });
+  if (el) nav.scrollTo({ left: el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function findCard(id) { const t = tournamentsFor(state.day); return [...t.real, ...t.series].find(x => x.id === id); }
+
+function rerenderCard(id, animate) {
+  const data = findCard(id), old = document.querySelector(`.t[data-id="${id}"]`);
+  if (!data || !old) return;
+  const wasOpen = old.classList.contains('open');
+  const tmp = document.createElement('div');
+  tmp.innerHTML = cardHTML(data, state.day);
+  const fresh = tmp.firstElementChild;
+  if (animate && !wasOpen && state.open.has(id)) {
+    fresh.classList.remove('open');
+    old.replaceWith(fresh);
+    requestAnimationFrame(() => requestAnimationFrame(() => fresh.classList.add('open')));
+  } else if (animate && wasOpen && !state.open.has(id)) {
+    old.classList.remove('open');
+    old.querySelector('[data-rail]').setAttribute('aria-expanded', 'false');
+    setTimeout(() => { const cur = document.querySelector(`.t[data-id="${id}"]`); if (cur && !state.open.has(id)) cur.replaceWith(fresh); }, 360);
+  } else old.replaceWith(fresh);
+  tick();
 }
 
 /* ================= events ================= */
 function bind() {
   $('#dates').addEventListener('click', e => {
     const b = e.target.closest('[data-day]');
-    if (!b) return;
+    if (!b || b.dataset.day === state.day) return;
+    $(`#dates [data-day="${state.day}"]`).setAttribute('aria-selected', 'false');
+    b.setAttribute('aria-selected', 'true');
     state.day = b.dataset.day;
     state.open.clear();
-    renderDates();
-    renderList();
+    movePad(true);
     centerDay(true);
+    renderList();
     $('#scroll').scrollTop = 0;
   });
 
   $('#list').addEventListener('click', e => {
+    const fold = e.target.closest('[data-fold]');
+    if (fold) {
+      const k = fold.dataset.fold, cards = fold.nextElementSibling;
+      state.folded.has(k) ? state.folded.delete(k) : state.folded.add(k);
+      const f = state.folded.has(k);
+      cards.hidden = f;
+      fold.setAttribute('aria-expanded', !f);
+      return;
+    }
     const card = e.target.closest('.t');
     if (!card) return;
     const id = card.dataset.id;
     const act = e.target.closest('[data-act]');
-    if (act) {
-      toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на твой матч' : 'Откроется аукцион: выкупи место в составе до дедлайна');
-      return;
-    }
+    if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на твой матч' : 'Откроется аукцион: выкупи место в составе до дедлайна'); return; }
+    if (e.target.closest('[data-screen]')) { toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
     const sw = e.target.closest('[data-sw]');
-    if (sw) {
-      const cur = sw.getAttribute('aria-checked') === 'true';
-      state.mode[id] = !cur;
-      rerenderCard(id);
-      return;
-    }
+    if (sw) { state.mode[id] = !state.mode[id]; rerenderCard(id); return; }
     const node = e.target.closest('[data-stage]');
     if (node) { const k = +node.dataset.stage; state.stage[id] = state.stage[id] === k ? undefined : k; rerenderCard(id); return; }
-    if (e.target.closest('[data-info]')) { toast('Нажми на точку таймлайна, чтобы увидеть стадию и её рубежи'); return; }
     const star = e.target.closest('[data-star]');
     if (star) {
       const k = star.dataset.star;
@@ -537,9 +570,7 @@ function bind() {
     if (seg) { state.big5Side[id] = seg.dataset.side; rerenderCard(id); return; }
     const lg = e.target.closest('[data-lg]');
     if (lg) {
-      const key = lg.dataset.lg;
-      const sec = lg.closest('.lg');
-      const isOpen = sec.classList.contains('open');
+      const key = lg.dataset.lg, sec = lg.closest('.lg'), isOpen = sec.classList.contains('open');
       if (isOpen) { state.lgOpen.delete(key); state.lgOpen.add('x' + key); } else { state.lgOpen.add(key); state.lgOpen.delete('x' + key); }
       sec.classList.toggle('open', !isOpen);
       lg.setAttribute('aria-expanded', !isOpen);
@@ -552,30 +583,8 @@ function bind() {
     }
   });
 
+  window.addEventListener('resize', () => movePad(false));
   setInterval(tick, 1000);
-}
-
-function rerenderCard(id, animate) {
-  const t = tournamentsFor(state.day);
-  const data = [...t.real, ...t.series].find(x => x.id === id);
-  const old = document.querySelector(`.t[data-id="${id}"]`);
-  if (!data || !old) return;
-  const wasOpen = old.classList.contains('open');
-  const tmp = document.createElement('div');
-  tmp.innerHTML = cardHTML(data, state.day);
-  const fresh = tmp.firstElementChild;
-  if (animate && !wasOpen && state.open.has(id)) {
-    // mount collapsed, then open on the next frame so the height animates
-    fresh.classList.remove('open');
-    old.replaceWith(fresh);
-    requestAnimationFrame(() => requestAnimationFrame(() => fresh.classList.add('open')));
-  } else if (animate && wasOpen && !state.open.has(id)) {
-    old.classList.remove('open');
-    old.querySelector('[data-rail]').setAttribute('aria-expanded', 'false');
-    old.querySelectorAll('.sw').forEach(x => (x.hidden = true));
-    setTimeout(() => { const cur = document.querySelector(`.t[data-id="${id}"]`); if (cur && !state.open.has(id)) cur.replaceWith(fresh); }, 360);
-  } else old.replaceWith(fresh);
-  tick();
 }
 
 function renderChrome() {
@@ -589,13 +598,9 @@ function renderChrome() {
 
 async function init() {
   renderChrome();
-  try {
-    const r = await fetch('data/real-matches.json');
-    REAL = await r.json();
-  } catch (e) {
-    REAL = { competitions: {}, days: {} };
-    console.error('real-matches.json failed to load', e);
-  }
+  const load = async (u, fb) => { try { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return await r.json(); } catch (e) { console.error(`${u} failed to load`, e); return fb; } };
+  [REAL, CRESTS] = await Promise.all([load('data/real-matches.json', { competitions: {}, days: {} }), load('data/crests.json', {})]);
+  CRESTS = { ...EXTRA_CRESTS, ...CRESTS };
   renderDates();
   renderList();
   centerDay(false);
