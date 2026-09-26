@@ -1,0 +1,1705 @@
+{
+  "window": {
+    "from": "2024-08-14",
+    "to": "2024-08-28",
+    "today": "2024-08-21"
+  },
+  "competitions": {
+    "ucl": {
+      "name": "Лига чемпионов УЕФА",
+      "country": "Европа",
+      "flag": "eu",
+      "stage": "Раунд плей-офф"
+    },
+    "usc": {
+      "name": "Суперкубок УЕФА",
+      "country": "Европа",
+      "flag": "eu",
+      "stage": "Финал"
+    },
+    "uel": {
+      "name": "Лига Европы УЕФА",
+      "country": "Европа",
+      "flag": "eu",
+      "stage": "Раунд плей-офф"
+    },
+    "uecl": {
+      "name": "Лига конференций УЕФА",
+      "country": "Европа",
+      "flag": "eu",
+      "stage": "Раунд плей-офф"
+    },
+    "epl": {
+      "name": "Премьер-лига",
+      "country": "Англия",
+      "flag": "gb-eng",
+      "stage": "Тур 1 / Тур 2"
+    },
+    "laliga": {
+      "name": "Ла Лига",
+      "country": "Испания",
+      "flag": "es",
+      "stage": "Тур 1 / Тур 2"
+    },
+    "seriea": {
+      "name": "Серия А",
+      "country": "Италия",
+      "flag": "it",
+      "stage": "Тур 1 / Тур 2"
+    },
+    "bundesliga": {
+      "name": "Бундеслига",
+      "country": "Германия",
+      "flag": "de",
+      "stage": "Тур 1"
+    },
+    "ligue1": {
+      "name": "Лига 1",
+      "country": "Франция",
+      "flag": "fr",
+      "stage": "Тур 1 / Тур 2"
+    }
+  },
+  "days": {
+    "2024-08-14": [
+      {
+        "id": "usc-1",
+        "comp": "usc",
+        "round": "Финал",
+        "home": "Реал Мадрид",
+        "away": "Аталанта",
+        "homeFlag": "es",
+        "awayFlag": "it",
+        "kickoff": "22:00",
+        "score": [
+          2,
+          0
+        ]
+      }
+    ],
+    "2024-08-15": [
+      {
+        "id": "laliga-1",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Атлетик Бильбао",
+        "away": "Хетафе",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "20:00",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "laliga-2",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Бетис",
+        "away": "Жирона",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:30",
+        "score": [
+          1,
+          1
+        ]
+      }
+    ],
+    "2024-08-16": [
+      {
+        "id": "laliga-3",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Сельта",
+        "away": "Алавес",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "20:00",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-1",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Гавр",
+        "away": "ПСЖ",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "21:45",
+        "score": [
+          1,
+          4
+        ]
+      },
+      {
+        "id": "epl-1",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Манчестер Юнайтед",
+        "away": "Фулхэм",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          0
+        ]
+      },
+      {
+        "id": "laliga-4",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Лас-Пальмас",
+        "away": "Севилья",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:30",
+        "score": [
+          2,
+          2
+        ]
+      }
+    ],
+    "2024-08-17": [
+      {
+        "id": "epl-2",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Ипсвич Таун",
+        "away": "Ливерпуль",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "14:30",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "ligue1-2",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Брест",
+        "away": "Марсель",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "16:00",
+        "score": [
+          1,
+          5
+        ]
+      },
+      {
+        "id": "epl-3",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Арсенал",
+        "away": "Вулверхэмптон",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "epl-4",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Эвертон",
+        "away": "Брайтон",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          0,
+          3
+        ]
+      },
+      {
+        "id": "epl-5",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Ньюкасл Юнайтед",
+        "away": "Саутгемптон",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          1,
+          0
+        ]
+      },
+      {
+        "id": "epl-6",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Ноттингем Форест",
+        "away": "Борнмут",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "epl-7",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Вест Хэм",
+        "away": "Астон Вилла",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "19:30",
+        "score": [
+          1,
+          2
+        ]
+      },
+      {
+        "id": "seriea-1",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Дженоа",
+        "away": "Интер",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          2,
+          2
+        ]
+      },
+      {
+        "id": "seriea-2",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Парма",
+        "away": "Фиорентина",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-3",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Реймс",
+        "away": "Лилль",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "20:00",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "seriea-3",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Эмполи",
+        "away": "Монца",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          0,
+          0
+        ]
+      },
+      {
+        "id": "seriea-4",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Милан",
+        "away": "Торино",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          2,
+          2
+        ]
+      },
+      {
+        "id": "laliga-5",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Осасуна",
+        "away": "Леганес",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "laliga-6",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Валенсия",
+        "away": "Барселона",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          2
+        ]
+      },
+      {
+        "id": "ligue1-4",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Монако",
+        "away": "Сент-Этьен",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          0
+        ]
+      }
+    ],
+    "2024-08-18": [
+      {
+        "id": "epl-8",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Брентфорд",
+        "away": "Кристал Пэлас",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "16:00",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-5",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Осер",
+        "away": "Ницца",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "16:00",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-6",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Монпелье",
+        "away": "Страсбур",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "18:05",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-7",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Анже",
+        "away": "Ланс",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "18:05",
+        "score": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-8",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Тулуза",
+        "away": "Нант",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "18:05",
+        "score": [
+          0,
+          0
+        ]
+      },
+      {
+        "id": "epl-9",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Челси",
+        "away": "Манчестер Сити",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "18:30",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "seriea-5",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Болонья",
+        "away": "Удинезе",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "seriea-6",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Верона",
+        "away": "Наполи",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          3,
+          0
+        ]
+      },
+      {
+        "id": "laliga-7",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Реал Сосьедад",
+        "away": "Райо Вальекано",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "20:00",
+        "score": [
+          1,
+          2
+        ]
+      },
+      {
+        "id": "seriea-7",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Лацио",
+        "away": "Венеция",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          3,
+          1
+        ]
+      },
+      {
+        "id": "seriea-8",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Кальяри",
+        "away": "Рома",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          0,
+          0
+        ]
+      },
+      {
+        "id": "ligue1-9",
+        "comp": "ligue1",
+        "round": "Тур 1",
+        "home": "Ренн",
+        "away": "Лион",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "21:45",
+        "score": [
+          3,
+          0
+        ]
+      },
+      {
+        "id": "laliga-8",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Мальорка",
+        "away": "Реал Мадрид",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          1
+        ]
+      }
+    ],
+    "2024-08-19": [
+      {
+        "id": "seriea-9",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Лечче",
+        "away": "Аталанта",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          0,
+          4
+        ]
+      },
+      {
+        "id": "laliga-9",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Вальядолид",
+        "away": "Эспаньол",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "20:00",
+        "score": [
+          1,
+          0
+        ]
+      },
+      {
+        "id": "seriea-10",
+        "comp": "seriea",
+        "round": "Тур 1",
+        "home": "Ювентус",
+        "away": "Комо",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          3,
+          0
+        ]
+      },
+      {
+        "id": "epl-10",
+        "comp": "epl",
+        "round": "Тур 1",
+        "home": "Лестер Сити",
+        "away": "Тоттенхэм",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "laliga-10",
+        "comp": "laliga",
+        "round": "Тур 1",
+        "home": "Вильярреал",
+        "away": "Атлетико Мадрид",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:30",
+        "score": [
+          2,
+          2
+        ]
+      }
+    ],
+    "2024-08-20": [
+      {
+        "id": "ucl-1",
+        "comp": "ucl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Карабах",
+        "away": "Динамо Загреб",
+        "homeFlag": "az",
+        "awayFlag": "hr",
+        "kickoff": "20:00",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "ucl-2",
+        "comp": "ucl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Будё-Глимт",
+        "away": "Црвена Звезда",
+        "homeFlag": "no",
+        "awayFlag": "rs",
+        "kickoff": "22:00",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "ucl-3",
+        "comp": "ucl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Лилль",
+        "away": "Славия Прага",
+        "homeFlag": "fr",
+        "awayFlag": "cz",
+        "kickoff": "22:00",
+        "score": [
+          2,
+          0
+        ]
+      }
+    ],
+    "2024-08-21": [
+      {
+        "id": "ucl-6",
+        "comp": "ucl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Мальмё",
+        "away": "Спарта Прага",
+        "homeFlag": "se",
+        "awayFlag": "cz",
+        "kickoff": "20:00",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "ucl-7",
+        "comp": "ucl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Динамо Киев",
+        "away": "Ред Булл Зальцбург",
+        "homeFlag": "ua",
+        "awayFlag": "at",
+        "kickoff": "21:00",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "ucl-4",
+        "comp": "ucl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Янг Бойз",
+        "away": "Галатасарай",
+        "homeFlag": "ch",
+        "awayFlag": "tr",
+        "kickoff": "22:00",
+        "score": [
+          3,
+          2
+        ]
+      },
+      {
+        "id": "ucl-5",
+        "comp": "ucl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Мидтьюлланн",
+        "away": "Слован Братислава",
+        "homeFlag": "dk",
+        "awayFlag": "sk",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          1
+        ]
+      }
+    ],
+    "2024-08-22": [
+      {
+        "id": "uel-4",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "РФШ",
+        "away": "АПОЭЛ",
+        "homeFlag": "lv",
+        "awayFlag": "cy",
+        "kickoff": "21:00",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "uel-5",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "ПАОК",
+        "away": "Шемрок Роверс",
+        "homeFlag": "gr",
+        "awayFlag": "ie",
+        "kickoff": "21:00",
+        "score": [
+          4,
+          0
+        ]
+      },
+      {
+        "id": "uel-6",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Лудогорец",
+        "away": "Петрокуб",
+        "homeFlag": "bg",
+        "awayFlag": "md",
+        "kickoff": "21:00",
+        "score": [
+          4,
+          0
+        ]
+      },
+      {
+        "id": "uel-7",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Маккаби Тель-Авив",
+        "away": "Бачка Топола",
+        "homeFlag": "il",
+        "awayFlag": "rs",
+        "kickoff": "21:00",
+        "score": [
+          3,
+          0
+        ]
+      },
+      {
+        "id": "uel-9",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Динамо Минск",
+        "away": "Андерлехт",
+        "homeFlag": "by",
+        "awayFlag": "be",
+        "kickoff": "21:00",
+        "score": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "uel-11",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Фенербахче",
+        "away": "Рейнджерс",
+        "homeFlag": "tr",
+        "awayFlag": "gb-sct",
+        "kickoff": "21:00",
+        "score": [
+          1,
+          3
+        ]
+      },
+      {
+        "id": "uel-1",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Виктория Пльзень",
+        "away": "Хартс",
+        "homeFlag": "cz",
+        "awayFlag": "gb-sct",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          0
+        ]
+      },
+      {
+        "id": "uel-2",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "ЛАСК",
+        "away": "ФКСБ",
+        "homeFlag": "at",
+        "awayFlag": "ro",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "uel-3",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Мольде",
+        "away": "Эльфсборг",
+        "homeFlag": "no",
+        "awayFlag": "se",
+        "kickoff": "22:00",
+        "score": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "uel-8",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Лугано",
+        "away": "Бешикташ",
+        "homeFlag": "ch",
+        "awayFlag": "tr",
+        "kickoff": "22:00",
+        "score": [
+          3,
+          3
+        ]
+      },
+      {
+        "id": "uel-10",
+        "comp": "uel",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Ягеллония",
+        "away": "Аякс",
+        "homeFlag": "pl",
+        "awayFlag": "nl",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          4
+        ]
+      },
+      {
+        "id": "uecl-1",
+        "comp": "uecl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Челси",
+        "away": "Серветт",
+        "homeFlag": "gb-eng",
+        "awayFlag": "ch",
+        "kickoff": "22:00",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "uecl-2",
+        "comp": "uecl",
+        "round": "Плей-офф, 1-й матч",
+        "home": "Фиорентина",
+        "away": "Пушкаш Академия",
+        "homeFlag": "it",
+        "awayFlag": "hu",
+        "kickoff": "22:00",
+        "score": [
+          3,
+          3
+        ]
+      }
+    ],
+    "2024-08-23": [
+      {
+        "id": "laliga-11",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Сельта",
+        "away": "Валенсия",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "20:00",
+        "score": [
+          3,
+          1
+        ]
+      },
+      {
+        "id": "bundesliga-1",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Боруссия М",
+        "away": "Байер Леверкузен",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "21:30",
+        "score": [
+          2,
+          3
+        ]
+      },
+      {
+        "id": "ligue1-10",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "ПСЖ",
+        "away": "Монпелье",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "21:45",
+        "score": [
+          6,
+          0
+        ]
+      },
+      {
+        "id": "laliga-12",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Севилья",
+        "away": "Вильярреал",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:30",
+        "score": [
+          1,
+          2
+        ]
+      }
+    ],
+    "2024-08-24": [
+      {
+        "id": "epl-11",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Брайтон",
+        "away": "Манчестер Юнайтед",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "14:30",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "laliga-13",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Осасуна",
+        "away": "Мальорка",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "15:00",
+        "score": [
+          1,
+          0
+        ]
+      },
+      {
+        "id": "bundesliga-2",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Фрайбург",
+        "away": "Штутгарт",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "16:30",
+        "score": [
+          3,
+          1
+        ]
+      },
+      {
+        "id": "bundesliga-3",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Боруссия Дортмунд",
+        "away": "Айнтрахт",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "16:30",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "bundesliga-4",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "РБ Лейпциг",
+        "away": "Бохум",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "16:30",
+        "score": [
+          1,
+          0
+        ]
+      },
+      {
+        "id": "bundesliga-5",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Хоффенхайм",
+        "away": "Хольштайн Киль",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "16:30",
+        "score": [
+          3,
+          2
+        ]
+      },
+      {
+        "id": "bundesliga-6",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Аугсбург",
+        "away": "Вердер Бремен",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "16:30",
+        "score": [
+          2,
+          2
+        ]
+      },
+      {
+        "id": "bundesliga-7",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Майнц",
+        "away": "Унион Берлин",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "16:30",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "epl-12",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Кристал Пэлас",
+        "away": "Вест Хэм",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "epl-13",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Фулхэм",
+        "away": "Лестер Сити",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "epl-14",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Манчестер Сити",
+        "away": "Ипсвич Таун",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          4,
+          1
+        ]
+      },
+      {
+        "id": "epl-15",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Саутгемптон",
+        "away": "Ноттингем Форест",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "epl-16",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Тоттенхэм",
+        "away": "Эвертон",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "17:00",
+        "score": [
+          4,
+          0
+        ]
+      },
+      {
+        "id": "laliga-14",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Барселона",
+        "away": "Атлетик Бильбао",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "17:15",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-11",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Лион",
+        "away": "Монако",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "18:00",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "epl-17",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Астон Вилла",
+        "away": "Арсенал",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "19:30",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "laliga-15",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Эспаньол",
+        "away": "Реал Сосьедад",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "19:30",
+        "score": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "seriea-11",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Парма",
+        "away": "Милан",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "seriea-13",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Интер",
+        "away": "Лечче",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "ligue1-12",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Лилль",
+        "away": "Анже",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "20:00",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "seriea-12",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Удинезе",
+        "away": "Лацио",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "seriea-14",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Монца",
+        "away": "Дженоа",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "laliga-16",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Хетафе",
+        "away": "Райо Вальекано",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:00",
+        "score": [
+          0,
+          0
+        ]
+      },
+      {
+        "id": "ligue1-13",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Сент-Этьен",
+        "away": "Гавр",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "22:00",
+        "score": [
+          0,
+          2
+        ]
+      }
+    ],
+    "2024-08-25": [
+      {
+        "id": "laliga-17",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Леганес",
+        "away": "Лас-Пальмас",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "15:00",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "epl-18",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Борнмут",
+        "away": "Ньюкасл Юнайтед",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "16:00",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "epl-19",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Вулверхэмптон",
+        "away": "Челси",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "16:00",
+        "score": [
+          2,
+          6
+        ]
+      },
+      {
+        "id": "ligue1-14",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Ланс",
+        "away": "Брест",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "16:00",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "bundesliga-9",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Санкт-Паули",
+        "away": "Хайденхайм",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "16:30",
+        "score": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": "laliga-19",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Алавес",
+        "away": "Бетис",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "17:15",
+        "score": [
+          0,
+          0
+        ]
+      },
+      {
+        "id": "ligue1-15",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Ницца",
+        "away": "Тулуза",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "18:00",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-16",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Страсбур",
+        "away": "Ренн",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "18:00",
+        "score": [
+          3,
+          1
+        ]
+      },
+      {
+        "id": "ligue1-17",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Нант",
+        "away": "Осер",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "18:00",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "epl-20",
+        "comp": "epl",
+        "round": "Тур 2",
+        "home": "Ливерпуль",
+        "away": "Брентфорд",
+        "homeFlag": "gb-eng",
+        "awayFlag": "gb-eng",
+        "kickoff": "18:30",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "bundesliga-8",
+        "comp": "bundesliga",
+        "round": "Тур 1",
+        "home": "Вольфсбург",
+        "away": "Бавария",
+        "homeFlag": "de",
+        "awayFlag": "de",
+        "kickoff": "18:30",
+        "score": [
+          2,
+          3
+        ]
+      },
+      {
+        "id": "laliga-18",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Реал Мадрид",
+        "away": "Вальядолид",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "19:30",
+        "score": [
+          3,
+          0
+        ]
+      },
+      {
+        "id": "seriea-15",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Фиорентина",
+        "away": "Венеция",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          0,
+          0
+        ]
+      },
+      {
+        "id": "seriea-16",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Торино",
+        "away": "Аталанта",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          2,
+          1
+        ]
+      },
+      {
+        "id": "seriea-17",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Наполи",
+        "away": "Болонья",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          3,
+          0
+        ]
+      },
+      {
+        "id": "seriea-18",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Рома",
+        "away": "Эмполи",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          1,
+          2
+        ]
+      },
+      {
+        "id": "ligue1-18",
+        "comp": "ligue1",
+        "round": "Тур 2",
+        "home": "Марсель",
+        "away": "Реймс",
+        "homeFlag": "fr",
+        "awayFlag": "fr",
+        "kickoff": "21:45",
+        "score": [
+          2,
+          2
+        ]
+      },
+      {
+        "id": "laliga-20",
+        "comp": "laliga",
+        "round": "Тур 2",
+        "home": "Атлетико Мадрид",
+        "away": "Жирона",
+        "homeFlag": "es",
+        "awayFlag": "es",
+        "kickoff": "22:30",
+        "score": [
+          3,
+          0
+        ]
+      }
+    ],
+    "2024-08-26": [
+      {
+        "id": "seriea-19",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Кальяри",
+        "away": "Комо",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "19:30",
+        "score": [
+          1,
+          1
+        ]
+      },
+      {
+        "id": "seriea-20",
+        "comp": "seriea",
+        "round": "Тур 2",
+        "home": "Верона",
+        "away": "Ювентус",
+        "homeFlag": "it",
+        "awayFlag": "it",
+        "kickoff": "21:45",
+        "score": [
+          0,
+          3
+        ]
+      }
+    ],
+    "2024-08-27": [
+      {
+        "id": "ucl-10",
+        "comp": "ucl",
+        "round": "Плей-офф, 2-й матч",
+        "home": "Галатасарай",
+        "away": "Янг Бойз",
+        "homeFlag": "tr",
+        "awayFlag": "ch",
+        "kickoff": "21:00",
+        "score": [
+          0,
+          1
+        ]
+      },
+      {
+        "id": "ucl-8",
+        "comp": "ucl",
+        "round": "Плей-офф, 2-й матч",
+        "home": "Спарта Прага",
+        "away": "Мальмё",
+        "homeFlag": "cz",
+        "awayFlag": "se",
+        "kickoff": "22:00",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "ucl-9",
+        "comp": "ucl",
+        "round": "Плей-офф, 2-й матч",
+        "home": "Ред Булл Зальцбург",
+        "away": "Динамо Киев",
+        "homeFlag": "at",
+        "awayFlag": "ua",
+        "kickoff": "22:00",
+        "score": [
+          1,
+          1
+        ]
+      }
+    ],
+    "2024-08-28": [
+      {
+        "id": "ucl-11",
+        "comp": "ucl",
+        "round": "Плей-офф, 2-й матч",
+        "home": "Динамо Загреб",
+        "away": "Карабах",
+        "homeFlag": "hr",
+        "awayFlag": "az",
+        "kickoff": "22:00",
+        "score": [
+          3,
+          0
+        ]
+      },
+      {
+        "id": "ucl-12",
+        "comp": "ucl",
+        "round": "Плей-офф, 2-й матч",
+        "home": "Слован Братислава",
+        "away": "Мидтьюлланн",
+        "homeFlag": "sk",
+        "awayFlag": "dk",
+        "kickoff": "22:00",
+        "score": [
+          3,
+          2
+        ]
+      },
+      {
+        "id": "ucl-13",
+        "comp": "ucl",
+        "round": "Плей-офф, 2-й матч",
+        "home": "Црвена Звезда",
+        "away": "Будё-Глимт",
+        "homeFlag": "rs",
+        "awayFlag": "no",
+        "kickoff": "22:00",
+        "score": [
+          2,
+          0
+        ]
+      },
+      {
+        "id": "ucl-14",
+        "comp": "ucl",
+        "round": "Плей-офф, 2-й матч",
+        "home": "Славия Прага",
+        "away": "Лилль",
+        "homeFlag": "cz",
+        "awayFlag": "fr",
+        "kickoff": "22:00",
+        "score": [
+          2,
+          1
+        ]
+      }
+    ]
+  }
+}

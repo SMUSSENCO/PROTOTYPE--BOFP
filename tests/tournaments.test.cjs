@@ -41,16 +41,18 @@ async function check(name, fn) {
 
   for (const vp of [{ width: 390, height: 844 }, { width: 360, height: 740 }]) {
     const tag = `${vp.width}`;
-    const page = await browser.newPage({ viewport: vp, deviceScaleFactor: 2, reducedMotion: 'reduce' });
+    const page = await browser.newPage({ viewport: vp, deviceScaleFactor: 2, reducedMotion: 'reduce', ignoreHTTPSErrors: true });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    page.on('console', m => m.type() === 'error' && errors.push(m.text()));
+    // only our own files count; third-party font hosts can be unreachable in CI sandboxes
+    page.on('console', m => m.type() === 'error' && (m.location().url || '').startsWith(url) && errors.push(m.text()));
+    page.on('requestfailed', r => r.url().startsWith(url) && errors.push(`${r.url()} ${r.failure().errorText}`));
     await page.goto(url);
     await page.waitForSelector('.t');
     await page.evaluate(() => document.fonts.ready);
     const box = sel => page.locator(sel).first().boundingBox();
 
-    await check(`[${tag}] no console errors`, async () => assert.deepEqual(errors, []));
+    await check(`[${tag}] no console errors`, async () => assert.deepEqual(errors, [], errors.join(' | ')));
 
     await check(`[${tag}] page never scrolls sideways`, async () => {
       const o = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth, document.querySelector('.scroll').scrollWidth, document.querySelector('.scroll').clientWidth]);
@@ -94,7 +96,7 @@ async function check(name, fn) {
       assert.equal(await page.locator('.day.alert .gavel').count(), 1);
       const anim = await page.evaluate(() => getComputedStyle(document.querySelector('.runner')).animationName);
       // reduced motion disables it in this run; the rule itself must exist
-      const hasRule = await page.evaluate(() => [...document.styleSheets].some(s => [...s.cssRules].some(r => r.name === 'run')));
+      const hasRule = await page.evaluate(() => [...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.name === 'run'); } catch { return false; } }));
       assert.ok(hasRule, `no @keyframes run (computed ${anim})`);
     });
 

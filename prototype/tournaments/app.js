@@ -196,12 +196,12 @@ const BIG5_DAYS = { West: ['2024-08-17', '2024-08-24'], East: ['2024-08-18', '20
 
 /* per-day player situations (drive the calendar frames and the action chips) */
 const STATUS = {
-  'ucl|2024-08-27': { kind: 'squad', deadlineHm: '21:00', text: 'Фан-клуб не выставил тебя в состав' },
+  'ucl|2024-08-21': { kind: 'predict' },
+  'ucl|2024-08-27': { kind: 'squad', deadlineHm: '20:00', text: 'Фан-клуб не выставил тебя в состав' },
   'acl|2024-08-21': { kind: 'predict' },
   'acl|2024-08-28': { kind: 'predict' },
   'rnd|2024-08-24': { kind: 'predict' },
   'g5|2024-08-24': { kind: 'in', pick: [2, 1] },
-  'ucl|2024-08-20': { kind: 'done', pick: [2, 1], pts: 3 },
   'rnd|2024-08-18': { kind: 'done', pick: [2, 0], pts: 5 },
   'g5|2024-08-17': { kind: 'done', pick: [1, 1], pts: 1 },
 };
@@ -339,9 +339,10 @@ function timelineHTML(t) {
 /* ---------- match rows ---------- */
 function matchRow(m, day, mineTeam, t, playersMode) {
   const me = isMine(m, mineTeam);
-  let score = m.score;
-  if (playersMode && !m.bofp && score) score = fakeScore('p' + m.id);
   const ko = at(day, m.kickoff), n = now();
+  const finished = day < TODAY || n > ko + 115 * 60000;
+  let score = finished ? m.score : null;
+  if (playersMode && !m.bofp && score) score = fakeScore('p' + m.id);
   let side;
   if (score) {
     const [h, a] = score;
@@ -446,7 +447,7 @@ function renderDates() {
     }
     const pastMine = past && playerMatchCount(d) ? '<span class="mine-dot"></span>' : '';
     const label = `${today ? 'Сегодня' : wd(d)}, ${ddmm(d)}${cnt ? `, твоих матчей: ${cnt}` : ''}${alert ? ', требуется действие' : ''}`;
-    items.push(`<button class="day ${past ? 'past' : ''} ${today ? 'today' : ''} ${alert ? 'alert' : ''}" role="tab" data-day="${d}" aria-selected="${d === state.day}" aria-label="${label}">
+    items.push(`<button class="day ${past ? 'past' : ''} ${today ? 'today' : ''} ${alert ? 'alert' : ''} ${cnt ? 'framed' : ''}" role="tab" data-day="${d}" aria-selected="${d === state.day}" aria-label="${label}">
       ${frame}<span class="wd">${today ? 'Сегодня' : wd(d)}</span><span class="dd num">${ddmm(d)}</span>${badge}${pastMine}</button>`);
   }
   nav.innerHTML = items.join('');
