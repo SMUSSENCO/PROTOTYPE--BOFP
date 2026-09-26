@@ -1,0 +1,8 @@
+{
+  "name": "bofp-prototype",
+  "private": true,
+  "description": "Battle of Predictions — interactive UI prototype",
+  "scripts": {
+    "test": "NODE_PATH=${NODE_PATH:-$(npm root -g)} node tests/tournaments.test.cjs"
+  }
+}

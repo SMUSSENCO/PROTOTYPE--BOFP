@@ -1,0 +1,3 @@
+node_modules/
+tests/__screenshots__/
+.DS_Store
