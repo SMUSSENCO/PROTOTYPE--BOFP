@@ -607,7 +607,7 @@ function rerenderCard(id, animate) {
   } else if (animate && wasOpen && !state.open.has(id)) {
     old.classList.remove('open');
     old.querySelector('[data-rail]').setAttribute('aria-expanded', 'false');
-    setTimeout(() => { const cur = document.querySelector(`.t[data-id="${id}"]`); if (cur && !state.open.has(id)) cur.replaceWith(fresh); updateHint(); }, 360);
+    setTimeout(() => { const cur = document.querySelector(`.t[data-id="${id}"]`); if (cur && !state.open.has(id)) cur.replaceWith(fresh); tick(); updateHint(); }, 360);
   } else old.replaceWith(fresh);
   tick();
   setTimeout(updateHint, 400);
