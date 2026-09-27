@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0A08">
+<title>BofP Турниры</title>
+<!-- GitHub Pages entry: loads the prototype fragment with its assets relative to its own folder -->
+<base href="prototype/tournaments/">
+<style>html,body{margin:0;height:100%;background:#0A0A08}</style>
+</head>
+<body>
+<script>
+fetch('index.html').then(r => r.text()).then(html => {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  document.title = doc.title || document.title;
+  for (const el of [...doc.head.children, ...doc.body.children]) {
+    if (el.tagName === 'SCRIPT' || el.tagName === 'TITLE') continue;
+    document.body.appendChild(document.importNode(el, true));
+  }
+  for (const s of doc.querySelectorAll('script')) {
+    const n = document.createElement('script');
+    if (s.src) n.src = s.getAttribute('src'); else n.textContent = s.textContent;
+    document.body.appendChild(n);
+  }
+});
+</script>
+</body>
+</html>

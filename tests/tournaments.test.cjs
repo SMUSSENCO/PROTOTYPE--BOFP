@@ -125,6 +125,16 @@ async function check(name, fn) {
       for (const r of await page.locator('.t-rail').all()) { const b = await r.boundingBox(); if (b) assert.ok(Math.abs(b.x + 54 - vp.width) < 1.5, 'rail misaligned'); }
     });
 
+    await check(`[${tag}] domestic leagues show a square flag as their icon`, async () => {
+      await day('2024-08-17');
+      const f = page.locator('.t[data-id="epl"] .t-icon .flag-sq');
+      assert.equal(await f.count(), 1);
+      const b = await f.boundingBox();
+      assert.ok(Math.abs(b.width - b.height) < 1, 'flag is not square');
+      assert.equal(await page.locator('.t[data-id="ucl"] .flag-sq').count(), 0, 'UEFA cups keep their own icon');
+      await day('2024-08-21');
+    });
+
     await check(`[${tag}] every open prediction still has time left`, async () => {
       for (const t of await page.locator('.act.predict .tm').allInnerTexts()) assert.notEqual(t.trim(), '00:00:00');
     });
@@ -167,7 +177,8 @@ async function check(name, fn) {
 
     await check(`[${tag}] night block at the bottom; hint above the tab bar scrolls to it`, async () => {
       assert.ok(await page.locator('[data-fold="night"]').count(), 'night block missing');
-      assert.equal(await page.locator('.t[data-id="n5"]').count(), 1, 'night BIG 5 missing');
+      assert.equal(await page.locator('.t[data-id="n5"]').count(), 0, 'Night BIG 5 must be gone');
+      assert.equal(await page.locator('[data-fold="night"] + .cards .t[data-id="lib"]').count(), 1, 'night cup missing');
       const hint = page.locator('#hintDn');
       await page.locator('.scroll').evaluate(n => { n.style.scrollBehavior = 'auto'; n.scrollTop = 0; });
       await page.waitForTimeout(200);
@@ -228,9 +239,13 @@ async function check(name, fn) {
       const bfp = page.locator('#drawer [data-dnode]', { hasText: 'BFP Еврокубки' });
       await bfp.click();
       assert.match(await bfp.locator('xpath=following-sibling::div[1]').innerText(), /BFP Champions League/);
-      const green = page.locator('#drawer [data-dnode]', { hasText: 'Green BIG 5' });
+      const green = page.locator('#drawer [data-dnode]', { hasText: /^Green$/ });
       await green.click();
-      assert.match(await green.locator('xpath=following-sibling::div[1]').innerText(), /West[\s\S]*East/);
+      const gk = green.locator('xpath=following-sibling::div[1]');
+      assert.match(await gk.innerText(), /West[\s\S]*East/);
+      assert.doesNotMatch(await page.locator('#drawer').innerText(), /Night BIG 5/);
+      await gk.locator('[data-dnode]').first().click();
+      assert.match(await gk.innerText(), /BIG 5 Cup/);
       await body.evaluate(n => (n.scrollTop = n.scrollHeight));
       const fifa = page.locator('#drawer [data-dnode]', { hasText: 'UEFA' }).last();
       const before = await body.evaluate(n => n.scrollTop);

@@ -218,15 +218,12 @@ const BIG5 = [
 const BIG5_START = '2024-08-12', BIG5_END = '2024-08-30';
 const big5Tour = day => Math.round((at(day, '12:00') - at(BIG5_START, '12:00')) / 864e5) + 1;
 const NIGHT_MINE = { lib: 'Стронгест' };
-/* night block: a BIG 5 that plays after midnight, so tomorrow's pick is not forgotten */
-const NIGHT_BIG5 = { code: 'n5', color: 'Night', img: 'blue-big-5', days: ['2024-08-21'], times: ['00:30', '01:30', '02:30'], mine: { side: 'West', liga: 1, team: ME.team, place: 3 } };
 
 /* player's situation per tournament/day. BofP tournaments never have lineup problems. */
 const STATUS = {
   'ucl|2024-08-21': { kind: 'predict' },
   'acl|2024-08-21': { kind: 'predict' },
   'bcl|2024-08-21': { kind: 'missed' },
-  'n5|2024-08-21': { kind: 'predict' },
   'lib|2024-08-21': { kind: 'squad', deadline: ['2024-08-22', '00:30'], text: 'Фан-клуб не выставил тебя в состав. Открыт аукцион.' },
   'rnd|2024-08-24': { kind: 'predict' },
   'ucl|2024-08-27': { kind: 'squad', deadline: ['2024-08-27', '20:00'], text: 'Фан-клуб не выставил тебя в состав. Открыт аукцион.' },
@@ -308,7 +305,7 @@ function realCard(code, matches, day, night) {
   if (!mineTeam && NIGHT_MINE[code] && matches.some(m => isMine(m, NIGHT_MINE[code]))) mineTeam = NIGHT_MINE[code];
   matches = [...matches].sort((a, b) => isMine(b, mineTeam) - isMine(a, mineTeam) || (a.date || '').localeCompare(b.date || '') || a.kickoff.localeCompare(b.kickoff));
   return { id: code, type: 'real', sport: 'foot', night, name: c.name || code, short: meta.short || c.name || code,
-    sub: [meta.country || c.country, shortRound(matches[0].round || c.stage)].filter(Boolean).join(' · '), iconSvg: meta.icon, flag: meta.bg, stages: meta.stages, matches, mineTeam };
+    sub: [meta.country || c.country, shortRound(matches[0].round || c.stage)].filter(Boolean).join(' · '), iconSvg: meta.icon, flag: meta.bg, flagIcon: FLAGS[meta.bg] && !['eu', 'conmebol'].includes(meta.bg) ? meta.bg : null, stages: meta.stages, matches, mineTeam };
 }
 
 function big5Card(b, day, tour, night, base = day) {
@@ -386,8 +383,6 @@ function buildTournaments(day) {
   }
   if (day >= BIG5_START && day <= BIG5_END) for (const b of BIG5) out.series.push(big5Card(b, day, big5Tour(day), false));
   out.series.push(...tennisCards(day));
-  const nbase = NIGHT_BIG5.days.find(d => d === day || addDays(d, 1) === day);
-  if (nbase) out.night.push(big5Card(NIGHT_BIG5, day, big5Tour(addDays(nbase, 1)), true, nbase));
   const nb = realByComp(day, true);
   for (const code of NIGHT_REAL) if (nb[code]) out.night.push(realCard(code, nb[code], day, true));
   out.custom = customCards(day);
@@ -528,7 +523,7 @@ function cardHTML(t, day) {
   if (t.bg) art = `<img src="${esc(t.bg)}" alt="">`;
   else if (t.flag && FLAGS[t.flag]) art = FLAGS[t.flag];
   else if (t.bgTint) art = `<div style="background:${t.bgTint}"></div>`;
-  const icon = t.icon ? `<img class="${t.iconLogo ? 'logo' : ''}" src="${esc(t.icon)}" alt="">` : (t.iconSvg || I.ball);
+  const icon = t.flagIcon ? `<span class="flag-sq">${FLAGS[t.flagIcon]}</span>` : t.icon ? `<img class="${t.iconLogo ? 'logo' : ''}" src="${esc(t.icon)}" alt="">` : (t.iconSvg || I.ball);
   let body = '';
   if (open && t.type === 'custom') body = `<div class="matches">${listHTML(t.id, t.matches.map(m => matchRow(m, day, null, t, false)))}</div>`;
   else if (open) {
@@ -543,7 +538,7 @@ function cardHTML(t, day) {
     ${t.mineTeam ? '<span class="ring" aria-hidden="true"></span>' : ''}
     ${art ? `<div class="t-art" aria-hidden="true">${art}</div>` : ''}
     <div class="t-head" data-toggle>
-      <button class="t-icon" data-screen aria-label="Открыть турнир ${esc(t.name)}">${icon}</button>
+      <button class="t-icon ${t.flagIcon ? 'is-flag' : ''}" data-screen aria-label="Открыть турнир ${esc(t.name)}">${icon}</button>
       <div class="t-main"><span class="t-title" title="${esc(t.name)}">${esc(t.short)}</span><span class="t-meta">${esc(t.sub)}</span></div>
       <div class="t-act">${actionChip(t, day)}</div>
       <button class="t-rail" data-rail aria-expanded="${open}" aria-label="${open ? 'Свернуть' : 'Развернуть'}: ${esc(t.name)}${live ? `, в эфире ${live}` : ''}">${I.chevron}${countHTML(ms.length, live)}</button>
@@ -668,13 +663,12 @@ function rerenderCard(id, animate) {
 }
 
 /* ================= catalog drawer ================= */
-const big5Tree = c => ({ t: `${c} BIG 5`, img: `${A}${c.toLowerCase()}-big-5-logo.webp`, kids: ['West', 'East'].map(s => ({ t: s, kids: [1, 2, 3].map(l => `${c} BIG 5 ${s} — Лига ${l}`) })) });
+const big5Tree = c => ({ t: c, img: `${A}${c.toLowerCase()}-big-5-logo.webp`, kids: ['West', 'East'].map(s => ({ t: s, kids: ['BIG 5 Cup'] })) });
 const groups = (L, n) => Array.from({ length: n }, (_, i) => `Группа ${L}${i + 1}`);
 const CATALOG = {
   foot: [
     { g: 'BofP Series', items: [
       ...['Green', 'Red', 'Yellow', 'Blue'].map(big5Tree),
-      { t: 'Night BIG 5', img: `${A}blue-big-5-logo.webp`, kids: ['West', 'East'].map(s => ({ t: s, kids: [1, 2, 3].map(l => `Night BIG 5 ${s} — Лига ${l}`) })) },
       { t: 'Random Cup', icon: I.dice },
     ] },
     { g: 'Еврокубки', items: [
