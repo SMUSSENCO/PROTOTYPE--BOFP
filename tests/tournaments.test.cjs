@@ -142,12 +142,17 @@ async function check(name, fn) {
 
     await check(`[${tag}] missed pick today: chip + yellow card next to my team`, async () => {
       const bcl = page.locator('.t[data-id="bcl"]');
-      assert.match(await bcl.locator('.act.missed').innerText(), /Пропуск/);
+      assert.doesNotMatch(await page.locator('#list').innerText(), /Пропуск/);
+      assert.equal(await bcl.locator('.t-act .act').count(), 0);
+      assert.match(await page.locator('.t[data-id="g5"] .act.picked').innerText(), /Прогноз сделан/);
       assert.equal(await bcl.locator('.t-head img[src*="card-"]').count(), 0, 'cards belong inside the expanded tournament only');
       await bcl.locator('[data-rail]').click(); await page.waitForTimeout(450);
       const me = bcl.locator('.m.me');
       assert.equal(await me.locator('img[src$="card-yellow.webp"]').count(), 1);
-      assert.ok(await bcl.locator('.m-team .bf').count() > 1, 'no buffs in BofP matches');
+      const buffRows = await bcl.locator('.m-team .bf:not(.card)').evaluateAll(b => b.map(x => x.closest('.m').classList.contains('live')));
+      assert.ok(buffRows.length > 0, 'no buffs in live BofP matches');
+      assert.ok(buffRows.every(Boolean), 'buffs outside live matches');
+      assert.equal(await bcl.locator('.m.done .m-time').first().innerText().catch(() => ''), '', 'finished match must show nothing');
       assert.equal(await bcl.locator('.sw').count(), 0, 'BofP card must not have the switch');
       assert.ok(await bcl.locator('.crest-img.team').count() > 5, 'BofP team avatars missing');
       await bcl.locator('[data-rail]').click(); await page.waitForTimeout(400);
@@ -170,7 +175,8 @@ async function check(name, fn) {
       assert.match(mask, /linear-gradient/, 'outline does not fade to the right');
       await ucl.locator('.sw').click();
       assert.match(await page.locator('.t[data-id="ucl"] .sw-note').innerText(), /Результаты игроков BofP/);
-      assert.ok(await page.locator('.t[data-id="ucl"] .m-team .bf').count() > 0, 'switched view shows no buffs');
+      const liveOnly = await page.locator('.t[data-id="ucl"] .m-team .bf:not(.card)').evaluateAll(b => b.every(x => x.closest('.m').classList.contains('live')));
+      assert.ok(liveOnly, 'buffs outside live matches');
       await page.screenshot({ path: path.join(SHOTS, `${tag}-expanded.png`) });
       await page.locator('.t[data-id="ucl"] .sw').click();
       await page.locator('.t[data-id="ucl"] [data-rail]').click(); await page.waitForTimeout(400);
@@ -191,7 +197,7 @@ async function check(name, fn) {
       await hint.click(); await page.waitForTimeout(900);
       const first = page.locator('.t[data-action]').last();
       const fb = await first.boundingBox();
-      assert.ok(fb.y < vp.height - 100 && fb.y > 0, 'did not scroll to the action');
+      assert.ok(fb.y < vp.height - 100 && fb.y > 0, `did not scroll to the action: ${await first.getAttribute('data-id')} y=${fb.y}`);
       await page.locator('.scroll').evaluate(n => { n.scrollTop = 0; n.style.scrollBehavior = ''; });
     });
 
@@ -324,6 +330,32 @@ async function check(name, fn) {
       await day('2024-08-22');
       assert.ok(await page.locator('[data-fold="night"]').count(), 'night block missing on the next day');
       assert.equal(await page.locator('.t[data-id="lib"]').count(), 1);
+      await day('2024-08-21');
+    });
+
+    await check(`[${tag}] join buttons: user tournaments 1 000, tennis priced by level on future days`, async () => {
+      const h = page.locator('[data-fold="custom"]');
+      if (await h.getAttribute('aria-expanded') === 'false') await h.click();
+      const box1 = h.locator('xpath=following-sibling::div[1]');
+      assert.ok(await box1.isVisible(), 'custom block did not open');
+      assert.equal(await h.locator('.n').innerText(), '10');
+      assert.equal(await box1.locator('.t').count(), 5, 'first five only');
+      assert.match(await page.locator('[data-fold="custom"] + .cards .act.join').first().textContent(), /Вступить[\s\S]*1\s000/);
+      await box1.locator('[data-page]').click();
+      assert.equal(await page.locator('[data-fold="custom"] + .cards .t').count(), 10);
+      await page.locator('[data-fold="custom"] + .cards [data-page]').click();
+      if (await page.locator('[data-fold="custom"]').getAttribute('aria-expanded') === 'true') await page.locator('[data-fold="custom"]').click();
+      await day('2024-08-22');
+      const t = page.locator('.t[data-id^="atp-"], .t[data-id^="wta-"]').first();
+      assert.match(await t.locator('.act.join').textContent(), /Вступить[\s\S]*\d+к/);
+      await day('2024-08-21');
+    });
+
+    await check(`[${tag}] calendar animation only today; past days have no night block; selected day glows`, async () => {
+      assert.equal(await page.locator('.day.alert').getAttribute('data-day'), '2024-08-21');
+      assert.match(await page.locator('#pad').evaluate(e => getComputedStyle(e).animationName), /padGlow|none/);
+      await day('2024-08-20');
+      assert.equal(await page.locator('[data-fold="night"]').count(), 0);
       await day('2024-08-21');
     });
 
