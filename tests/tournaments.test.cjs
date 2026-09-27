@@ -329,6 +329,25 @@ async function check(name, fn) {
       await page.locator('.t[data-id="g5"] [data-rail]').click(); await page.waitForTimeout(400);
     });
 
+    await check(`[${tag}] opening a card folds its chip; the big button says "Сделать прогноз"; Alliance CL follows its rules`, async () => {
+      const acl = page.locator('.t[data-id="acl"]');
+      await acl.locator('[data-rail]').click(); await page.waitForTimeout(600);
+      assert.ok(await acl.locator('.m-team .crest-img.team').count() > 0, 'Alliance CL must use BofP team avatars');
+      const w = await acl.locator('.t-act').evaluate(e => e.getBoundingClientRect().width);
+      assert.ok(w < 2, `chip still visible (${w}px)`);
+      assert.match(await acl.locator('.me-cta .act').textContent(), /Сделать прогноз/);
+      assert.equal(await acl.locator('.tl-node.auction').count(), 1, 'qualification auction missing on the timeline');
+      await acl.locator('.tl-node.auction').scrollIntoViewIfNeeded();
+      await page.locator('.scroll').evaluate(n => (n.scrollTop += 0));
+      await acl.locator('.tl-node.auction').click();
+      assert.match(await page.locator('.t[data-id="acl"] .tl-card').innerText(), /аукцион/i);
+      await page.locator('.t[data-id="acl"] [data-rail]').click(); await page.waitForTimeout(500);
+      assert.ok(await page.locator('.t[data-id="acl"] .t-act').evaluate(e => e.getBoundingClientRect().width) > 60, 'chip must come back when folded');
+      const series = await page.locator('[data-fold="series"] + .cards > .t').evaluateAll(t => t.map(x => x.dataset.action || ''));
+      const firstPlain = series.findIndex(a => !a);
+      assert.ok(series.slice(firstPlain).every(a => !a), 'tournaments waiting for a pick must be on top');
+    });
+
     await check(`[${tag}] night block is also on the next day; it names the auction`, async () => {
       assert.match(await page.locator('[data-fold="night"]').innerText(), /аукцион/i);
       for (const d of ['2024-08-22', '2024-08-20']) { await day(d); assert.equal(await page.locator('[data-fold="night"]').count(), 0, `night block on ${d}`); }
@@ -348,8 +367,9 @@ async function check(name, fn) {
       await page.locator('[data-fold="custom"] + .cards [data-page]').click();
       if (await page.locator('[data-fold="custom"]').getAttribute('aria-expanded') === 'true') await page.locator('[data-fold="custom"]').click();
       await day('2024-08-22');
-      const t = page.locator('.t[data-id^="atp-"], .t[data-id^="wta-"]').first();
+      const t = page.locator('.t[data-id^="atp-"]').first();
       assert.match(await t.locator('.act.join').textContent(), /Вступить[\s\S]*\d+к/);
+      assert.equal(await page.locator('.t[data-id^="wta-"] .act.join').count(), 0, 'WTA cannot be joined');
       await day('2024-08-21');
     });
 

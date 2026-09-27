@@ -119,6 +119,13 @@ function league(s) {
   st.push({ n: 'Последний тур', f: s.end, t: s.end, ms: ['Чемпион, еврокубки, вылет'], final: true });
   return st.sort((a, b) => a.f.localeCompare(b.f) || !!a.final - !!b.final);
 }
+const ACL_STAGES = [
+  { n: 'Аукцион квалификации', f: '2024-08-13', t: '2024-08-13', ms: ['4 места в квалификации разыгрываются на аукционе'], auction: true },
+  { n: 'Квалификация', f: '2024-08-20', t: '2024-08-21', ms: ['3 победителя Лиги 1 Big5+ из альянсов 3–5 мест рейтинга', 'Команда со 2-го места Лиги 1 Big5+ альянса №1', '4 победителя аукциона', 'Один матч, 4 победителя проходят в групповой этап'] },
+  { n: 'Групповой этап', f: '2024-08-27', t: '2024-09-24', ms: ['Победители прошлых Alliance CL и Alliance EL', '2 победителя Лиги 1 Big5+ из альянсов 1–2 мест', '4 победителя квалификации', 'Каждая команда играет 3 матча', 'Если победитель CL или EL — ещё и чемпион Big5+, его слот Big5+ уходит второму месту'] },
+  { n: '1/2 финала', f: '2024-10-08', t: '2024-10-08', ms: ['Плей-офф: один матч'] },
+  { n: 'Финал', f: '2024-10-22', t: '2024-10-22', ms: ['Один матч'], final: true },
+];
 const BCL_STAGES = [
   { n: 'Квалификация, 1-й раунд', f: '2024-07-09', t: '2024-07-17', ms: ['144 команды стартуют с первого раунда', 'Проигравшие → 2-й квал. раунд Лиги конференций'] },
   { n: 'Квалификация, 2-й раунд', f: '2024-07-23', t: '2024-07-31', ms: ['Проигравшие → 3-й квал. раунд Лиги конференций'] },
@@ -203,8 +210,8 @@ const BOFP = [
     days: ['2024-08-20', '2024-08-21', '2024-08-27', '2024-08-28'], pool: 'bofp', size: 16, mine: { team: ME.team, days: ['2024-08-21'] } },
   { code: 'bel', name: 'BofP Europa League', short: 'BofP EL', kind: 'BofP', icon: A + 'bofp-europa-league-logo.webp', iconLogo: true, bg: A + 'bofp-europa-league-calendar.webp', stages: UEL_STAGES, days: ['2024-08-22'], pool: 'bofp', size: 12 },
   { code: 'becl', name: 'BofP Conference League', short: 'BofP ECL', kind: 'BofP', icon: A + 'bofp-conference-league-logo.webp', iconLogo: true, bg: A + 'bofp-conference-league-calendar.webp', stages: UECL_STAGES, days: ['2024-08-22'], pool: 'bofp', size: 12 },
-  { code: 'acl', name: 'Alliance Champions League', short: 'Alliance CL', kind: 'Альянсы', icon: A + 'alliance-champions-league-avatar.webp', bg: A + 'alliance-champions-league-calendar.webp', stages: UCL_STAGES,
-    days: ['2024-08-20', '2024-08-21', '2024-08-27', '2024-08-28'], pool: 'alliance', size: 12, mine: { team: ME.alliance, days: ['2024-08-21', '2024-08-28'] } },
+  { code: 'acl', name: 'Alliance Champions League', short: 'Alliance CL', kind: 'Альянсы', icon: A + 'alliance-champions-league-avatar.webp', bg: A + 'alliance-champions-league-calendar.webp', stages: ACL_STAGES,
+    days: ['2024-08-20', '2024-08-21', '2024-08-27', '2024-08-28'], pool: 'bofp', size: 4, rounds: { '2024-08-20': 'Квалификация', '2024-08-21': 'Квалификация', '2024-08-27': 'Группы, 1-й тур', '2024-08-28': 'Группы, 1-й тур' }, mine: { team: ME.alliance, days: ['2024-08-21', '2024-08-28'] } },
   { code: 'ael', name: 'Alliance Europa League', short: 'Alliance EL', kind: 'Альянсы', icon: A + 'alliance-europe-league-avatar.webp', bg: A + 'alliance-europe-league-calendar.webp', stages: UEL_STAGES, days: ['2024-08-22'], pool: 'alliance', size: 10 },
   { code: 'acol', name: 'Alliance Conference League', short: 'Alliance ECL', kind: 'Альянсы', icon: A + 'alliance-conference-league-avatar.webp', bg: A + 'alliance-conference-league-calendar.webp', stages: UECL_STAGES, days: ['2024-08-22'], pool: 'alliance', size: 10 },
   { code: 'rnd', name: 'Random Cup', short: 'Random Cup', kind: 'Кубок', iconSvg: I.dice, bgTint: 'linear-gradient(120deg,#3b2a6b,#8a3d7a 55%,#d8914a)', stages: RANDOM_STAGES,
@@ -347,7 +354,7 @@ function tennisCards(day) {
     const stages = Object.entries(t.days).sort().map(([d, rn], i, arr) => ({ n: rn, f: d, t: d, ms: [], final: i === arr.length - 1 && rn === 'Финал' }));
     if (!stages.length || stages[0].f > t.start) stages.unshift({ n: 'Старт турнира', f: t.start, t: t.start, ms: [`Сетка на ${t.drawSize || '—'} участников`, t.surface || ''].filter(Boolean) });
     if (!stages.some(s => s.final)) stages.push({ n: 'Финал', f: t.end, t: t.end, ms: [], final: true });
-    out.push({ join: day > TODAY ? TENNIS_PRICE[t.category] || 20000 : null, id: t.id, type: 'tennis', sport: 'tennis', name: `${t.tour} ${t.name}`, short: `${t.tour} ${t.nameRu || t.name}`, sub: `${t.category} · ${round}`,
+    out.push({ join: day > TODAY && t.tour === 'ATP' ? TENNIS_PRICE[t.category] || 20000 : null, id: t.id, type: 'tennis', sport: 'tennis', name: `${t.tour} ${t.name}`, short: `${t.tour} ${t.nameRu || t.name}`, sub: `${t.category} · ${round}`,
       iconSvg: I.tennis, bgTint: t.tour === 'WTA' ? 'linear-gradient(120deg,#3b1450,#9a4fc0)' : 'linear-gradient(120deg,#0b2a5b,#2a73cf)', stages, matches, mineTeam: null });
   }
   return out;
@@ -397,7 +404,7 @@ function buildTournaments(day) {
     if (!t.days.includes(day)) continue;
     const mineTeam = t.mine && t.mine.days.includes(day) ? t.mine.team : null;
     let teams, round, times;
-    if (t.pool === 'bofp') { teams = pick(BOFP_TEAMS.map(x => x.name), t.code, t.size, t.mine ? t.mine.team : null); round = t.round || 'Плей-офф'; times = ['19:45', '22:00']; }
+    if (t.pool === 'bofp') { teams = pick(BOFP_TEAMS.map(x => x.name), t.rounds ? t.code + day : t.code, t.size, mineTeam || (t.rounds ? null : t.mine && t.mine.team)); round = (t.rounds && t.rounds[day]) || t.round || 'Плей-офф'; times = ['19:45', '22:00']; }
     else if (t.pool === 'random') { teams = teamPool('rnd', 16, ME.team); round = day === '2024-08-18' ? '1/16' : '1/8'; times = ['16:00', '18:30', '21:00']; }
     else { teams = ALLIANCE_TEAMS.slice(0, t.size); round = 'Плей-офф'; times = ['19:45', '22:00']; }
     out.series.push({ id: t.code, type: 'bofp', sport: 'foot', name: t.name, short: t.short, sub: `${t.kind} · ${round}`, icon: t.icon, iconLogo: t.iconLogo, iconSvg: t.iconSvg,
@@ -409,7 +416,8 @@ function buildTournaments(day) {
   for (const code of NIGHT_REAL) if (nb[code] && !auctioned.has(code)) out.night.push(realCard(code, nb[code], day, true));
   if (day === TODAY) out.night.push(...auctions.filter(c => c.night));
   out.custom = customCards(day);
-  const order = (a, b) => (b.sport === 'foot') - (a.sport === 'foot') || !!b.mineTeam - !!a.mineTeam;
+  const needs = c => { const k = (c.auction || statusFor(c.id, day) || {}).kind; return c.mineTeam && (k === 'predict' || k === 'squad') ? 1 : 0; };
+  const order = (a, b) => (b.sport === 'foot') - (a.sport === 'foot') || needs(b) - needs(a) || !!b.mineTeam - !!a.mineTeam;
   for (const k in out) out[k] = out[k].filter(c => state.sports.has(c.sport)).sort(order);
   return out;
 }
@@ -440,7 +448,7 @@ function actionChip(t, day) {
   if (!st) return '';
   if (st.kind === 'predict') return `<button class="act predict" data-act="predict" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.game}Прогноз</span><span class="tm num" data-left></span></button>`;
   if (st.kind === 'squad') return `<button class="act squad" data-act="squad" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.gavel}Вне состава</span><span class="tm num" data-left></span></button>`;
-  if (st.kind === 'picked') return `<span class="act picked">${I.check}<span class="l">Прогноз сделан</span></span>`;
+  if (st.kind === 'picked') return `<span class="act picked"><span class="l">Прогноз сделан</span></span>`;
   return '';
 }
 
@@ -515,7 +523,7 @@ function matchRow(m, day, mineTeam, t, playersMode) {
   const body = `${time}<div class="m-teams">${team(m.home, 0)}${team(m.away, 1)}</div>${score}`;
   if (!me) return `<div class="m ${ms.s}">${body}</div>`;
   let cta = '';
-  if (ms.s === 'sched' && st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${at(mDate(m, day), m.kickoff)}"><span class="l">${I.game}Прогноз</span><span class="tm num" data-left></span></button>`;
+  if (ms.s === 'sched' && st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${at(mDate(m, day), m.kickoff)}"><span class="l">${I.game}Сделать прогноз</span><span class="tm num" data-left></span></button>`;
   else if (ms.s === 'sched' && st.kind === 'squad') cta = `<button class="act squad" data-act="squad" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.gavel}Вне состава</span><span class="tm num" data-left></span></button>`;
   return `<div class="m me ${ms.s}"><span class="ring" aria-hidden="true"></span>${body}${cta ? `<div class="me-cta">${cta}</div>` : ''}</div>`;
 }
