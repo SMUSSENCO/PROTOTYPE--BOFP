@@ -175,6 +175,7 @@ async function check(name, fn) {
       assert.match(mask, /linear-gradient/, 'outline does not fade to the right');
       await ucl.locator('.sw').click();
       assert.match(await page.locator('.t[data-id="ucl"] .sw-note').innerText(), /Результаты игроков BofP/);
+      assert.equal(await page.locator('.t[data-id="ucl"] .tl-fill').evaluate(e => getComputedStyle(e).animationName), 'none', 'switch must not replay the timeline');
       const liveOnly = await page.locator('.t[data-id="ucl"] .m-team .bf:not(.card)').evaluateAll(b => b.every(x => x.closest('.m').classList.contains('live')));
       assert.ok(liveOnly, 'buffs outside live matches');
       await page.screenshot({ path: path.join(SHOTS, `${tag}-expanded.png`) });
@@ -191,8 +192,10 @@ async function check(name, fn) {
       await page.waitForTimeout(200);
       assert.ok(await hint.evaluate(e => e.classList.contains('show')), 'hint not shown');
       assert.ok(await hint.locator('svg').count() >= 2, 'hint icons missing');
-      const hb = await box('#hintDn'), tb = await box('.tabbar');
-      assert.ok(hb.y + hb.height <= tb.y, 'hint must sit above the tab bar');
+      const hb = await box('#hintDn .key'), tb = await box('.tabbar'), mound = await box('#hintDn');
+      assert.ok(hb.y + hb.height <= tb.y + 2, 'hint key must sit above the tab bar');
+      assert.ok(mound.y + mound.height > tb.y, 'the mound must melt into the tab bar');
+      assert.ok(Math.abs(hb.x + hb.width / 2 - vp.width / 2) < 2, 'hint not centred');
       await page.screenshot({ path: path.join(SHOTS, `${tag}-today.png`) });
       await hint.click(); await page.waitForTimeout(900);
       const first = page.locator('.t[data-action]').last();
@@ -251,11 +254,11 @@ async function check(name, fn) {
       await page.locator('#catalogBtn').click(); await page.waitForTimeout(500);
       const d = await box('#drawer');
       assert.ok(d.x >= -1 && d.x < 2, `drawer x=${d.x}`);
-      assert.match(await page.locator('#drawer').innerText(), /BFP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
+      assert.match(await page.locator('#drawer').innerText(), /BofP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
       const body = page.locator('#drawer .dr-body');
-      const bfp = page.locator('#drawer [data-dnode]', { hasText: 'BFP Еврокубки' });
+      const bfp = page.locator('#drawer [data-dnode]', { hasText: 'BofP Еврокубки' });
       await bfp.click();
-      assert.match(await bfp.locator('xpath=following-sibling::div[1]').innerText(), /BFP Champions League/);
+      assert.match(await bfp.locator('xpath=following-sibling::div[1]').innerText(), /BofP Champions League[\s\S]*BofP Super Cup/);
       const green = page.locator('#drawer [data-dnode]', { hasText: /^Green$/ });
       await green.click();
       const gk = green.locator('xpath=following-sibling::div[1]');
@@ -274,6 +277,7 @@ async function check(name, fn) {
       assert.match(await page.locator('#drawer').innerText(), /Группа A1/);
       await page.locator('#drawer [data-drsport="tennis"]').click();
       assert.match(await page.locator('#drawer').innerText(), /ATP Masters 1000[\s\S]*WTA 125/);
+      assert.doesNotMatch(await page.locator('#drawer').innerText(), /ITF/);
       await page.locator('#drawer [data-dnode]', { hasText: 'ATP Masters 1000' }).click();
       assert.match(await page.locator('#drawer').innerText(), /Индиан-Уэллс[\s\S]*Цинциннати/);
       await page.screenshot({ path: path.join(SHOTS, `${tag}-drawer.png`) });
@@ -327,9 +331,7 @@ async function check(name, fn) {
 
     await check(`[${tag}] night block is also on the next day; it names the auction`, async () => {
       assert.match(await page.locator('[data-fold="night"]').innerText(), /аукцион/i);
-      await day('2024-08-22');
-      assert.ok(await page.locator('[data-fold="night"]').count(), 'night block missing on the next day');
-      assert.equal(await page.locator('.t[data-id="lib"]').count(), 1);
+      for (const d of ['2024-08-22', '2024-08-20']) { await day(d); assert.equal(await page.locator('[data-fold="night"]').count(), 0, `night block on ${d}`); }
       await day('2024-08-21');
     });
 
@@ -353,7 +355,7 @@ async function check(name, fn) {
 
     await check(`[${tag}] calendar animation only today; past days have no night block; selected day glows`, async () => {
       assert.equal(await page.locator('.day.alert').getAttribute('data-day'), '2024-08-21');
-      assert.match(await page.locator('#pad').evaluate(e => getComputedStyle(e).animationName), /padGlow|none/);
+      assert.equal(await page.locator('#pad').evaluate(e => getComputedStyle(e).outlineStyle), 'none', 'tile must be plain glass');
       await day('2024-08-20');
       assert.equal(await page.locator('[data-fold="night"]').count(), 0);
       await day('2024-08-21');

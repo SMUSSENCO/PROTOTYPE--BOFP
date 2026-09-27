@@ -24,6 +24,7 @@
   --scrim:rgba(0,0,0,.5);
   --band:rgba(255,255,255,.05);
   --tint:rgba(255,210,63,.035);
+  --mound-a:rgba(58,56,48,.92); --mound-b:rgba(36,35,30,.9);
   --radius:20px; --gutter:16px;
   --font:'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --ease:cubic-bezier(.22,.8,.26,1);
@@ -42,7 +43,9 @@
     --pastel-y:#FBE9A6; --pastel-y-ink:#3A2F05; --pastel-r:#F9D6CE; --pastel-r-ink:#7A2416;
     --live:#E5402F; --ok:#2E8B4A;
     --node:#FFFFFF; --tl:#17160F; --tl-track:rgba(20,18,10,.12);
-    --art-opacity:.35; --art-bright:1.05; --veil:rgba(255,255,255,.55);
+    --mound-a:rgba(255,255,255,.96); --mound-b:rgba(250,248,242,.92);
+    --mound-a:rgba(255,255,255,.96); --mound-b:rgba(250,248,242,.92);
+  --art-opacity:.35; --art-bright:1.05; --veil:rgba(255,255,255,.55);
     --btn-a:#FFE27A; --btn-b:#FFC21A; --btn-ink:#2A2000;
     --knob:#FFFFFF; --knob-ink:#17160F; --scrim:rgba(20,18,10,.3); --band:rgba(20,18,10,.04);
   }
@@ -115,12 +118,16 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .day[aria-selected="true"],.day[aria-selected="true"] .dd{color:var(--text)}
 .day.today[aria-selected="true"] .dd{color:var(--accent-text)}
 .day[aria-selected="true"] .frame{animation:none;filter:drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 8px var(--glow))}
-.pad{outline:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:-1.5px}
+
 .day.past .mine-dot{position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--glow)}
 .pad{position:absolute;top:12px;left:0;width:60px;height:62px;border-radius:16px;z-index:0;pointer-events:none;
   background:linear-gradient(150deg,var(--fill-3),var(--fill-1));box-shadow:inset 0 1px 0 var(--glass-edge),inset 0 0 0 1px var(--line),0 8px 18px rgba(0,0,0,.2);
-  transition:transform .42s cubic-bezier(.3,1.35,.45,1);animation:padGlow 2.4s ease-in-out infinite}
-@keyframes padGlow{0%,100%{box-shadow:inset 0 1px 0 var(--glass-edge),0 0 6px var(--glow)}50%{box-shadow:inset 0 1px 0 var(--glass-edge),0 0 14px var(--glow)}}
+  transition:transform .42s cubic-bezier(.3,1.35,.45,1);
+  /* liquid glass: bright lip on top, refracted rim, darker lower edge */
+  background:radial-gradient(120% 70% at 50% -10%,rgba(255,255,255,.22),transparent 60%),linear-gradient(180deg,var(--fill-3),var(--fill-1));
+  -webkit-backdrop-filter:blur(10px) saturate(180%) brightness(1.1);backdrop-filter:blur(10px) saturate(180%) brightness(1.1);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.45),inset 0 -1px 1px rgba(0,0,0,.35),inset 1px 0 1px rgba(255,255,255,.12),inset -1px 0 1px rgba(255,255,255,.12),
+    inset 0 0 0 1px rgba(255,255,255,.06),inset 0 6px 10px -6px rgba(255,255,255,.25),0 6px 14px rgba(0,0,0,.28)}
 
 /* every yellow line breathes a soft glow */
 @keyframes breathe{0%,100%{opacity:.9;filter:drop-shadow(0 0 1px var(--glow))}50%{opacity:1;filter:drop-shadow(0 0 2px var(--glow))}}
@@ -162,7 +169,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .cards{display:flex;flex-direction:column;gap:8px;padding-left:12px}
 .t{border-radius:var(--radius) 0 0 var(--radius);border:1px solid var(--line-2);border-right:0;overflow:hidden;scroll-margin:120px 0 140px}
 .t.mine{border-color:transparent}
-.t.mine::before{opacity:1;background:linear-gradient(90deg,var(--tint),transparent 85%),radial-gradient(90px 70px at 0 0,var(--glass-edge),transparent 70%)}
+.t.mine::before{opacity:1;background:linear-gradient(90deg,var(--tint),transparent 42%),radial-gradient(90px 70px at 0 0,var(--glass-edge),transparent 70%)}
 .t.alarm{animation:alarm 1.6s ease-in-out infinite}
 @keyframes alarm{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 2px var(--glow),0 0 8px var(--glow)}}
 .t.plain{background:none;border-color:var(--line);box-shadow:none}
@@ -174,7 +181,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .t.flash{animation:flash .9s ease-out 2}
 @keyframes flash{50%{box-shadow:0 0 0 2px var(--accent)}}
 .t-art{position:absolute;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
-  -webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.5) 26%,transparent 55%);mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.5) 26%,transparent 55%)}
+  -webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.5) 13%,transparent 28%);mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.5) 13%,transparent 28%)}
 .t-art > *{position:absolute;inset:-18px;width:calc(100% + 36px);height:calc(100% + 36px);object-fit:cover;filter:blur(9px) saturate(1.5) brightness(var(--art-bright));opacity:var(--art-opacity)}
 .t-art svg{height:120px}
 .t::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:radial-gradient(90px 70px at 0 0,var(--glass-edge),transparent 70%);opacity:.6}
@@ -235,6 +242,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 
 .t-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease)}
 .t.open .t-body{grid-template-rows:1fr}
+.t.still .tl-fill,.t.still .tl-here{animation:none}
+.t.still .t-body{transition:none}
 .t-body > .in{overflow:hidden;min-height:0}
 .t.open .t-body > .in{border-top:1px solid var(--line);background:var(--veil)}
 
@@ -331,17 +340,23 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .lg-b > div{overflow:hidden;min-height:0}
 
 /* ---------- "action below" hint above the tab bar ---------- */
-.hint-dn{position:fixed;left:50%;transform:translate(-50%,10px);bottom:calc(env(safe-area-inset-bottom,0px) + 80px);z-index:11;opacity:0;pointer-events:none;transition:opacity .25s,transform .3s var(--ease);
-  display:flex;flex-direction:column;align-items:center;gap:0;height:auto;padding:2px 18px 6px;border-radius:22px;background:linear-gradient(180deg,var(--btn-a),var(--btn-b));color:var(--btn-ink);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px var(--glow),0 0 10px var(--glow),0 6px 14px rgba(0,0,0,.3)}
-.hint-dn.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;animation:hintGlow 1.8s ease-in-out infinite}
-.hint-dn svg{width:22px;height:22px;flex:none}
-.hint-dn .arr svg{width:18px;height:18px}
-.hint-dn .ics{display:flex;align-items:center;gap:10px}
+.hint-dn{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:11;width:160px;height:64px;transform:translate(-50%,14px);opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .3s var(--ease);display:grid;place-items:end center;padding-bottom:10px}
+.hint-dn.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.hint-dn::before{ /* the mound: same glass as the tab bar, melting into it */
+  content:"";position:absolute;inset:auto 0 0 0;height:46px;z-index:-1;
+  background:linear-gradient(180deg,var(--mound-a),var(--mound-b));-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);
+  clip-path:path('M0 46 C 26 46 30 12 52 8 C 60 6.5 100 6.5 108 8 C 130 12 134 46 160 46 Z')}
+.hint-dn .key{display:flex;flex-direction:column;align-items:center;justify-content:center;width:58px;height:50px;border-radius:16px;color:var(--btn-ink);
+  background:linear-gradient(180deg,var(--btn-a),var(--btn-b));box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -2px 0 rgba(120,80,0,.25),0 3px 0 rgba(120,80,0,.35),0 6px 12px rgba(0,0,0,.3)}
+.hint-dn.show .key{animation:hintGlow 1.8s ease-in-out infinite}
+.hint-dn svg{width:20px;height:20px;flex:none}
+.hint-dn .arr{line-height:0;margin-bottom:-2px}
+.hint-dn .arr svg{width:16px;height:16px;animation:bob 1.1s ease-in-out infinite}
+.hint-dn .ics{display:flex;align-items:center;gap:6px}
 .hint-dn .gv{display:grid;animation:tap 1.2s var(--ease) infinite;transform-origin:70% 90%}
-.hint-dn .arr{animation:bob 1.1s ease-in-out infinite}
-@keyframes bob{50%{transform:translateY(3px)}}
-@keyframes hintGlow{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 2px var(--glow),0 0 16px var(--glow),0 6px 14px rgba(0,0,0,.3)}}
+@keyframes bob{50%{transform:translateY(2px)}}
+@keyframes hintGlow{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -2px 0 rgba(120,80,0,.25),0 3px 0 rgba(120,80,0,.35),0 0 12px var(--glow)}}
 .hint-glow{position:fixed;left:0;right:0;bottom:0;height:120px;z-index:8;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(70% 90% at 50% 100%,var(--glow),transparent 75%)}
 .hint-glow.show{animation:glowPulse 1.8s ease-in-out infinite}
 @keyframes glowPulse{50%{opacity:.6}}

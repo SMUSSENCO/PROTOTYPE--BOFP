@@ -405,9 +405,9 @@ function buildTournaments(day) {
   }
   if (day >= BIG5_START && day <= BIG5_END) for (const b of BIG5) out.series.push(big5Card(b, day, big5Tour(day), false));
   out.series.push(...tennisCards(day));
-  const nb = day < TODAY ? {} : realByComp(day, true);
+  const nb = day !== TODAY ? {} : realByComp(day, true);
   for (const code of NIGHT_REAL) if (nb[code] && !auctioned.has(code)) out.night.push(realCard(code, nb[code], day, true));
-  if (day >= TODAY) out.night.push(...auctions.filter(c => c.night));
+  if (day === TODAY) out.night.push(...auctions.filter(c => c.night));
   out.custom = customCards(day);
   const order = (a, b) => (b.sport === 'foot') - (a.sport === 'foot') || !!b.mineTeam - !!a.mineTeam;
   for (const k in out) out[k] = out[k].filter(c => state.sports.has(c.sport)).sort(order);
@@ -667,7 +667,7 @@ function updateHint() {
   if (btn.dataset.k !== key) {
     btn.dataset.k = key;
     btn.setAttribute('aria-label', kinds.has('squad') && kinds.has('predict') ? 'Ниже: прогноз и аукцион' : kinds.has('squad') ? 'Ниже: аукцион, попади в состав' : 'Ниже: нужен прогноз');
-    btn.innerHTML = `<span class="arr">${I.chevron}</span><span class="ics">${kinds.has('predict') ? I.game : ''}${kinds.has('squad') ? `<span class="gv">${I.gavel}</span>` : ''}</span>`;
+    btn.innerHTML = `<span class="key"><span class="arr">${I.chevron}</span><span class="ics">${kinds.has('predict') ? I.game : ''}${kinds.has('squad') ? `<span class="gv">${I.gavel}</span>` : ''}</span></span>`;
   }
 }
 
@@ -687,7 +687,7 @@ function rerenderCard(id, animate) {
     old.classList.remove('open');
     old.querySelector('[data-rail]').setAttribute('aria-expanded', 'false');
     setTimeout(() => { const cur = document.querySelector(`.t[data-id="${id}"]`); if (cur && !state.open.has(id)) cur.replaceWith(fresh); tick(); updateHint(); }, 360);
-  } else old.replaceWith(fresh);
+  } else { if (old.classList.contains('open')) fresh.classList.add('still'); old.replaceWith(fresh); }
   tick();
   setTimeout(updateHint, 400);
 }
@@ -702,7 +702,7 @@ const CATALOG = {
       { t: 'Random Cup', icon: I.dice },
     ] },
     { g: 'Еврокубки', items: [
-      { t: 'BFP Еврокубки', icon: I.crown, kids: ['BFP Champions League', 'BFP Europa League', 'BFP Conference League', 'BFP Super Cup'] },
+      { t: 'BofP Еврокубки', icon: I.crown, kids: ['BofP Champions League', 'BofP Europa League', 'BofP Conference League', 'BofP Super Cup'] },
       { t: 'Альянс Еврокубки', icon: I.shield, kids: ['Alliance Champions League', 'Alliance Europa League', 'Alliance Conference League'] },
       { t: 'УЕФА Еврокубки', flag: 'eu', kids: ['UEFA Champions League', 'UEFA Europa League', 'UEFA Conference League', 'UEFA Super Cup'] },
     ] },
@@ -729,21 +729,19 @@ const CATALOG = {
     ] },
   ],
   tennis: [
-    { g: 'Мужчины · ATP / ITF', items: [
+    { g: 'Мужчины · ATP', items: [
       { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open · Мельбурн', 'Roland Garros · Париж', 'Wimbledon · Лондон', 'US Open · Нью-Йорк'] },
       { t: 'ATP Masters 1000', icon: I.tennis, kids: ['Индиан-Уэллс', 'Майами', 'Монте-Карло', 'Мадрид', 'Рим', 'Канада', 'Цинциннати', 'Шанхай', 'Париж'] },
       { t: 'ATP 500', icon: I.tennis, kids: ['Роттердам', 'Рио-де-Жанейро', 'Дубай', 'Акапулько', 'Барселона', 'Мюнхен', 'Галле', 'Лондон (Queen’s)', 'Гамбург', 'Вашингтон', 'Пекин', 'Токио', 'Базель', 'Вена'] },
       { t: 'ATP 250', icon: I.tennis, kids: ['Брисбен', 'Гонконг', 'Окленд', 'Аделаида', 'Монпелье', 'Даллас', 'Марсель', 'Дели', 'Доха', 'Буэнос-Айрес', 'Лос-Кабос', 'Сантьяго', 'Хьюстон', 'Марракеш', 'Бухарест', 'Женева', 'Лион', 'Штутгарт', 'Хертогенбос', 'Мальорка', 'Истборн', 'Бастад', 'Гштаад', 'Умаг', 'Атланта', 'Кицбюэль', 'Уинстон-Сейлем', 'Чэнду', 'Ханчжоу', 'Алматы', 'Антверпен', 'Стокгольм', 'Белград', 'Мец'] },
       { t: 'ATP Challenger', icon: I.tennis, kids: ['Challenger 175', 'Challenger 125', 'Challenger 100', 'Challenger 75', 'Challenger 50'] },
-      { t: 'ITF Men', sm: 'World Tennis Tour', icon: I.tennis },
     ] },
-    { g: 'Женщины · WTA / ITF', items: [
+    { g: 'Женщины · WTA', items: [
       { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open · Мельбурн', 'Roland Garros · Париж', 'Wimbledon · Лондон', 'US Open · Нью-Йорк'] },
       { t: 'WTA 1000', icon: I.tennis, kids: ['Доха', 'Дубай', 'Индиан-Уэллс', 'Майами', 'Мадрид', 'Рим', 'Торонто', 'Цинциннати', 'Пекин', 'Ухань'] },
       { t: 'WTA 500', icon: I.tennis, kids: ['Брисбен', 'Аделаида', 'Абу-Даби', 'Сан-Диего', 'Чарльстон', 'Штутгарт', 'Берлин', 'Истборн', 'Вашингтон', 'Монтеррей', 'Сеул', 'Токио', 'Нинбо'] },
       { t: 'WTA 250', icon: I.tennis, kids: ['Окленд', 'Хобарт', 'Хуа Хин', 'Линц', 'Клуж-Напока', 'Мерида', 'Остин', 'Боготá', 'Руан', 'Страсбург', 'Рабат', 'Хертогенбос', 'Ноттингем', 'Бирмингем', 'Бад-Хомбург', 'Палермо', 'Прага', 'Кливленд', 'Гвадалахара', 'Монастир', 'Осака', 'Гонконг'] },
       { t: 'WTA 125', icon: I.tennis, kids: ['Барранкилья', 'Париж', 'Флорианополис', 'Лимож', 'Мумбаи', 'Анже'] },
-      { t: 'ITF Women', sm: 'World Tennis Tour', icon: I.tennis },
     ] },
   ],
 };
