@@ -676,7 +676,7 @@ function rerenderCard(id, animate) {
 }
 
 /* ================= catalog drawer ================= */
-const big5Tree = c => ({ t: c, img: `${A}${c.toLowerCase()}-big-5-logo.webp`, kids: ['West', 'East'].map(s => ({ t: s, kids: ['BIG 5 Cup'] })) });
+const big5Tree = c => ({ t: c, img: `${A}${c.toLowerCase()}-big-5-logo.webp`, kids: ['West', 'East'].map(s => ({ t: s, kids: ['BIG 5 · Лига 1', 'BIG 5 · Лига 2', 'BIG 5 · Лига 3', 'BIG 5 Cup'] })) });
 const groups = (L, n) => Array.from({ length: n }, (_, i) => `Группа ${L}${i + 1}`);
 const CATALOG = {
   foot: [
@@ -685,28 +685,28 @@ const CATALOG = {
       { t: 'Random Cup', icon: I.dice },
     ] },
     { g: 'Еврокубки', items: [
-      { t: 'BFP Еврокубки', icon: I.crown, kids: ['BFP Champions League', 'BFP Europa League', 'BFP Conference League'] },
+      { t: 'BFP Еврокубки', icon: I.crown, kids: ['BFP Champions League', 'BFP Europa League', 'BFP Conference League', 'BFP Super Cup'] },
       { t: 'Альянс Еврокубки', icon: I.shield, kids: ['Alliance Champions League', 'Alliance Europa League', 'Alliance Conference League'] },
-      { t: 'УЕФА Еврокубки', flag: 'eu', kids: ['UEFA Champions League', 'UEFA Europa League', 'UEFA Conference League'] },
+      { t: 'УЕФА Еврокубки', flag: 'eu', kids: ['UEFA Champions League', 'UEFA Europa League', 'UEFA Conference League', 'UEFA Super Cup'] },
     ] },
     { g: 'Конференции · страновые лиги и кубки', items: [
-      { t: 'Англия', flag: 'gb-eng', kids: ['АПЛ', 'Чемпионшип', 'Кубок Англии', 'Кубок Лиги', 'Суперкубок'] },
-      { t: 'Испания', flag: 'es', kids: ['Ла Лига', 'Сегунда', 'Кубок Короля', 'Суперкубок'] },
-      { t: 'Германия', flag: 'de', kids: ['Бундеслига', '2. Бундеслига', 'Кубок Германии'] },
-      { t: 'Италия', flag: 'it', kids: ['Серия А', 'Серия B', 'Кубок Италии'] },
-      { t: 'Франция', flag: 'fr', kids: ['Лига 1', 'Лига 2', 'Кубок Франции'] },
+      { t: 'Англия', flag: 'gb-eng', kids: ['АПЛ', 'Кубок Англии', 'Кубок Лиги', 'Суперкубок'] },
+      { t: 'Испания', flag: 'es', kids: ['Ла Лига', 'Кубок Короля', 'Суперкубок'] },
+      { t: 'Германия', flag: 'de', kids: ['Бундеслига', 'Кубок Германии'] },
+      { t: 'Италия', flag: 'it', kids: ['Серия А', 'Кубок Италии'] },
+      { t: 'Франция', flag: 'fr', kids: ['Лига 1', 'Кубок Франции'] },
       { t: 'Турция', flag: 'tr', kids: ['Суперлига', 'Кубок Турции'] },
       { t: 'Португалия', flag: 'pt', kids: ['Примейра', 'Кубок Португалии'] },
       { t: 'Бельгия', flag: 'be', kids: ['Про-лига', 'Кубок Бельгии'] },
       { t: 'Нидерланды', flag: 'nl', kids: ['Эредивизи', 'Кубок Нидерландов'] },
     ] },
     { g: 'Сборные и международные', items: [
-      { t: 'FIFA', icon: I.globe, kids: ['Чемпионат мира', 'Клубный чемпионат мира', 'Товарищеские матчи сборных', 'Клубные товарищеские матчи'] },
+      { t: 'FIFA', icon: I.globe, kids: ['Чемпионат мира', 'Клубный чемпионат мира', 'Товарищеские матчи сборных'] },
       { t: 'UEFA', flag: 'eu', kids: ['Чемпионат Европы', { t: 'Лига наций УЕФА', kids: [
         { t: 'Лига A', kids: groups('A', 4) }, { t: 'Лига B', kids: groups('B', 4) }, { t: 'Лига C', kids: groups('C', 4) }, { t: 'Лига D', kids: groups('D', 2) }] }] },
       { t: 'CONMEBOL', flag: 'conmebol', kids: ['Кубок Америки', 'Кубок Либертадорес'] },
       { t: 'CONCACAF', icon: I.globe, kids: ['Золотой кубок КОНКАКАФ', { t: 'Лига наций КОНКАКАФ', kids: [{ t: 'Лига A', kids: groups('A', 2) }, { t: 'Лига B', kids: groups('B', 4) }, { t: 'Лига C', kids: groups('C', 2) }] }] },
-      { t: 'AFC', icon: I.globe, kids: ['Кубок Азии'] },
+      { t: 'AFC', icon: I.globe, kids: [{ t: 'Кубок Азии', kids: groups('', 6).map((g, i) => `Группа ${'ABCDEF'[i]}`) }] },
       { t: 'CAF', icon: I.globe, kids: ['Кубок африканских наций'] },
       { t: 'OFC', icon: I.globe, kids: ['Кубок наций ОФК'] },
     ] },
