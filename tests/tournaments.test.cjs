@@ -88,10 +88,11 @@ async function check(name, fn) {
       const sw = await page.locator('.frame .base').first().evaluate(e => parseFloat(getComputedStyle(e).strokeWidth));
       assert.ok(sw <= 1.8, `stroke ${sw}`);
       assert.match(await page.locator('.frame').first().evaluate(e => getComputedStyle(e).animationName), /breathe|none/);
-      const d27 = page.locator('.day[data-day="2024-08-27"]');
-      assert.equal(await d27.locator('.top-b svg').count(), 1, 'game icon missing');
-      assert.equal((await d27.locator('.bot-b').innerText()).trim(), '2', 'auction count missing');
-      assert.equal((await page.locator('.day[data-day="2024-08-24"] .bot-b').innerText()).trim(), '', 'single auction shows no number');
+      assert.equal(await page.locator('.day[data-day="2024-08-24"] .top-b svg').count(), 1, 'game icon missing');
+      const d26 = page.locator('.day[data-day="2024-08-26"]');
+      assert.equal(await d26.locator('.frame').count(), 1, 'auction day must be framed');
+      assert.equal(await d26.locator('.bot-b svg').count(), 1, 'gavel missing');
+      assert.equal((await d26.locator('.bot-b').innerText()).trim(), '', 'single auction shows no number');
       assert.equal(await page.locator('.day.alert .runner').count(), 1);
       assert.equal(await page.locator('.day.past .frame').count(), 0);
     });
@@ -194,8 +195,18 @@ async function check(name, fn) {
       await page.locator('.scroll').evaluate(n => { n.scrollTop = 0; n.style.scrollBehavior = ''; });
     });
 
+    await check(`[${tag}] auction: only my match, dated a day after the auction, "Вне состава"`, async () => {
+      const lib = page.locator('[data-fold="night"] + .cards .t[data-id="lib"]');
+      await lib.locator('[data-rail]').click(); await page.waitForTimeout(450);
+      assert.equal(await lib.locator('.m').count(), 1, 'auction card must show only my match');
+      assert.match(await lib.locator('.m.me .m-time').innerText(), /23\.08\s*01:00/);
+      assert.match(await lib.locator('.me-cta').innerText(), /вне состава/i);
+      assert.doesNotMatch(await lib.innerText(), /Попасть|Фан-клуб не выставил/);
+      await lib.locator('[data-rail]').click(); await page.waitForTimeout(400);
+    });
+
     await check(`[${tag}] squad actions carry a gavel; BofP Series never has lineup states`, async () => {
-      await day('2024-08-27');
+      await day('2024-08-26');
       const sq = page.locator('.t[data-id="ucl"] .act.squad');
       assert.equal(await sq.count(), 1);
       assert.equal(await sq.locator('svg').count(), 1, 'gavel missing on the button');

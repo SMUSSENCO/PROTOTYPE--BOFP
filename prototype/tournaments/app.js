@@ -224,14 +224,18 @@ const STATUS = {
   'ucl|2024-08-21': { kind: 'predict' },
   'acl|2024-08-21': { kind: 'predict' },
   'bcl|2024-08-21': { kind: 'missed' },
-  'lib|2024-08-21': { kind: 'squad', deadline: ['2024-08-22', '00:30'], text: 'Фан-клуб не выставил тебя в состав. Открыт аукцион.' },
   'rnd|2024-08-24': { kind: 'predict' },
-  'ucl|2024-08-27': { kind: 'squad', deadline: ['2024-08-27', '20:00'], text: 'Фан-клуб не выставил тебя в состав. Открыт аукцион.' },
   'acl|2024-08-28': { kind: 'predict' },
 };
 const statusFor = (id, day) => STATUS[`${id}|${day}`] || (id === 'g5' && day >= TODAY && day <= BIG5_END ? { kind: 'predict' } : null);
-const AUCTIONS = { '2024-08-21': 1, '2024-08-24': 1, '2024-08-27': 2 };
-const ALERT_DAY = '2024-08-27';
+/* lineup auctions: the player is out of the squad; the auction runs on `day` and closes at `end`,
+   the match itself starts a day after the auction closes */
+const AUCTION_LIST = [
+  { comp: 'lib', day: '2024-08-21', team: 'Сан-Паулу', matchDate: '2024-08-23', end: ['2024-08-22', '01:00'], night: true },
+  { comp: 'ucl', day: '2024-08-26', team: 'Галатасарай', matchDate: '2024-08-27', end: ['2024-08-26', '21:00'] },
+];
+const AUCTIONS = AUCTION_LIST.reduce((o, a) => (o[a.day] = (o[a.day] || 0) + 1, o), {});
+const ALERT_DAY = '2024-08-26';
 const BUFFS = [
   { f: 'forward', t: 'Бафф «Нападающий»' }, { f: 'change-score', t: 'Бафф «Смена счёта»' },
   { f: 'shield-golden-double', t: 'Бафф «Двойной щит»' }, { f: 'card-red', t: 'Красная карточка', card: true },
@@ -370,7 +374,15 @@ function tournamentsFor(day) {
 function buildTournaments(day) {
   const out = { real: [], series: [], night: [] };
   const by = realByComp(day);
-  for (const code of REAL_ORDER) if (by[code]) out.real.push(realCard(code, by[code], day, false));
+  const auctions = AUCTION_LIST.filter(a => a.day === day).map(a => {
+    const m = (REAL.days[a.matchDate] || []).find(x => x.comp === a.comp && (x.home === a.team || x.away === a.team));
+    if (!m) return null;
+    const card = realCard(a.comp, [{ ...m, date: a.matchDate }], day, !!a.night);
+    return Object.assign(card, { mineTeam: a.team, auction: { kind: 'squad', deadline: a.end } });
+  }).filter(Boolean);
+  const auctioned = new Set(auctions.map(c => c.id));
+  for (const code of REAL_ORDER) if (by[code] && !auctioned.has(code)) out.real.push(realCard(code, by[code], day, false));
+  out.real.push(...auctions.filter(c => !c.night));
   for (const t of BOFP) {
     if (!t.days.includes(day)) continue;
     const mineTeam = t.mine && t.mine.days.includes(day) ? t.mine.team : null;
@@ -384,7 +396,8 @@ function buildTournaments(day) {
   if (day >= BIG5_START && day <= BIG5_END) for (const b of BIG5) out.series.push(big5Card(b, day, big5Tour(day), false));
   out.series.push(...tennisCards(day));
   const nb = realByComp(day, true);
-  for (const code of NIGHT_REAL) if (nb[code]) out.night.push(realCard(code, nb[code], day, true));
+  for (const code of NIGHT_REAL) if (nb[code] && !auctioned.has(code)) out.night.push(realCard(code, nb[code], day, true));
+  out.night.push(...auctions.filter(c => c.night));
   out.custom = customCards(day);
   const order = (a, b) => (b.sport === 'foot') - (a.sport === 'foot') || !!b.mineTeam - !!a.mineTeam;
   for (const k in out) out[k] = out[k].filter(c => state.sports.has(c.sport)).sort(order);
@@ -393,12 +406,12 @@ function buildTournaments(day) {
 const allMatches = t => t.type === 'big5' ? [...t.struct.West, ...t.struct.East].flatMap(l => l.matches) : t.matches;
 const everyCard = day => { const t = tournamentsFor(day); return [...t.real, ...t.series, ...t.night, ...t.custom]; };
 function myMatch(t) { return t.mineTeam ? allMatches(t).find(m => isMine(m, t.mineTeam)) : null; }
-function statusOf(t, day) { return t.mineTeam ? statusFor(t.id, day) : null; }
+function statusOf(t, day) { return t.auction || (t.mineTeam ? statusFor(t.id, day) : null); }
 function actionOf(t, day) { const s = statusOf(t, day); return s && (s.kind === 'predict' || s.kind === 'squad') ? s.kind : null; }
 function playerMatchCount(day) {
   const keep = new Set(state.sports); state.sports = new Set(['foot', 'tennis']);
   // a night match is counted on the evening before, not again on its own date
-  const n = everyCard(day).reduce((k, x) => k + (x.mineTeam ? allMatches(x).filter(m => isMine(m, x.mineTeam) && !(x.night && mDate(m, day) === day)).length : 0), 0);
+  const n = everyCard(day).reduce((k, x) => k + (x.mineTeam && !x.auction ? allMatches(x).filter(m => isMine(m, x.mineTeam) && !(x.night && mDate(m, day) === day)).length : 0), 0);
   state.sports = keep;
   return n;
 }
@@ -464,7 +477,7 @@ function matchRow(m, day, mineTeam, t, playersMode) {
   const me = isMine(m, mineTeam), ms = matchState(m, day, playersMode);
   const st = me ? statusOf(t, day) || {} : {};
   let time;
-  if (ms.s === 'sched') time = `<span class="m-time num">${esc(m.kickoff)}</span>`;
+  if (ms.s === 'sched') time = mDate(m, day) !== day ? `<span class="m-time dated num"><b>${ddmm(mDate(m, day))}</b>${esc(m.kickoff)}</span>` : `<span class="m-time num">${esc(m.kickoff)}</span>`;
   else if (ms.s === 'live') time = `<span class="m-time live num"><i></i>${esc(ms.min)}</span>`;
   else time = `<span class="m-time num">Зав.</span>`;
   let score = '';
@@ -490,7 +503,7 @@ function matchRow(m, day, mineTeam, t, playersMode) {
   if (!me) return `<div class="m ${ms.s}">${body}</div>`;
   let cta = '';
   if (ms.s === 'sched' && st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${at(mDate(m, day), m.kickoff)}"><span class="l">${I.game}Прогноз</span><span class="tm num" data-left></span></button>`;
-  else if (ms.s === 'sched' && st.kind === 'squad') cta = `<button class="act squad" data-act="squad" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.gavel}Попасть в состав</span><span class="tm num" data-left></span></button><span class="hint">${esc(st.text)}</span>`;
+  else if (ms.s === 'sched' && st.kind === 'squad') cta = `<button class="act squad" data-act="squad" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.gavel}Вне состава</span><span class="tm num" data-left></span></button>`;
   return `<div class="m me ${ms.s}"><span class="ring" aria-hidden="true"></span>${body}${cta ? `<div class="me-cta">${cta}</div>` : ''}</div>`;
 }
 
@@ -556,16 +569,16 @@ function renderDates() {
     const d = addDays(TODAY, i), past = d < TODAY, today = d === TODAY;
     const cnt = past ? 0 : playerMatchCount(d), auc = past ? 0 : AUCTIONS[d] || 0, alert = d === ALERT_DAY;
     let frame = '', badges = '';
-    if (cnt) {
+    if (cnt || auc) {
       // the mask breaks the stroke under the top badge and under the gavel
       const tw = cnt > 1 ? 26 : 22, bw = auc > 1 ? 26 : 20;
-      frame = `<svg class="frame" viewBox="0 0 60 62" aria-hidden="true"><defs><mask id="mk${i}"><rect x="-4" y="-4" width="68" height="70" fill="#fff"/><rect x="${30 - tw / 2}" y="-4" width="${tw}" height="9" fill="#000"/>${auc ? `<rect x="${30 - bw / 2}" y="57" width="${bw}" height="9" fill="#000"/>` : ''}</mask></defs>
+      frame = `<svg class="frame" viewBox="0 0 60 62" aria-hidden="true"><defs><mask id="mk${i}"><rect x="-4" y="-4" width="68" height="70" fill="#fff"/>${cnt ? `<rect x="${30 - tw / 2}" y="-4" width="${tw}" height="9" fill="#000"/>` : ''}${auc ? `<rect x="${30 - bw / 2}" y="57" width="${bw}" height="9" fill="#000"/>` : ''}</mask></defs>
         <rect class="base" x="1" y="1" width="58" height="60" rx="15" mask="url(#mk${i})"/>${alert ? `<rect class="runner" x="1" y="1" width="58" height="60" rx="15" pathLength="200" mask="url(#mk${i})"/>` : ''}</svg>`;
-      badges = `<span class="top-b num">${I.game}${cnt}</span>${auc ? `<span class="bot-b num">${I.gavel}${auc > 1 ? auc : ''}</span>` : ''}`;
+      badges = `${cnt ? `<span class="top-b num">${I.game}${cnt}</span>` : ''}${auc ? `<span class="bot-b num">${I.gavel}${auc > 1 ? auc : ''}</span>` : ''}`;
     }
     const pastMine = past && playerMatchCount(d) ? '<span class="mine-dot"></span>' : '';
     const label = `${today ? 'Сегодня' : wd(d)}, ${ddmm(d)}${cnt ? `, твоих матчей: ${cnt}` : ''}${auc ? `, аукционов: ${auc}` : ''}${alert ? ', требуется действие' : ''}`;
-    items.push(`<button class="day ${past ? 'past' : ''} ${today ? 'today' : ''} ${alert ? 'alert' : ''} ${cnt ? 'framed' : ''}" role="tab" data-day="${d}" aria-selected="${d === state.day}" aria-label="${label}">
+    items.push(`<button class="day ${past ? 'past' : ''} ${today ? 'today' : ''} ${alert ? 'alert' : ''} ${cnt || auc ? 'framed' : ''}" role="tab" data-day="${d}" aria-selected="${d === state.day}" aria-label="${label}">
       ${frame}<span class="wd">${today ? 'Сегодня' : wd(d)}</span><span class="dd num">${ddmm(d)}</span>${badges}${pastMine}</button>`);
   }
   $('#dates').innerHTML = items.join('');
