@@ -106,21 +106,23 @@ async function check(name, fn) {
       assert.match(await page.locator('.empty').innerText(), /вид спорта/);
       await page.locator('[data-sport="foot"]').click(); await tennis.click();
       const b = await box('[data-sport="foot"]');
-      assert.ok(b.height >= 44);
+      assert.ok(b.height <= 36 && b.height >= 30, `chip ${b.height}`);
+      assert.equal((await page.locator('#sports').innerText()).trim(), '', 'chips must be icons only');
     });
 
     await check(`[${tag}] card row: one-line title, centred pastel chip, count + red live box without slash`, async () => {
-      for (const el of await page.locator('.t-title').all()) assert.ok((await el.boundingBox()).height < 22, 'title wraps');
+      for (const el of await page.locator('.t-title').all()) { const b = await el.boundingBox(); if (b) assert.ok(b.height < 22, 'title wraps'); }
       const ucl = page.locator('.t[data-id="ucl"]');
       const head = await ucl.locator('.t-head').boundingBox(), a = await ucl.locator('.t-act .act').boundingBox();
       assert.ok(Math.abs(a.y + a.height / 2 - (head.y + head.height / 2)) < 2);
-      assert.match(await ucl.locator('.t-act .act').innerText(), /\+ прогноз[\s\S]*\d{2}:\d{2}:\d{2}/i);
-      const bg = await ucl.locator('.act.predict').evaluate(e => getComputedStyle(e).backgroundColor);
-      assert.equal(bg, 'rgb(246, 227, 161)', 'button is not pastel');
+      const txt = await ucl.locator('.t-act .act').innerText();
+      assert.match(txt, /Прогноз[\s\S]*\d{2}:\d{2}:\d{2}/i); assert.doesNotMatch(txt, /\+/);
+      assert.match(await ucl.locator('.act.predict').evaluate(e => getComputedStyle(e).backgroundImage), /gradient/, 'button is not raised');
+      assert.match(await page.locator('.balance').innerText(), /10,4 М/);
       const rail = (await ucl.locator('.t-rail .cnt-wrap').innerText()).replace(/\s/g, '');
       assert.match(rail, /^\d+\d$/); assert.doesNotMatch(rail, /\//);
       assert.ok((await ucl.locator('.t-rail').boundingBox()).width <= 54.5);
-      for (const r of await page.locator('.t-rail').all()) assert.ok(Math.abs((await r.boundingBox()).x + 54 - vp.width) < 1.5, 'rail misaligned');
+      for (const r of await page.locator('.t-rail').all()) { const b = await r.boundingBox(); if (b) assert.ok(Math.abs(b.x + 54 - vp.width) < 1.5, 'rail misaligned'); }
     });
 
     await check(`[${tag}] every open prediction still has time left`, async () => {
@@ -130,6 +132,7 @@ async function check(name, fn) {
     await check(`[${tag}] missed pick today: chip + yellow card next to my team`, async () => {
       const bcl = page.locator('.t[data-id="bcl"]');
       assert.match(await bcl.locator('.act.missed').innerText(), /Пропуск/);
+      assert.equal(await bcl.locator('.t-head img[src*="card-"]').count(), 0, 'cards belong inside the expanded tournament only');
       await bcl.locator('[data-rail]').click(); await page.waitForTimeout(450);
       const me = bcl.locator('.m.me');
       assert.equal(await me.locator('img[src$="card-yellow.webp"]').count(), 1);
@@ -221,10 +224,26 @@ async function check(name, fn) {
       const d = await box('#drawer');
       assert.ok(d.x >= -1 && d.x < 2, `drawer x=${d.x}`);
       assert.match(await page.locator('#drawer').innerText(), /BFP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
-      await page.locator('#drawer [data-dnode]').first().click();
-      assert.match(await page.locator('#drawer .kids:not([hidden])').first().innerText(), /BFP Champions League/);
+      const body = page.locator('#drawer .dr-body');
+      const bfp = page.locator('#drawer [data-dnode]', { hasText: 'BFP Еврокубки' });
+      await bfp.click();
+      assert.match(await bfp.locator('xpath=following-sibling::div[1]').innerText(), /BFP Champions League/);
+      const green = page.locator('#drawer [data-dnode]', { hasText: 'Green BIG 5' });
+      await green.click();
+      assert.match(await green.locator('xpath=following-sibling::div[1]').innerText(), /West[\s\S]*East/);
+      await body.evaluate(n => (n.scrollTop = n.scrollHeight));
+      const fifa = page.locator('#drawer [data-dnode]', { hasText: 'UEFA' }).last();
+      const before = await body.evaluate(n => n.scrollTop);
+      await fifa.click();
+      assert.ok(Math.abs(await body.evaluate(n => n.scrollTop) - before) < 2, 'catalog jumped when a row was expanded');
+      const nl = page.locator('#drawer [data-dnode]', { hasText: 'Лига наций УЕФА' });
+      await nl.click();
+      await page.locator('#drawer [data-dnode]', { hasText: 'Лига A' }).first().click();
+      assert.match(await page.locator('#drawer').innerText(), /Группа A1/);
       await page.locator('#drawer [data-drsport="tennis"]').click();
       assert.match(await page.locator('#drawer').innerText(), /ATP Masters 1000[\s\S]*WTA 125/);
+      await page.locator('#drawer [data-dnode]', { hasText: 'ATP Masters 1000' }).click();
+      assert.match(await page.locator('#drawer').innerText(), /Индиан-Уэллс[\s\S]*Цинциннати/);
       await page.screenshot({ path: path.join(SHOTS, `${tag}-drawer.png`) });
       await page.keyboard.press('Escape'); await page.waitForTimeout(450);
       assert.ok((await box('#drawer')).x < -100, 'drawer did not close');
@@ -240,8 +259,50 @@ async function check(name, fn) {
       assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'dark');
     });
 
+    await check(`[${tag}] user tournaments: bottom block, folded, create button first, no backgrounds`, async () => {
+      const h = page.locator('[data-fold="custom"]');
+      assert.equal(await h.getAttribute('aria-expanded'), 'false');
+      const last = await page.locator('.section-h').last().getAttribute('data-fold');
+      assert.equal(last, 'custom', 'custom block must be the last one');
+      await h.click();
+      const box1 = h.locator('xpath=following-sibling::div[1]');
+      assert.match(await box1.locator('> *').first().innerText(), /Создать/);
+      const card = box1.locator('.t').first();
+      assert.equal(await card.locator('.t-art').count(), 0);
+      await card.locator('[data-rail]').click(); await page.waitForTimeout(400);
+      assert.equal(await card.locator('.sw').count(), 0);
+      assert.ok(await card.locator('.m').count() > 0);
+      await h.click();
+    });
+
+    await check(`[${tag}] timelines: auction node in BofP CL and at the end of BIG 5`, async () => {
+      const bcl = page.locator('.t[data-id="bcl"]');
+      await bcl.locator('[data-rail]').click(); await page.waitForTimeout(400);
+      assert.equal(await bcl.locator('.tl-node.auction').count(), 1);
+      await bcl.locator('[data-rail]').click(); await page.waitForTimeout(400);
+      const g5 = page.locator('.t[data-id="g5"]');
+      await g5.locator('[data-rail]').click(); await page.waitForTimeout(400);
+      assert.equal(await g5.locator('.tl-node.auction').count(), 1);
+      assert.match(await g5.locator('.tl-dates .auc').innerText(), /31\.08/);
+      assert.match(await g5.locator('.more').first().innerText(), /Показать все \d+/);
+      const n0 = await g5.locator('.lg.open .m').count();
+      await g5.locator('.more').first().click();
+      assert.ok(await page.locator('.t[data-id="g5"] .lg.open .m').count() > n0, 'show-all did not expand');
+      await page.locator('.t[data-id="g5"] .more').first().click();
+      assert.equal(await page.locator('.t[data-id="g5"] .lg.open .m').count(), n0);
+      await page.locator('.t[data-id="g5"] [data-rail]').click(); await page.waitForTimeout(400);
+    });
+
+    await check(`[${tag}] night block is also on the next day; it names the auction`, async () => {
+      assert.match(await page.locator('[data-fold="night"]').innerText(), /аукцион/i);
+      await day('2024-08-22');
+      assert.ok(await page.locator('[data-fold="night"]').count(), 'night block missing on the next day');
+      assert.equal(await page.locator('.t[data-id="lib"]').count(), 1);
+      await day('2024-08-21');
+    });
+
     await check(`[${tag}] touch targets ≥ 44px`, async () => {
-      for (const sel of ['#catalogBtn', '#searchBtn', '#profileBtn', '.day', '.chip', '.t-rail', '.t-icon', '.tab', '.section-h']) {
+      for (const sel of ['#catalogBtn', '#searchBtn', '#profileBtn', '.day', '.t-rail', '.t-icon', '.tab', '.section-h']) {
         const b = await box(sel);
         assert.ok(b.width >= 44 && b.height >= 44, `${sel} ${b.width}x${b.height}`);
       }

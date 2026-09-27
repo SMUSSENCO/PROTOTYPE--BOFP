@@ -20,7 +20,8 @@ const I = {
   /* "your match": a pitch with a ball on the centre spot */
   game: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M12 5v14"/><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/><path d="M2.5 9.5h3v5h-3M21.5 9.5h-3v5h3"/></svg>',
   moon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
-  catalog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M8 4h8v3.5a4 4 0 0 1-8 0z"/><path d="M8 5.5H5.5v.8a2.7 2.7 0 0 0 2.6 2.7M16 5.5h2.5v.8A2.7 2.7 0 0 1 15.9 9M12 11.5v3M9 16.5h6"/><path d="M4 20h16"/></svg>',
+  catalog: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12v2h3v2.5A4.5 4.5 0 0 1 16.9 12 5.5 5.5 0 0 1 13 15.4V18h3.5v3h-9v-3H11v-2.6A5.5 5.5 0 0 1 7.1 12 4.5 4.5 0 0 1 3 7.5V5h3zm0 4H5v.5A2.5 2.5 0 0 0 6.3 9.7 6 6 0 0 1 6 8zm12 0v1a6 6 0 0 1-.3 1.7A2.5 2.5 0 0 0 19 7.5V7z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   activity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.2-3.8 2.3-5 .3 1.6 1 2.4 1.9 2.8C11 8.5 11 6 12 3z"/></svg>',
   news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
   cupTab: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8"/></svg>',
@@ -117,12 +118,27 @@ function league(s) {
   st.push({ n: 'Последний тур', f: s.end, t: s.end, ms: ['Чемпион, еврокубки, вылет'], final: true });
   return st.sort((a, b) => a.f.localeCompare(b.f) || !!a.final - !!b.final);
 }
+const BCL_STAGES = [
+  { n: 'Квалификация, 1-й раунд', f: '2024-07-09', t: '2024-07-17', ms: ['144 команды стартуют с первого раунда', 'Проигравшие → 2-й квал. раунд Лиги конференций'] },
+  { n: 'Квалификация, 2-й раунд', f: '2024-07-23', t: '2024-07-31', ms: ['Проигравшие → 3-й квал. раунд Лиги конференций'] },
+  { n: 'Квалификация, 3-й раунд', f: '2024-08-06', t: '2024-08-14', ms: ['Проигравшие → 4-й квал. раунд Лиги конференций'] },
+  { n: 'Квалификация, 4-й раунд', f: '2024-08-20', t: '2024-08-28', ms: ['16 победителей — в основной этап', 'Проигравшие → основной этап Лиги Европы', 'Ничья — серия пенальти'] },
+  { n: 'Аукцион мест', f: '2024-09-10', t: '2024-09-10', ms: ['12 мест основного этапа разыгрываются на аукционе'], auction: true },
+  { n: 'Основной этап', f: '2024-09-17', t: '2025-01-29', ms: ['36 команд: 8 из «Плей-офф основной фазы 26/27», 16 из квалификации, 12 с аукциона', '8 туров: победа 3, ничья 1, поражение 0', 'При равенстве очков: разница мячей, затем забитые', 'Места 1–8 — в 1/8, места 9–24 — в 1/16'] },
+  { n: '1/16 плей-офф', f: '2025-02-11', t: '2025-02-19', ms: ['Команды с 9 по 24 место', 'Победитель пары — по забитым мячам, ничья — пенальти'] },
+  { n: '1/8 финала', f: '2025-03-04', t: '2025-03-12', ms: [] },
+  { n: '1/4 финала', f: '2025-04-08', t: '2025-04-16', ms: [] },
+  { n: '1/2 финала', f: '2025-04-29', t: '2025-05-07', ms: [] },
+  { n: 'Финал', f: '2025-05-31', t: '2025-05-31', ms: [], final: true },
+];
+/* BIG 5: 19 rounds, one a day inside a month; the auction closes the month */
 const BIG5_STAGES = [
-  { n: 'Осенний круг', f: '2024-08-17', t: '2024-12-08', ms: ['7 туров, дома и в гостях', 'West и East играют в один день'] },
-  { n: 'Зимняя пауза', f: '2024-12-09', t: '2025-01-17', ms: ['Трансферный аукцион открыт'] },
-  { n: 'Весенний круг', f: '2025-01-18', t: '2025-05-11', ms: [] },
-  { n: 'Стыки', f: '2025-05-17', t: '2025-05-18', ms: ['Топ-2 каждой лиги поднимаются выше', 'Два последних — вниз'] },
-  { n: 'Суперфинал', f: '2025-05-25', t: '2025-05-25', ms: ['Чемпион West против чемпиона East'], final: true },
+  { n: 'Тур 1', f: '2024-08-12', t: '2024-08-12', ms: ['20 команд в каждой лиге, 19 туров за месяц', 'Матчи каждый день'] },
+  { n: 'Тур 5', f: '2024-08-16', t: '2024-08-16', ms: [] },
+  { n: 'Тур 10 · экватор', f: '2024-08-21', t: '2024-08-21', ms: [] },
+  { n: 'Тур 15', f: '2024-08-26', t: '2024-08-26', ms: [] },
+  { n: 'Тур 19 · финиш', f: '2024-08-30', t: '2024-08-30', ms: ['Топ-2 поднимаются в лигу выше', 'Два последних — вниз'], final: true },
+  { n: 'Аукцион', f: '2024-08-31', t: '2024-08-31', ms: ['Последний день месяца: торги за игроков на следующий месяц'], auction: true },
 ];
 const RANDOM_STAGES = [
   { n: 'Жеребьёвка', f: '2024-08-10', t: '2024-08-10', ms: ['Соперников выбирает случай'] },
@@ -182,7 +198,7 @@ function pairUp(teams, key, times, comp, round, me, date, meAt) {
 }
 
 const BOFP = [
-  { code: 'bcl', name: 'BofP Champions League', short: 'BofP CL', kind: 'Команды BofP', icon: A + 'bofp-champions-league-logo.webp', iconLogo: true, bg: A + 'bofp-champions-league-calendar.webp', stages: UCL_STAGES,
+  { code: 'bcl', name: 'BofP Champions League', short: 'BofP CL', kind: 'Команды BofP', round: 'Квал., 4-й раунд', icon: A + 'bofp-champions-league-logo.webp', iconLogo: true, bg: A + 'bofp-champions-league-calendar.webp', stages: BCL_STAGES,
     days: ['2024-08-20', '2024-08-21', '2024-08-27', '2024-08-28'], pool: 'bofp', size: 16, mine: { team: ME.team, days: ['2024-08-21'] } },
   { code: 'bel', name: 'BofP Europa League', short: 'BofP EL', kind: 'Команды BofP', icon: A + 'bofp-europa-league-logo.webp', iconLogo: true, bg: A + 'bofp-europa-league-calendar.webp', stages: UEL_STAGES, days: ['2024-08-22'], pool: 'bofp', size: 12 },
   { code: 'becl', name: 'BofP Conference League', short: 'BofP ECL', kind: 'Команды BofP', icon: A + 'bofp-conference-league-logo.webp', iconLogo: true, bg: A + 'bofp-conference-league-calendar.webp', stages: UECL_STAGES, days: ['2024-08-22'], pool: 'bofp', size: 12 },
@@ -199,7 +215,9 @@ const BIG5 = [
   { code: 'y5', color: 'Yellow', img: 'yellow-big-5' },
   { code: 'b5', color: 'Blue', img: 'blue-big-5' },
 ];
-const BIG5_DAYS = ['2024-08-17', '2024-08-24'];
+const BIG5_START = '2024-08-12', BIG5_END = '2024-08-30';
+const big5Tour = day => Math.round((at(day, '12:00') - at(BIG5_START, '12:00')) / 864e5) + 1;
+const NIGHT_MINE = { lib: 'Стронгест' };
 /* night block: a BIG 5 that plays after midnight, so tomorrow's pick is not forgotten */
 const NIGHT_BIG5 = { code: 'n5', color: 'Night', img: 'blue-big-5', days: ['2024-08-21'], times: ['00:30', '01:30', '02:30'], mine: { side: 'West', liga: 1, team: ME.team, place: 3 } };
 
@@ -210,11 +228,11 @@ const STATUS = {
   'bcl|2024-08-21': { kind: 'missed' },
   'n5|2024-08-21': { kind: 'predict' },
   'lib|2024-08-21': { kind: 'squad', deadline: ['2024-08-22', '00:30'], text: 'Фан-клуб не выставил тебя в состав. Открыт аукцион.' },
-  'g5|2024-08-24': { kind: 'predict' },
   'rnd|2024-08-24': { kind: 'predict' },
   'ucl|2024-08-27': { kind: 'squad', deadline: ['2024-08-27', '20:00'], text: 'Фан-клуб не выставил тебя в состав. Открыт аукцион.' },
   'acl|2024-08-28': { kind: 'predict' },
 };
+const statusFor = (id, day) => STATUS[`${id}|${day}`] || (id === 'g5' && day >= TODAY && day <= BIG5_END ? { kind: 'predict' } : null);
 const AUCTIONS = { '2024-08-21': 1, '2024-08-24': 1, '2024-08-27': 2 };
 const ALERT_DAY = '2024-08-27';
 const BUFFS = [
@@ -229,7 +247,7 @@ const ROUND_SIZE = { 'Финал': 1, '1/2 финала': 2, '1/4 финала':
 
 /* ================= state ================= */
 let REAL = { competitions: {}, days: {} }, CRESTS = {}, TEAM_IMG = {}, TENNIS = [];
-const state = { day: TODAY, open: new Set(), mode: {}, big5Side: {}, lgOpen: new Set(), stage: {}, folded: new Set(), sports: new Set(['foot', 'tennis']), drOpen: new Set(['g0']), drSport: 'foot' };
+const state = { day: TODAY, open: new Set(), mode: {}, big5Side: {}, lgOpen: new Set(), stage: {}, folded: new Set(['custom']), more: new Set(), sports: new Set(['foot', 'tennis']), drOpen: new Set(['g0']), drSport: 'foot' };
 
 /* ================= helpers ================= */
 const EXTRA_CRESTS = { 'Фенербахче': 'fenerbahce', 'Бешикташ': 'besiktasjk', 'Бенфика': 'sl-benfica', 'Порту': 'fc-porto', 'Аякс': 'ajax', 'Галатасарай': 'galatasaray-as' };
@@ -272,33 +290,34 @@ function metaFor(code) {
   if (code === 'lib' && s) stages = [...(s.extra || []).map((x, i, arr) => ({ n: x.n, f: x.f, t: x.t || x.f, ms: [], final: i === arr.length - 1 }))];
   else if (s && s.start) stages = league(s);
   else stages = [{ n: 'Сезон', f: '2024-08-01', t: '2025-05-31', ms: [], final: true }];
-  return REAL_META[code] = { icon: code === 'lib' ? I.cup : I.ball, bg: c.flag, stages };
+  return REAL_META[code] = { icon: code === 'lib' ? I.cup : I.ball, bg: c.flag, stages, short: code === 'lib' ? 'Либертадорес' : undefined, country: code === 'lib' ? 'КОНМЕБОЛ' : undefined };
 }
+const isNight = m => NIGHT_REAL.includes(m.comp) && m.kickoff < '06:00';
 function realByComp(day, night) {
   const by = {};
-  const src = night ? (REAL.days[addDays(day, 1)] || []).filter(m => NIGHT_REAL.includes(m.comp) && m.kickoff < '06:00').map(m => ({ ...m, date: addDays(day, 1) }))
-    : (REAL.days[day] || []).filter(m => !(NIGHT_REAL.includes(m.comp) && m.kickoff < '06:00'));
+  // a night match belongs to two days: the evening before (to make the pick) and its own calendar day
+  const src = night ? [...(REAL.days[day] || []).filter(isNight).map(m => ({ ...m, date: day })), ...(REAL.days[addDays(day, 1)] || []).filter(isNight).map(m => ({ ...m, date: addDays(day, 1) }))]
+    : (REAL.days[day] || []).filter(m => !isNight(m));
   for (const m of src) (by[m.comp] ||= []).push(m);
   return by;
 }
 
 function realCard(code, matches, day, night) {
   const c = REAL.competitions[code] || {}, meta = metaFor(code);
-  const statusKey = STATUS[`${code}|${day}`];
   let mineTeam = matches.some(m => isMine(m, ME.fanClub)) ? ME.fanClub : null;
-  if (!mineTeam && statusKey) mineTeam = matches[0].home; // night cup: the club whose fan-club squad the player is in
+  if (!mineTeam && NIGHT_MINE[code] && matches.some(m => isMine(m, NIGHT_MINE[code]))) mineTeam = NIGHT_MINE[code];
   matches = [...matches].sort((a, b) => isMine(b, mineTeam) - isMine(a, mineTeam) || (a.date || '').localeCompare(b.date || '') || a.kickoff.localeCompare(b.kickoff));
   return { id: code, type: 'real', sport: 'foot', night, name: c.name || code, short: meta.short || c.name || code,
-    sub: [c.country, shortRound(matches[0].round || c.stage)].filter(Boolean).join(' · '), iconSvg: meta.icon, flag: meta.bg, stages: meta.stages, matches, mineTeam };
+    sub: [meta.country || c.country, shortRound(matches[0].round || c.stage)].filter(Boolean).join(' · '), iconSvg: meta.icon, flag: meta.bg, stages: meta.stages, matches, mineTeam };
 }
 
-function big5Card(b, day, tour, night) {
+function big5Card(b, day, tour, night, base = day) {
   const struct = {};
   for (const side of ['West', 'East']) {
     struct[side] = [1, 2, 3].map(liga => {
       const forced = b.mine && b.mine.side === side && b.mine.liga === liga ? b.mine.team : null;
-      const date = night ? addDays(day, 1) : undefined;
-      const matches = pairUp(teamPool(`${b.code}${side}${liga}`, 8, forced), day + side + liga, b.times || ['15:00', '17:30', '20:00'], `${b.code}${side[0]}${liga}`, `Тур ${tour}`, forced, date);
+      const date = night ? addDays(base, 1) : undefined;
+      const matches = pairUp(teamPool(`${b.code}${side}${liga}`, 20, forced), base + side + liga, b.times || ['15:00', '17:30', '20:00', '22:30'], `${b.code}${side[0]}${liga}`, `Тур ${tour}`, forced, date);
       return { liga, matches, mine: !!forced, team: forced };
     });
   }
@@ -330,7 +349,28 @@ function tennisCards(day) {
   return out;
 }
 
+const CUSTOM = [
+  { id: 'u1', name: 'Кубок друзей Смусенко', sub: 'Приватный · 8 участников', take: 5 },
+  { id: 'u2', name: 'Офисная лига Astana Hub', sub: 'По приглашению · 24 участника', take: 7 },
+  { id: 'u3', name: 'Лига выходного дня', sub: 'Открытый · 112 участников', take: 4 },
+];
+function customCards(day) {
+  const pool = [...(REAL.days[day] || [])].filter(m => !isNight(m));
+  if (!pool.length) return [];
+  return CUSTOM.map(c => {
+    const r = rng(c.id + day), list = [...pool], matches = [];
+    while (matches.length < Math.min(c.take, pool.length)) matches.push({ ...list.splice(Math.floor(r() * list.length), 1)[0] });
+    matches.sort((a, b) => a.kickoff.localeCompare(b.kickoff));
+    return { id: c.id, type: 'custom', sport: 'foot', name: c.name, short: c.name, sub: c.sub, iconSvg: I.user, stages: null, matches, mineTeam: null };
+  });
+}
+const CACHE = new Map();
 function tournamentsFor(day) {
+  const key = day + [...state.sports].sort().join();
+  if (!CACHE.has(key)) CACHE.set(key, buildTournaments(day));
+  return CACHE.get(key);
+}
+function buildTournaments(day) {
   const out = { real: [], series: [], night: [] };
   const by = realByComp(day);
   for (const code of REAL_ORDER) if (by[code]) out.real.push(realCard(code, by[code], day, false));
@@ -338,29 +378,32 @@ function tournamentsFor(day) {
     if (!t.days.includes(day)) continue;
     const mineTeam = t.mine && t.mine.days.includes(day) ? t.mine.team : null;
     let teams, round, times;
-    if (t.pool === 'bofp') { teams = pick(BOFP_TEAMS.map(x => x.name), t.code, t.size, t.mine ? t.mine.team : null); round = 'Плей-офф'; times = ['19:45', '22:00']; }
+    if (t.pool === 'bofp') { teams = pick(BOFP_TEAMS.map(x => x.name), t.code, t.size, t.mine ? t.mine.team : null); round = t.round || 'Плей-офф'; times = ['19:45', '22:00']; }
     else if (t.pool === 'random') { teams = teamPool('rnd', 16, ME.team); round = day === '2024-08-18' ? '1/16' : '1/8'; times = ['16:00', '18:30', '21:00']; }
     else { teams = ALLIANCE_TEAMS.slice(0, t.size); round = 'Плей-офф'; times = ['19:45', '22:00']; }
     out.series.push({ id: t.code, type: 'bofp', sport: 'foot', name: t.name, short: t.short, sub: `${t.kind} · ${round}`, icon: t.icon, iconLogo: t.iconLogo, iconSvg: t.iconSvg,
-      bg: t.bg, bgTint: t.bgTint, stages: t.stages, matches: pairUp(teams, day + t.code, times, t.code, round, mineTeam, undefined, (STATUS[`${t.code}|${day}`] || {}).kind === 'missed' ? 'first' : 'last'), mineTeam });
+      bg: t.bg, bgTint: t.bgTint, stages: t.stages, matches: pairUp(teams, day + t.code, times, t.code, round, mineTeam, undefined, (statusFor(t.code, day) || {}).kind === 'missed' ? 'first' : 'last'), mineTeam });
   }
-  if (BIG5_DAYS.includes(day)) for (const b of BIG5) out.series.push(big5Card(b, day, BIG5_DAYS.indexOf(day) + 1, false));
+  if (day >= BIG5_START && day <= BIG5_END) for (const b of BIG5) out.series.push(big5Card(b, day, big5Tour(day), false));
   out.series.push(...tennisCards(day));
-  if (NIGHT_BIG5.days.includes(day)) out.night.push(big5Card(NIGHT_BIG5, day, 2, true));
+  const nbase = NIGHT_BIG5.days.find(d => d === day || addDays(d, 1) === day);
+  if (nbase) out.night.push(big5Card(NIGHT_BIG5, day, big5Tour(addDays(nbase, 1)), true, nbase));
   const nb = realByComp(day, true);
   for (const code of NIGHT_REAL) if (nb[code]) out.night.push(realCard(code, nb[code], day, true));
+  out.custom = customCards(day);
   const order = (a, b) => (b.sport === 'foot') - (a.sport === 'foot') || !!b.mineTeam - !!a.mineTeam;
   for (const k in out) out[k] = out[k].filter(c => state.sports.has(c.sport)).sort(order);
   return out;
 }
 const allMatches = t => t.type === 'big5' ? [...t.struct.West, ...t.struct.East].flatMap(l => l.matches) : t.matches;
-const everyCard = day => { const t = tournamentsFor(day); return [...t.real, ...t.series, ...t.night]; };
+const everyCard = day => { const t = tournamentsFor(day); return [...t.real, ...t.series, ...t.night, ...t.custom]; };
 function myMatch(t) { return t.mineTeam ? allMatches(t).find(m => isMine(m, t.mineTeam)) : null; }
-function statusOf(t, day) { return t.mineTeam ? STATUS[`${t.id}|${day}`] : null; }
+function statusOf(t, day) { return t.mineTeam ? statusFor(t.id, day) : null; }
 function actionOf(t, day) { const s = statusOf(t, day); return s && (s.kind === 'predict' || s.kind === 'squad') ? s.kind : null; }
 function playerMatchCount(day) {
   const keep = new Set(state.sports); state.sports = new Set(['foot', 'tennis']);
-  const n = everyCard(day).reduce((k, x) => k + (x.mineTeam ? allMatches(x).filter(m => isMine(m, x.mineTeam)).length : 0), 0);
+  // a night match is counted on the evening before, not again on its own date
+  const n = everyCard(day).reduce((k, x) => k + (x.mineTeam ? allMatches(x).filter(m => isMine(m, x.mineTeam) && !(x.night && mDate(m, day) === day)).length : 0), 0);
   state.sports = keep;
   return n;
 }
@@ -374,9 +417,9 @@ function deadlineOf(t, day) {
 function actionChip(t, day) {
   const st = statusOf(t, day);
   if (!st) return '';
-  if (st.kind === 'predict') return `<button class="act predict" data-act="predict" data-deadline="${deadlineOf(t, day)}"><span class="l">+ прогноз</span><span class="tm num" data-left></span></button>`;
-  if (st.kind === 'squad') return `<button class="act squad" data-act="squad" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.gavel}Не в составе</span><span class="tm num" data-left></span></button>`;
-  if (st.kind === 'missed') return `<span class="act missed"><img src="${A}buffs/card-yellow.webp" alt=""><span class="l">Пропуск</span></span>`;
+  if (st.kind === 'predict') return `<button class="act predict" data-act="predict" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.game}Прогноз</span><span class="tm num" data-left></span></button>`;
+  if (st.kind === 'squad') return `<button class="act squad" data-act="squad" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.gavel}Вне состава</span><span class="tm num" data-left></span></button>`;
+  if (st.kind === 'missed') return `<span class="act missed"><span class="l">Пропуск</span></span>`;
   return '';
 }
 
@@ -403,8 +446,8 @@ function timelineHTML(t, day) {
   const picked = state.stage[t.id], act = !!actionOf(t, day);
   const nodes = st.map((s, i) => {
     const passed = at(s.t, '23:59') < nowT;
-    const cls = ['tl-node', s.final ? 'final' : '', passed ? 'passed' : '', i === cur && act ? 'act' : ''].join(' ');
-    return `<button class="${cls}" style="left:${pos[i].toFixed(2)}%" data-stage="${i}" aria-pressed="${i === picked}" aria-label="${esc(s.n)}"><i>${s.final ? I.trophy : ''}</i></button>`;
+    const cls = ['tl-node', s.final ? 'final' : '', s.auction ? 'auction' : '', passed ? 'passed' : '', i === cur && act ? 'act' : ''].join(' ');
+    return `<button class="${cls}" style="left:${pos[i].toFixed(2)}%" data-stage="${i}" aria-pressed="${i === picked}" aria-label="${esc(s.n)} ${ddmm(s.f)}"><i>${s.final ? I.trophy : s.auction ? I.gavel : ''}</i></button>`;
   }).join('');
   let card = '';
   if (picked != null) {
@@ -412,7 +455,7 @@ function timelineHTML(t, day) {
     card = `<div class="tl-card"><div class="n">${esc(s.n)}${picked === cur ? ' · сейчас' : ''}</div><div class="d num">${dates}</div>${s.ms.length ? `<ul>${s.ms.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>`;
   }
   return `<div class="tl" style="--w:${here.toFixed(2)}%"><div class="tl-track"><div class="tl-line"></div><div class="tl-fill"></div>${nodes}<span class="tl-here" aria-hidden="true"></span></div>
-    <div class="tl-dates num"><span>${ddmm(st[0].f)}</span><span>${ddmm(st[st.length - 1].t)}</span></div>${card}</div>`;
+    <div class="tl-dates num"><span>${ddmm(st[0].f)}</span>${st[st.length - 1].auction ? `<span class="auc">${I.gavel}${ddmm(st[st.length - 1].f)}</span>` : `<span>${ddmm(st[st.length - 1].t)}</span>`}</div>${card}</div>`;
 }
 
 /* ---------- match row ---------- */
@@ -451,11 +494,17 @@ function matchRow(m, day, mineTeam, t, playersMode) {
   const body = `${time}<div class="m-teams">${team(m.home, 0)}${team(m.away, 1)}</div>${score}`;
   if (!me) return `<div class="m ${ms.s}">${body}</div>`;
   let cta = '';
-  if (ms.s === 'sched' && st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${at(mDate(m, day), m.kickoff)}"><span class="l">+ прогноз</span><span class="tm num" data-left></span></button>`;
+  if (ms.s === 'sched' && st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${at(mDate(m, day), m.kickoff)}"><span class="l">${I.game}Прогноз</span><span class="tm num" data-left></span></button>`;
   else if (ms.s === 'sched' && st.kind === 'squad') cta = `<button class="act squad" data-act="squad" data-deadline="${deadlineOf(t, day)}"><span class="l">${I.gavel}Попасть в состав</span><span class="tm num" data-left></span></button><span class="hint">${esc(st.text)}</span>`;
   return `<div class="m me ${ms.s}"><span class="ring" aria-hidden="true"></span>${body}${cta ? `<div class="me-cta">${cta}</div>` : ''}</div>`;
 }
 
+const SHOW = 5;
+function listHTML(key, rows) {
+  if (rows.length <= SHOW + 1) return rows.join('');
+  const all = state.more.has(key);
+  return (all ? rows : rows.slice(0, SHOW)).join('') + `<button class="more" data-more="${key}" aria-expanded="${all}">${all ? 'Свернуть' : `Показать все ${rows.length}`}${I.chevron}</button>`;
+}
 function big5Body(t, day) {
   const side = state.big5Side[t.id] || t.mineSide || 'West';
   const tabs = ['West', 'East'].map(s => `<button role="tab" data-side="${s}" aria-selected="${s === side}">${s}${t.mineSide === s ? '<span class="me-dot" aria-label="твоя конференция"></span>' : ''}</button>`).join('');
@@ -466,7 +515,7 @@ function big5Body(t, day) {
     return `<section class="lg ${open ? 'open' : ''} ${lg.mine ? 'me' : ''}">
       <button class="lg-h" data-lg="${key}" aria-expanded="${open}"><span class="ico"><img src="${esc(t.icon)}" alt=""></span>
         <span class="nm">${t.color} BIG 5 ${side} — Лига ${lg.liga}</span>${countHTML(lg.matches.length, live)}${I.chevron}</button>
-      <div class="lg-b"><div>${lg.matches.map(m => matchRow(m, day, lg.team, t, false)).join('')}<button class="row-link" data-table>${I.table}<span class="sp">Таблица</span>${I.right}</button></div></div></section>`;
+      <div class="lg-b"><div>${listHTML(key, lg.matches.map(m => matchRow(m, day, lg.team, t, false)))}<button class="row-link" data-table>${I.table}<span class="sp">Таблица</span>${I.right}</button></div></div></section>`;
   }).join('');
   return `<div class="seg" role="tablist">${tabs}</div>${lgs}`;
 }
@@ -481,17 +530,18 @@ function cardHTML(t, day) {
   else if (t.bgTint) art = `<div style="background:${t.bgTint}"></div>`;
   const icon = t.icon ? `<img class="${t.iconLogo ? 'logo' : ''}" src="${esc(t.icon)}" alt="">` : (t.iconSvg || I.ball);
   let body = '';
-  if (open) {
+  if (open && t.type === 'custom') body = `<div class="matches">${listHTML(t.id, t.matches.map(m => matchRow(m, day, null, t, false)))}</div>`;
+  else if (open) {
     if (real) body += `<div class="sw-row"><button class="sw" role="switch" data-sw aria-checked="${playersMode}" aria-label="Результаты игроков BofP"><span class="k">${playersMode ? `<img src="${A}switch-on.webp" alt="">` : I.globe}</span></button>
       <span class="sw-note ${playersMode ? 'on' : ''}">${playersMode ? 'Результаты игроков BofP' : 'Реальные результаты'}</span></div>`;
     body += timelineHTML(t, day);
     body += t.type === 'big5' ? big5Body(t, day)
-      : `<div class="matches">${t.matches.map(m => matchRow(m, day, t.mineTeam, t, playersMode)).join('')}</div><button class="row-link" data-table>${I.table}<span class="sp">${t.type === 'tennis' ? 'Сетка турнира' : t.stages.length > 6 ? 'Сетка и таблица' : 'Таблица'}</span>${I.right}</button>`;
+      : `<div class="matches">${listHTML(t.id, t.matches.map(m => matchRow(m, day, t.mineTeam, t, playersMode)))}</div><button class="row-link" data-table>${I.table}<span class="sp">${t.type === 'tennis' ? 'Сетка турнира' : t.stages.length > 6 ? 'Сетка и таблица' : 'Таблица'}</span>${I.right}</button>`;
   }
   const act = actionOf(t, day);
-  return `<article class="t glass ${t.mineTeam ? 'mine' : ''} ${open ? 'open' : ''} ${real ? '' : 'series'}" data-id="${t.id}" ${act ? `data-action="${act}"` : ''}>
+  return `<article class="t ${t.type === 'custom' ? 'plain' : 'glass'} ${t.mineTeam ? 'mine' : ''} ${open ? 'open' : ''} ${real ? '' : 'series'} ${act === 'squad' ? 'alarm' : ''}" data-id="${t.id}" ${act ? `data-action="${act}"` : ''}>
     ${t.mineTeam ? '<span class="ring" aria-hidden="true"></span>' : ''}
-    <div class="t-art" aria-hidden="true">${art}</div>
+    ${art ? `<div class="t-art" aria-hidden="true">${art}</div>` : ''}
     <div class="t-head" data-toggle>
       <button class="t-icon" data-screen aria-label="Открыть турнир ${esc(t.name)}">${icon}</button>
       <div class="t-main"><span class="t-title" title="${esc(t.name)}">${esc(t.short)}</span><span class="t-meta">${esc(t.sub)}</span></div>
@@ -535,21 +585,25 @@ function movePad(animate) {
 }
 function renderSports() {
   $('#sports').innerHTML = [['foot', 'Футбол', I.ball], ['tennis', 'Теннис', I.tennis]]
-    .map(([k, l, ic]) => `<button class="chip" data-sport="${k}" aria-pressed="${state.sports.has(k)}">${ic}${l}</button>`).join('');
+    .map(([k, l, ic]) => `<button class="chip" data-sport="${k}" aria-pressed="${state.sports.has(k)}" aria-label="${l}" title="${l}">${ic}</button>`).join('');
 }
 
-function section(key, title, cards, day, icon) {
+function section(key, title, cards, day, icon, pre = '') {
   const hot = cards.some(c => c.mineTeam && (statusOf(c, day) || allMatches(c).some(m => isMine(m, c.mineTeam))));
   const folded = state.folded.has(key);
   return `<button class="section-h ${hot ? 'hot' : ''}" data-fold="${key}" aria-expanded="${!folded}">${icon ? `<span class="ic">${icon}</span>` : ''}<span>${title}</span><span class="n num">${cards.length}</span><span class="rule"></span>${I.chevron}</button>
-    <div class="cards" ${folded ? 'hidden' : ''}>${cards.map(x => cardHTML(x, day)).join('')}</div>`;
+    <div class="cards" ${folded ? 'hidden' : ''}>${pre}${cards.map(x => cardHTML(x, day)).join('')}</div>`;
 }
 function renderList() {
   const day = state.day, t = tournamentsFor(day), parts = [];
   if (t.real.length) parts.push(section('real', 'Турниры', t.real, day));
   if (t.series.length) parts.push(section('series', 'BofP Series', t.series, day));
-  if (t.night.length) parts.push(section('night', 'Ночные турниры', t.night, day, I.moon));
-  if (!parts.length) parts.push(`<p class="empty">${state.sports.size ? 'В этот день матчей нет.<br>Выбери другую дату в календаре.' : 'Выбери вид спорта: футбол или теннис.'}</p>`);
+  if (t.night.length) {
+    const auction = t.night.some(c => actionOf(c, day) === 'squad');
+    parts.push(section('night', auction ? 'Ночные турниры и аукцион' : 'Ночные турниры', t.night, day, auction ? `${I.moon}${I.gavel}` : I.moon));
+  }
+  parts.push(section('custom', 'Пользовательские', t.custom, day, I.user, `<button class="create" data-create>${I.plus}Создать турнир</button>`));
+  if (parts.length === 1) parts.unshift(`<p class="empty">${state.sports.size ? 'В этот день матчей нет.<br>Выбери другую дату в календаре.' : 'Выбери вид спорта: футбол или теннис.'}</p>`);
   $('#list').innerHTML = parts.join('');
   tick();
   requestAnimationFrame(updateHint);
@@ -574,7 +628,7 @@ function centerDay(smooth) {
 /* ---------- "action below" hint ---------- */
 function hiddenActions() {
   const sc = $('#scroll'), limit = sc.getBoundingClientRect().bottom - 96;
-  return [...document.querySelectorAll('.t[data-action]')].filter(el => el.offsetParent && el.getBoundingClientRect().top > limit);
+  return [...document.querySelectorAll('.t[data-action]')].filter(el => !el.offsetParent || el.getBoundingClientRect().top > limit);
 }
 function updateHint() {
   const below = hiddenActions(), btn = $('#hintDn');
@@ -587,8 +641,8 @@ function updateHint() {
   const key = [...kinds].sort().join();
   if (btn.dataset.k !== key) {
     btn.dataset.k = key;
-    const label = kinds.has('squad') && kinds.has('predict') ? 'Прогноз и аукцион ниже' : kinds.has('squad') ? 'Аукцион: попади в состав' : 'Прогноз ниже';
-    btn.innerHTML = `<span class="arr">${I.down}</span>${kinds.has('predict') ? I.game : ''}${kinds.has('squad') ? I.gavel : ''}<span>${label}</span>`;
+    btn.setAttribute('aria-label', kinds.has('squad') && kinds.has('predict') ? 'Ниже: прогноз и аукцион' : kinds.has('squad') ? 'Ниже: аукцион, попади в состав' : 'Ниже: нужен прогноз');
+    btn.innerHTML = `<span class="arr">${I.down}</span>${kinds.has('predict') ? I.game : ''}${kinds.has('squad') ? I.gavel : ''}`;
   }
 }
 
@@ -614,8 +668,15 @@ function rerenderCard(id, animate) {
 }
 
 /* ================= catalog drawer ================= */
+const big5Tree = c => ({ t: `${c} BIG 5`, img: `${A}${c.toLowerCase()}-big-5-logo.webp`, kids: ['West', 'East'].map(s => ({ t: s, kids: [1, 2, 3].map(l => `${c} BIG 5 ${s} — Лига ${l}`) })) });
+const groups = (L, n) => Array.from({ length: n }, (_, i) => `Группа ${L}${i + 1}`);
 const CATALOG = {
   foot: [
+    { g: 'BofP Series', items: [
+      ...['Green', 'Red', 'Yellow', 'Blue'].map(big5Tree),
+      { t: 'Night BIG 5', img: `${A}blue-big-5-logo.webp`, kids: ['West', 'East'].map(s => ({ t: s, kids: [1, 2, 3].map(l => `Night BIG 5 ${s} — Лига ${l}`) })) },
+      { t: 'Random Cup', icon: I.dice },
+    ] },
     { g: 'Еврокубки', items: [
       { t: 'BFP Еврокубки', icon: I.crown, kids: ['BFP Champions League', 'BFP Europa League', 'BFP Conference League'] },
       { t: 'Альянс Еврокубки', icon: I.shield, kids: ['Alliance Champions League', 'Alliance Europa League', 'Alliance Conference League'] },
@@ -628,14 +689,16 @@ const CATALOG = {
       { t: 'Италия', flag: 'it', kids: ['Серия А', 'Серия B', 'Кубок Италии'] },
       { t: 'Франция', flag: 'fr', kids: ['Лига 1', 'Лига 2', 'Кубок Франции'] },
       { t: 'Турция', flag: 'tr', kids: ['Суперлига', 'Кубок Турции'] },
+      { t: 'Португалия', flag: 'pt', kids: ['Примейра', 'Кубок Португалии'] },
       { t: 'Бельгия', flag: 'be', kids: ['Про-лига', 'Кубок Бельгии'] },
       { t: 'Нидерланды', flag: 'nl', kids: ['Эредивизи', 'Кубок Нидерландов'] },
     ] },
     { g: 'Сборные и международные', items: [
       { t: 'FIFA', icon: I.globe, kids: ['Чемпионат мира', 'Клубный чемпионат мира', 'Товарищеские матчи сборных', 'Клубные товарищеские матчи'] },
-      { t: 'UEFA', flag: 'eu', kids: ['Чемпионат Европы', 'Лига наций УЕФА'] },
-      { t: 'CONMEBOL', flag: 'conmebol', kids: ['Кубок Америки'] },
-      { t: 'CONCACAF', icon: I.globe, kids: ['Золотой кубок КОНКАКАФ', 'Лига наций КОНКАКАФ'] },
+      { t: 'UEFA', flag: 'eu', kids: ['Чемпионат Европы', { t: 'Лига наций УЕФА', kids: [
+        { t: 'Лига A', kids: groups('A', 4) }, { t: 'Лига B', kids: groups('B', 4) }, { t: 'Лига C', kids: groups('C', 4) }, { t: 'Лига D', kids: groups('D', 2) }] }] },
+      { t: 'CONMEBOL', flag: 'conmebol', kids: ['Кубок Америки', 'Кубок Либертадорес'] },
+      { t: 'CONCACAF', icon: I.globe, kids: ['Золотой кубок КОНКАКАФ', { t: 'Лига наций КОНКАКАФ', kids: [{ t: 'Лига A', kids: groups('A', 2) }, { t: 'Лига B', kids: groups('B', 4) }, { t: 'Лига C', kids: groups('C', 2) }] }] },
       { t: 'AFC', icon: I.globe, kids: ['Кубок Азии'] },
       { t: 'CAF', icon: I.globe, kids: ['Кубок африканских наций'] },
       { t: 'OFC', icon: I.globe, kids: ['Кубок наций ОФК'] },
@@ -643,31 +706,40 @@ const CATALOG = {
   ],
   tennis: [
     { g: 'Мужчины · ATP / ITF', items: [
-      { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open', 'Roland Garros', 'Wimbledon', 'US Open'] },
-      { t: 'ATP Masters 1000', icon: I.tennis }, { t: 'ATP 500', icon: I.tennis }, { t: 'ATP 250', icon: I.tennis },
+      { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open · Мельбурн', 'Roland Garros · Париж', 'Wimbledon · Лондон', 'US Open · Нью-Йорк'] },
+      { t: 'ATP Masters 1000', icon: I.tennis, kids: ['Индиан-Уэллс', 'Майами', 'Монте-Карло', 'Мадрид', 'Рим', 'Канада', 'Цинциннати', 'Шанхай', 'Париж'] },
+      { t: 'ATP 500', icon: I.tennis, kids: ['Роттердам', 'Рио-де-Жанейро', 'Дубай', 'Акапулько', 'Барселона', 'Мюнхен', 'Галле', 'Лондон (Queen’s)', 'Гамбург', 'Вашингтон', 'Пекин', 'Токио', 'Базель', 'Вена'] },
+      { t: 'ATP 250', icon: I.tennis, kids: ['Брисбен', 'Гонконг', 'Окленд', 'Аделаида', 'Монпелье', 'Даллас', 'Марсель', 'Дели', 'Доха', 'Буэнос-Айрес', 'Лос-Кабос', 'Сантьяго', 'Хьюстон', 'Марракеш', 'Бухарест', 'Женева', 'Лион', 'Штутгарт', 'Хертогенбос', 'Мальорка', 'Истборн', 'Бастад', 'Гштаад', 'Умаг', 'Атланта', 'Кицбюэль', 'Уинстон-Сейлем', 'Чэнду', 'Ханчжоу', 'Алматы', 'Антверпен', 'Стокгольм', 'Белград', 'Мец'] },
       { t: 'ATP Challenger', icon: I.tennis, kids: ['Challenger 175', 'Challenger 125', 'Challenger 100', 'Challenger 75', 'Challenger 50'] },
       { t: 'ITF Men', sm: 'World Tennis Tour', icon: I.tennis },
     ] },
     { g: 'Женщины · WTA / ITF', items: [
-      { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open', 'Roland Garros', 'Wimbledon', 'US Open'] },
-      { t: 'WTA 1000', icon: I.tennis }, { t: 'WTA 500', icon: I.tennis }, { t: 'WTA 250', icon: I.tennis }, { t: 'WTA 125', icon: I.tennis },
+      { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open · Мельбурн', 'Roland Garros · Париж', 'Wimbledon · Лондон', 'US Open · Нью-Йорк'] },
+      { t: 'WTA 1000', icon: I.tennis, kids: ['Доха', 'Дубай', 'Индиан-Уэллс', 'Майами', 'Мадрид', 'Рим', 'Торонто', 'Цинциннати', 'Пекин', 'Ухань'] },
+      { t: 'WTA 500', icon: I.tennis, kids: ['Брисбен', 'Аделаида', 'Абу-Даби', 'Сан-Диего', 'Чарльстон', 'Штутгарт', 'Берлин', 'Истборн', 'Вашингтон', 'Монтеррей', 'Сеул', 'Токио', 'Нинбо'] },
+      { t: 'WTA 250', icon: I.tennis, kids: ['Окленд', 'Хобарт', 'Хуа Хин', 'Линц', 'Клуж-Напока', 'Мерида', 'Остин', 'Боготá', 'Руан', 'Страсбург', 'Рабат', 'Хертогенбос', 'Ноттингем', 'Бирмингем', 'Бад-Хомбург', 'Палермо', 'Прага', 'Кливленд', 'Гвадалахара', 'Монастир', 'Осака', 'Гонконг'] },
+      { t: 'WTA 125', icon: I.tennis, kids: ['Барранкилья', 'Париж', 'Флорианополис', 'Лимож', 'Мумбаи', 'Анже'] },
       { t: 'ITF Women', sm: 'World Tennis Tour', icon: I.tennis },
     ] },
   ],
 };
+function treeHTML(items, key, depth) {
+  return items.map((it, i) => {
+    const node = typeof it === 'string' ? { t: it } : it, k = `${key}.${i}`, has = !!(node.kids && node.kids.length);
+    const open = state.drOpen.has(k);
+    const lead = node.flag ? `<span class="fl">${FLAGS[node.flag]}</span>` : node.img ? `<span class="fl ic"><img src="${esc(node.img)}" alt=""></span>`
+      : depth === 0 ? `<span class="fl ic"><span class="g">${node.icon || I.cup}</span></span>` : '';
+    return `<button class="node d${Math.min(depth, 3)}" ${has ? `data-dnode="${k}" aria-expanded="${open}"` : 'data-leaf'}>${lead}<span class="tx">${node.sm ? `<span class="sm">${esc(node.sm)}</span>` : ''}<span class="nm">${esc(node.t)}</span></span>${has ? I.chevron : I.right}</button>
+      ${has ? `<div class="kids" ${open ? '' : 'hidden'}>${treeHTML(node.kids, k, depth + 1)}</div>` : ''}`;
+  }).join('');
+}
 function renderDrawer() {
   const sport = state.drSport, groups = CATALOG[sport];
-  const node = (it, key) => {
-    const has = it.kids && it.kids.length, open = state.drOpen.has(key);
-    const fl = it.flag ? FLAGS[it.flag] : `<span class="g">${it.icon || I.cup}</span>`;
-    return `<button class="node" ${has ? `data-dnode="${key}" aria-expanded="${open}"` : 'data-leaf'}><span class="fl">${fl}</span><span class="tx">${it.sm ? `<span class="sm">${esc(it.sm)}</span>` : ''}<span class="nm">${esc(it.t)}</span></span>${has ? I.chevron : I.right}</button>
-      ${has ? `<div class="kids" ${open ? '' : 'hidden'}>${it.kids.map(k => `<button class="node" data-leaf><span class="tx"><span class="nm">${esc(k)}</span></span>${I.right}</button>`).join('')}</div>` : ''}`;
-  };
   $('#drawer').innerHTML = `<div class="dr-h"><h2>Все турниры</h2><button class="icon-btn" data-close aria-label="Закрыть">${I.close}</button></div>
     <div class="seg dr-seg" role="tablist">${[['foot', 'Футбол'], ['tennis', 'Теннис']].map(([k, l]) => `<button role="tab" data-drsport="${k}" aria-selected="${k === sport}">${l}</button>`).join('')}</div>
     <div class="dr-body">${groups.map((g, gi) => {
       const key = `${sport}g${gi}`, open = !state.drOpen.has('x' + key);
-      return `<button class="band" data-band="${key}" aria-expanded="${open}"><span>${esc(g.g)}</span>${I.chevron}</button><div ${open ? '' : 'hidden'}>${g.items.map((it, ii) => node(it, `${key}i${ii}`)).join('')}</div>`;
+      return `<button class="band" data-band="${key}" aria-expanded="${open}"><span>${esc(g.g)}</span>${I.chevron}</button><div ${open ? '' : 'hidden'}>${treeHTML(g.items, key, 0)}</div>`;
     }).join('')}</div>`;
 }
 function setDrawer(open) {
@@ -675,7 +747,15 @@ function setDrawer(open) {
   $('#scrim').classList.toggle('show', open);
   $('#drawer').setAttribute('aria-hidden', !open);
   $('#catalogBtn').setAttribute('aria-expanded', open);
-  if (open) { renderDrawer(); setTimeout(() => $('#drawer [data-close]').focus(), 50); }
+  if (open) { if (!$('#drawer').firstChild) renderDrawer(); setTimeout(() => $('#drawer [data-close]').focus({ preventScroll: true }), 50); }
+}
+/* expand in place so the list keeps its scroll position */
+function toggleIn(btn, key, openKeyIsCollapse) {
+  const box = btn.nextElementSibling, open = box.hidden;
+  box.hidden = !open;
+  btn.setAttribute('aria-expanded', open);
+  const k = openKeyIsCollapse ? 'x' + key : key;
+  (open !== openKeyIsCollapse) ? state.drOpen.add(k) : state.drOpen.delete(k);
 }
 
 /* ================= events ================= */
@@ -697,6 +777,7 @@ function bind() {
     if (!b) return;
     const k = b.dataset.sport;
     state.sports.has(k) ? state.sports.delete(k) : state.sports.add(k);
+    CACHE.clear();
     b.setAttribute('aria-pressed', state.sports.has(k));
     renderList();
   });
@@ -704,6 +785,8 @@ function bind() {
   $('#hintDn').addEventListener('click', () => {
     const el = hiddenActions()[0];
     if (!el) return;
+    const box = el.parentElement;
+    if (box.hidden) { box.hidden = false; const h = box.previousElementSibling; state.folded.delete(h.dataset.fold); h.setAttribute('aria-expanded', 'true'); }
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
   });
@@ -718,9 +801,12 @@ function bind() {
       updateHint();
       return;
     }
+    if (e.target.closest('[data-create]')) { toast('Откроется мастер создания турнира'); return; }
     const card = e.target.closest('.t');
     if (!card) return;
     const id = card.dataset.id;
+    const more = e.target.closest('[data-more]');
+    if (more) { const k = more.dataset.more; state.more.has(k) ? state.more.delete(k) : state.more.add(k); rerenderCard(id); return; }
     const act = e.target.closest('[data-act]');
     if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на твой матч' : 'Откроется аукцион: выкупи место в составе до дедлайна'); return; }
     if (e.target.closest('[data-screen]')) { toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
@@ -738,7 +824,7 @@ function bind() {
       return;
     }
     if (e.target.closest('[data-table]')) { toast('Таблица турнира — отдельный экран'); return; }
-    if (e.target.closest('[data-toggle]')) { state.open.has(id) ? state.open.delete(id) : state.open.add(id); rerenderCard(id, true); }
+    if (e.target.closest('[data-toggle]')) { state.open.has(id) ? state.open.delete(id) : state.open.add(id); delete state.stage[id]; rerenderCard(id, true); }
   });
 
   $('#catalogBtn').addEventListener('click', () => setDrawer(true));
@@ -749,9 +835,9 @@ function bind() {
     const sp = e.target.closest('[data-drsport]');
     if (sp) { state.drSport = sp.dataset.drsport; renderDrawer(); return; }
     const band = e.target.closest('[data-band]');
-    if (band) { const k = 'x' + band.dataset.band; state.drOpen.has(k) ? state.drOpen.delete(k) : state.drOpen.add(k); renderDrawer(); return; }
+    if (band) { toggleIn(band, band.dataset.band, true); return; }
     const dn = e.target.closest('[data-dnode]');
-    if (dn) { const k = dn.dataset.dnode; state.drOpen.has(k) ? state.drOpen.delete(k) : state.drOpen.add(k); renderDrawer(); return; }
+    if (dn) { toggleIn(dn, dn.dataset.dnode, false); return; }
     const leaf = e.target.closest('[data-leaf]');
     if (leaf) toast(`Откроется экран турнира «${leaf.querySelector('.nm').textContent}»`);
   });
