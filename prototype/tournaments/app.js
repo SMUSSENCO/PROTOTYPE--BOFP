@@ -7,6 +7,7 @@ const I = {
   right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+  rank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 21V9h6v12M3 21v-7h6M15 21v-9.5h6V21M2 21h20"/><path d="m12 2.5.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 4.6l2-.3z"/></svg>',
   table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3.5 5 5 4v4M3.5 11.5h2.2l-2.2 2.5h2.2M3.5 17h2.2v4H3.5M3.8 19h1.9"/></svg>',
   globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg>',
   trophy: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3zm0 4H6v1a2 2 0 0 0 1 1.7zm10 0v2.7A2 2 0 0 0 18 8V7z"/></svg>',
@@ -145,7 +146,7 @@ const BIG5_STAGES = [
   { n: 'Тур 5', f: '2024-08-16', t: '2024-08-16', ms: [] },
   { n: 'Тур 10 · экватор', f: '2024-08-21', t: '2024-08-21', ms: [] },
   { n: 'Тур 15', f: '2024-08-26', t: '2024-08-26', ms: [] },
-  { n: 'Тур 19 · финиш', f: '2024-08-30', t: '2024-08-30', ms: ['Топ-2 поднимаются в лигу выше', 'Два последних — вниз'], final: true },
+  { n: 'Тур 19 · финиш', f: '2024-08-30', t: '2024-08-30', ms: [], final: true },
   { n: 'Аукцион', f: '2024-08-31', t: '2024-08-31', ms: ['Последний день месяца: торги за игроков на следующий месяц'], auction: true },
 ];
 const RANDOM_STAGES = [
@@ -249,9 +250,15 @@ const BUFFS = [
   { f: 'shield-golden-double', t: 'Бафф «Двойной щит»' }, { f: 'card-red', t: 'Красная карточка', card: true },
 ];
 
-/* tennis: real 125+ events of the window, played by pairs of BofP users */
-const SURN = ['Смусенко', 'Ахметов', 'Ким', 'Орлова', 'Жумабаев', 'Лисицына', 'Нурланов', 'Беляев', 'Сейткали', 'Гарипова', 'Томпсон', 'Мукашев', 'Руденко', 'Есенова',
-  'Каримов', 'Полякова', 'Абдрахман', 'Чен', 'Дюсенов', 'Соколова', 'Иманбаев', 'Литвин', 'Оспанова', 'Гуревич', 'Тулегенов', 'Власова', 'Бекмуханов', 'Зайцева'];
+/* tennis: real 125+ events of the window; the switch shows BofP players' points instead of sets */
+const PLAYERS = {
+  ATP: ['Я. Синнер', 'К. Алькарас', 'А. Зверев', 'Д. Медведев', 'Т. Фриц', 'К. Рууд', 'Н. Джокович', 'А. де Минаур', 'А. Рублёв', 'Г. Димитров', 'Т. Пол', 'Х. Хуркач',
+    'Б. Шелтон', 'Х. Руне', 'С. Циципас', 'К. Хачанов', 'У. Умбер', 'Ф. Тиафо', 'С. Корда', 'Л. Музетти', 'А. Попырин', 'Ф. Коболли', 'Дж. Дрейпер', 'Ф. Оже-Альяссим',
+    'Л. Сонего', 'Ф. Черундоло', 'А. Фильс', 'Т. Махач', 'И. Лехечка', 'Н. Харри', 'Б. Накашима', 'Ё. Нисиока'],
+  WTA: ['И. Швёнтек', 'А. Соболенко', 'К. Гауфф', 'Е. Рыбакина', 'Я. Паолини', 'Чжэн Циньвэнь', 'Дж. Пегула', 'М. Андреева', 'Б. Крейчикова', 'Д. Коллинз', 'М. Киз',
+    'Е. Остапенко', 'Д. Касаткина', 'Л. Самсонова', 'Э. Наварро', 'Б. Хаддад Майя', 'А. Калинская', 'Д. Векич', 'М. Вондроушова', 'Л. Носкова', 'Д. Шнайдер', 'К. Мухова',
+    'В. Азаренко', 'Э. Свитолина', 'М. Костюк', 'Ю. Путинцева', 'А. Павлюченкова', 'Л. Фернандес', 'П. Бадоса', 'Э. Радукану', 'М. Саккари', 'Э. Мертенс'],
+};
 const TENNIS_PRICE = { 'WTA 125': 20000, 'Challenger 125': 20000, 'Challenger 175': 25000, 'ATP 250': 40000, 'WTA 250': 40000, 'ATP 500': 80000, 'WTA 500': 80000,
   'Masters 1000': 150000, 'WTA 1000': 150000, 'Grand Slam': 300000 };
 const ROUND_SIZE = { 'Финал': 1, '1/2 финала': 2, '1/4 финала': 4, '1/8 финала': 8 };
@@ -278,14 +285,22 @@ function matchState(m, day, playersMode) {
   const d = mDate(m, day), ko = at(d, m.kickoff), el = (now() - ko) / 60000;
   const long = m.tennis ? 150 : 112;
   let final = m.bofp || playersMode ? fakeScore((playersMode && !m.bofp ? 'p' : '') + m.id) : m.score;
-  if (m.tennis) final = m.sets;
+  // tennis: real sets, or BofP players' points (0–100) when the switch is on
+  if (m.tennis) final = playersMode ? tennisPts(m.id) : m.sets;
   if (d < TODAY || (d === TODAY && el > long)) return { s: 'done', score: final };
   if (d > TODAY || el < 0) return { s: 'sched' };
-  if (m.tennis) { const n = Math.min(m.sets.length, 1 + Math.floor(el / 45)); return { s: 'live', min: `${n}-й сет`, score: m.sets.slice(0, n) }; }
+  if (m.tennis && playersMode) { const f = Math.min(1, el / long); return { s: 'live', min: 'Live', score: final.map(v => Math.round(v * f)) }; }
+  if (m.tennis) return { s: 'live', min: 'Live', score: m.sets.slice(0, Math.min(m.sets.length, 1 + Math.floor(el / 45))) };
   const min = el <= 45 ? Math.max(1, Math.ceil(el)) : el < 60 ? 'Пер.' : Math.min(90, Math.ceil(el - 15));
   const cur = typeof min === 'number' ? min : 45;
   const score = (final || [0, 0]).map((g, k) => { let n = 0; for (let i = 0; i < g; i++) if (1 + hash(`${m.id}|${k}|${i}`) % 90 <= cur) n++; return n; });
   return { s: 'live', min: typeof min === 'number' ? `${min}'` : min, score };
+}
+
+function tennisPts(id) {
+  const a = 12 + hash(id + '|pa') % 89; let b = 12 + hash(id + '|pb') % 89;
+  if (b === a) b = a > 50 ? a - 7 : a + 7;
+  return [a, b];
 }
 
 function mergeReal(a, b) {
@@ -344,12 +359,13 @@ function tennisCards(day) {
     if (!round) continue;
     const n = ROUND_SIZE[round] || 8;
     const r = rng(t.id + day);
-    const pairs = Array.from({ length: n * 2 }, () => { const a = SURN[Math.floor(r() * SURN.length)]; let b = SURN[Math.floor(r() * SURN.length)]; if (b === a) b = SURN[(SURN.indexOf(a) + 3) % SURN.length]; return `${a} / ${b}`; });
+    const pool = [...(PLAYERS[t.tour] || PLAYERS.ATP)], players = [];
+    while (players.length < n * 2 && pool.length) players.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
     const matches = Array.from({ length: n }, (_, i) => {
       const id = `${t.id}-${day}-${i}`, rr = rng(id), three = rr() < .4, firstWins = rr() < .5;
       const set = w => { const lo = Math.floor(rr() * 5); return w ? [6, lo] : [lo, 6]; };
       const seq = three ? [firstWins, !firstWins, firstWins] : [firstWins, firstWins];
-      return { id, comp: t.id, round, home: pairs[i * 2], away: pairs[i * 2 + 1], kickoff: ['17:00', '18:30', '20:00', '21:30', '23:00'][i % 5], tennis: true, bofp: true, sets: seq.map(set) };
+      return { id, comp: t.id, round, home: players[i * 2], away: players[i * 2 + 1], kickoff: ['17:00', '18:30', '20:00', '21:30', '23:00'][i % 5], tennis: true, sets: seq.map(set) };
     });
     const stages = Object.entries(t.days).sort().map(([d, rn], i, arr) => ({ n: rn, f: d, t: d, ms: [], final: i === arr.length - 1 && rn === 'Финал' }));
     if (!stages.length || stages[0].f > t.start) stages.unshift({ n: 'Старт турнира', f: t.start, t: t.start, ms: [`Сетка на ${t.drawSize || '—'} участников`, t.surface || ''].filter(Boolean) });
@@ -504,7 +520,7 @@ function matchRow(m, day, mineTeam, t, playersMode) {
   let score = '';
   if (ms.score) {
     const fin = ms.s === 'done';
-    if (m.tennis) {
+    if (m.tennis && !playersMode) {
       const row = k => ms.score.map(([a, b]) => { const v = k ? b : a, o = k ? a : b; return `<span class="set ${fin && v < o ? 'lose' : ''}">${v}</span>`; }).join('');
       score = `<div class="m-sc num ${ms.s}"><span>${row(0)}</span><span>${row(1)}</span></div>`;
     } else {
@@ -512,7 +528,7 @@ function matchRow(m, day, mineTeam, t, playersMode) {
       score = `<div class="m-sc num ${ms.s}"><span class="${fin && h < a ? 'lose' : ''}">${h}</span><span class="${fin && a < h ? 'lose' : ''}">${a}</span>${m.pens ? `<span class="pen">пен. ${m.pens.join(':')}</span>` : ''}</div>`;
     }
   }
-  const won = k => { if (ms.s !== 'done' || !ms.score) return true; if (m.tennis) { const w = ms.score.filter(([a, b]) => (k ? b > a : a > b)).length; return w * 2 > ms.score.length; } return ms.score[k] >= ms.score[1 - k]; };
+  const won = k => { if (ms.s !== 'done' || !ms.score) return true; if (m.tennis && !playersMode) { const w = ms.score.filter(([a, b]) => (k ? b > a : a > b)).length; return w * 2 > ms.score.length; } return ms.score[k] >= ms.score[1 - k]; };
   const showBuffs = ms.s === 'live' && (m.bofp || playersMode);
   const team = (name, k) => {
     let extra = '';
@@ -548,10 +564,13 @@ function big5Body(t, day) {
   }).join('');
   return `<div class="seg" role="tablist">${tabs}</div>${lgs}`;
 }
+/* the switch: real results vs BofP players; national leagues start on BofP */
+const CUP_CODES = ['usc', 'ucl', 'uel', 'uecl', 'lib'];
+const modeOf = t => t.type !== 'real' && t.type !== 'tennis' ? false : t.id in state.mode ? state.mode[t.id] : t.type === 'real' && !CUP_CODES.includes(t.id) && !t.auction;
 const countHTML = (n, live) => `<span class="cnt-wrap num">${n}${live ? `<b class="lv" aria-label="в эфире ${live}">${live}</b>` : ''}</span>`;
 
 function cardHTML(t, day) {
-  const open = state.open.has(t.id), real = t.type === 'real', playersMode = real && !!state.mode[t.id];
+  const open = state.open.has(t.id), real = t.type === 'real', playersMode = modeOf(t);
   const ms = allMatches(t), live = ms.filter(m => matchState(m, day, playersMode).s === 'live').length;
   let art = '';
   if (t.bg) art = `<img src="${esc(t.bg)}" alt="">`;
@@ -561,7 +580,7 @@ function cardHTML(t, day) {
   let body = '';
   if (open && t.type === 'custom') body = `<div class="matches">${listHTML(t.id, t.matches.map(m => matchRow(m, day, null, t, false)))}</div>`;
   else if (open) {
-    if (real) body += `<div class="sw-row"><button class="sw" role="switch" data-sw aria-checked="${playersMode}" aria-label="Результаты игроков BofP"><span class="k">${playersMode ? `<img src="${A}switch-on.webp" alt="">` : I.globe}</span></button>
+    if (real || t.type === 'tennis') body += `<div class="sw-row"><button class="sw" role="switch" data-sw aria-checked="${playersMode}" aria-label="Результаты игроков BofP"><span class="k">${playersMode ? `<img src="${A}switch-on.webp" alt="">` : I.globe}</span></button>
       <span class="sw-note ${playersMode ? 'on' : ''}">${playersMode ? 'Результаты игроков BofP' : 'Реальные результаты'}</span></div>`;
     body += timelineHTML(t, day);
     body += t.type === 'big5' ? big5Body(t, day)
@@ -708,13 +727,14 @@ const CATALOG = {
     { g: 'BofP Series', items: [
       ...['Green', 'Red', 'Yellow', 'Blue'].map(big5Tree),
       { t: 'Random Cup', icon: I.dice },
+      { t: 'Сборные Альянсов', icon: I.shield },
     ] },
     { g: 'Еврокубки', items: [
       { t: 'BofP Еврокубки', icon: I.crown, kids: ['BofP Champions League', 'BofP Europa League', 'BofP Conference League', 'BofP Super Cup'] },
       { t: 'Альянс Еврокубки', icon: I.shield, kids: ['Alliance Champions League', 'Alliance Europa League', 'Alliance Conference League'] },
       { t: 'УЕФА Еврокубки', flag: 'eu', kids: ['UEFA Champions League', 'UEFA Europa League', 'UEFA Conference League', 'UEFA Super Cup'] },
     ] },
-    { g: 'Конференции · страновые лиги и кубки', items: [
+    { g: 'Конференции', items: [
       { t: 'Англия', flag: 'gb-eng', kids: ['АПЛ', 'Кубок Англии', 'Кубок Лиги', 'Суперкубок'] },
       { t: 'Испания', flag: 'es', kids: ['Ла Лига', 'Кубок Короля', 'Суперкубок'] },
       { t: 'Германия', flag: 'de', kids: ['Бундеслига', 'Кубок Германии'] },
@@ -725,7 +745,7 @@ const CATALOG = {
       { t: 'Бельгия', flag: 'be', kids: ['Про-лига', 'Кубок Бельгии'] },
       { t: 'Нидерланды', flag: 'nl', kids: ['Эредивизи', 'Кубок Нидерландов'] },
     ] },
-    { g: 'Сборные и международные', items: [
+    { g: 'Конфедерации — сборные', items: [
       { t: 'FIFA', icon: I.globe, kids: ['Чемпионат мира', 'Клубный чемпионат мира', 'Товарищеские матчи сборных'] },
       { t: 'UEFA', flag: 'eu', kids: ['Чемпионат Европы', { t: 'Лига наций УЕФА', kids: [
         { t: 'Лига A', kids: groups('A', 4) }, { t: 'Лига B', kids: groups('B', 4) }, { t: 'Лига C', kids: groups('C', 4) }, { t: 'Лига D', kids: groups('D', 2) }] }] },
@@ -736,30 +756,37 @@ const CATALOG = {
       { t: 'OFC', icon: I.globe, kids: ['Кубок наций ОФК'] },
     ] },
   ],
-  tennis: [
+  tennis: [],
+};
+/* tennis tree from data/tennis-catalog.json: [name, 'dd.mm-dd.mm'] per event */
+function tennisTree(c) {
+  const ev = list => (list || []).map(([t, dt]) => ({ t, dt }));
+  const a = c.atp || {}, w = c.wta || {};
+  return [
     { g: 'Мужчины · ATP', items: [
-      { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open · Мельбурн', 'Roland Garros · Париж', 'Wimbledon · Лондон', 'US Open · Нью-Йорк'] },
-      { t: 'ATP Masters 1000', icon: I.tennis, kids: ['Индиан-Уэллс', 'Майами', 'Монте-Карло', 'Мадрид', 'Рим', 'Канада', 'Цинциннати', 'Шанхай', 'Париж'] },
-      { t: 'ATP 500', icon: I.tennis, kids: ['Роттердам', 'Рио-де-Жанейро', 'Дубай', 'Акапулько', 'Барселона', 'Мюнхен', 'Галле', 'Лондон (Queen’s)', 'Гамбург', 'Вашингтон', 'Пекин', 'Токио', 'Базель', 'Вена'] },
-      { t: 'ATP 250', icon: I.tennis, kids: ['Брисбен', 'Гонконг', 'Окленд', 'Аделаида', 'Монпелье', 'Даллас', 'Марсель', 'Дели', 'Доха', 'Буэнос-Айрес', 'Лос-Кабос', 'Сантьяго', 'Хьюстон', 'Марракеш', 'Бухарест', 'Женева', 'Лион', 'Штутгарт', 'Хертогенбос', 'Мальорка', 'Истборн', 'Бастад', 'Гштаад', 'Умаг', 'Атланта', 'Кицбюэль', 'Уинстон-Сейлем', 'Чэнду', 'Ханчжоу', 'Алматы', 'Антверпен', 'Стокгольм', 'Белград', 'Мец'] },
-      { t: 'ATP Challenger', icon: I.tennis, kids: ['Challenger 175', 'Challenger 125', 'Challenger 100', 'Challenger 75', 'Challenger 50'] },
+      { t: 'Турниры Большого шлема', icon: I.crown, kids: ev(a.gs) },
+      { t: 'ATP Masters 1000', icon: I.tennis, kids: ev(a.m1000) },
+      { t: 'ATP 500', icon: I.tennis, kids: ev(a.a500) },
+      { t: 'ATP 250', icon: I.tennis, kids: ev(a.a250) },
+      { t: 'ATP Challenger', icon: I.tennis, kids: ['175', '125', '100', '75', '50'].map(k => ({ t: `Challenger ${k}`, kids: ev(a[`ch${k}`]) })) },
     ] },
     { g: 'Женщины · WTA', items: [
-      { t: 'Турниры Большого шлема', icon: I.crown, kids: ['Australian Open · Мельбурн', 'Roland Garros · Париж', 'Wimbledon · Лондон', 'US Open · Нью-Йорк'] },
-      { t: 'WTA 1000', icon: I.tennis, kids: ['Доха', 'Дубай', 'Индиан-Уэллс', 'Майами', 'Мадрид', 'Рим', 'Торонто', 'Цинциннати', 'Пекин', 'Ухань'] },
-      { t: 'WTA 500', icon: I.tennis, kids: ['Брисбен', 'Аделаида', 'Абу-Даби', 'Сан-Диего', 'Чарльстон', 'Штутгарт', 'Берлин', 'Истборн', 'Вашингтон', 'Монтеррей', 'Сеул', 'Токио', 'Нинбо'] },
-      { t: 'WTA 250', icon: I.tennis, kids: ['Окленд', 'Хобарт', 'Хуа Хин', 'Линц', 'Клуж-Напока', 'Мерида', 'Остин', 'Боготá', 'Руан', 'Страсбург', 'Рабат', 'Хертогенбос', 'Ноттингем', 'Бирмингем', 'Бад-Хомбург', 'Палермо', 'Прага', 'Кливленд', 'Гвадалахара', 'Монастир', 'Осака', 'Гонконг'] },
-      { t: 'WTA 125', icon: I.tennis, kids: ['Барранкилья', 'Париж', 'Флорианополис', 'Лимож', 'Мумбаи', 'Анже'] },
+      { t: 'Турниры Большого шлема', icon: I.crown, kids: ev(w.gs) },
+      { t: 'WTA 1000', icon: I.tennis, kids: ev(w.w1000) },
+      { t: 'WTA 500', icon: I.tennis, kids: ev(w.w500) },
+      { t: 'WTA 250', icon: I.tennis, kids: ev(w.w250) },
+      { t: 'WTA 125', icon: I.tennis, kids: ev(w.w125) },
     ] },
-  ],
-};
+  ];
+}
+const RATINGS = { foot: ['Рейтинг альянсов', 'Рейтинг сборных альянсов'], tennis: ['Теннисный рейтинг'] };
 function treeHTML(items, key, depth) {
   return items.map((it, i) => {
     const node = typeof it === 'string' ? { t: it } : it, k = `${key}.${i}`, has = !!(node.kids && node.kids.length);
     const open = state.drOpen.has(k);
     const lead = node.flag ? `<span class="fl">${FLAGS[node.flag]}</span>` : node.img ? `<span class="fl ic"><img src="${esc(node.img)}" alt=""></span>`
       : depth === 0 ? `<span class="fl ic"><span class="g">${node.icon || I.cup}</span></span>` : '';
-    return `<button class="node d${Math.min(depth, 3)}" ${has ? `data-dnode="${k}" aria-expanded="${open}"` : 'data-leaf'}>${lead}<span class="tx">${node.sm ? `<span class="sm">${esc(node.sm)}</span>` : ''}<span class="nm">${esc(node.t)}</span></span>${has ? I.chevron : I.right}</button>
+    return `<button class="node d${Math.min(depth, 3)}" ${has ? `data-dnode="${k}" aria-expanded="${open}"` : 'data-leaf'}>${lead}<span class="tx">${node.sm ? `<span class="sm">${esc(node.sm)}</span>` : ''}<span class="nm">${esc(node.t)}</span></span>${node.dt ? `<span class="dt num">${node.dt}</span>` : ''}${has ? I.chevron : I.right}</button>
       ${has ? `<div class="kids" ${open ? '' : 'hidden'}>${treeHTML(node.kids, k, depth + 1)}</div>` : ''}`;
   }).join('');
 }
@@ -767,7 +794,7 @@ function renderDrawer() {
   const sport = state.drSport, groups = CATALOG[sport];
   $('#drawer').innerHTML = `<div class="dr-h"><h2>Все турниры</h2><button class="icon-btn" data-close aria-label="Закрыть">${I.close}</button></div>
     <div class="seg dr-seg" role="tablist">${[['foot', 'Футбол'], ['tennis', 'Теннис']].map(([k, l]) => `<button role="tab" data-drsport="${k}" aria-selected="${k === sport}">${l}</button>`).join('')}</div>
-    <div class="dr-body">${groups.map((g, gi) => {
+    <div class="dr-body"><div class="dr-rank">${RATINGS[sport].map(r => `<button class="rk" data-rank>${I.rank}<span class="nm">${r}</span>${I.right}</button>`).join('')}</div>${groups.map((g, gi) => {
       const key = `${sport}g${gi}`, open = !state.drOpen.has('x' + key);
       return `<button class="band" data-band="${key}" aria-expanded="${open}"><span>${esc(g.g)}</span>${I.chevron}</button><div ${open ? '' : 'hidden'}>${treeHTML(g.items, key, 0)}</div>`;
     }).join('')}</div>`;
@@ -842,7 +869,7 @@ function bind() {
     const act = e.target.closest('[data-act]');
     if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на твой матч' : act.dataset.act === 'join' ? `Вступление в турнир за ${(+act.dataset.price).toLocaleString('ru-RU')} монет` : 'Откроется аукцион: выкупи место в составе до дедлайна'); return; }
     if (e.target.closest('[data-screen]')) { toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
-    if (e.target.closest('[data-sw]')) { state.mode[id] = !state.mode[id]; rerenderCard(id); return; }
+    if (e.target.closest('[data-sw]')) { state.mode[id] = !modeOf(findCard(id)); rerenderCard(id); return; }
     const node = e.target.closest('[data-stage]');
     if (node) { const k = +node.dataset.stage; state.stage[id] = state.stage[id] === k ? undefined : k; rerenderCard(id); return; }
     const seg = e.target.closest('[data-side]');
@@ -870,6 +897,8 @@ function bind() {
     if (band) { toggleIn(band, band.dataset.band, true); return; }
     const dn = e.target.closest('[data-dnode]');
     if (dn) { toggleIn(dn, dn.dataset.dnode, false); return; }
+    const rk = e.target.closest('[data-rank]');
+    if (rk) { toast(`Откроется «${rk.querySelector('.nm').textContent}»`); return; }
     const leaf = e.target.closest('[data-leaf]');
     if (leaf) toast(`Откроется экран турнира «${leaf.querySelector('.nm').textContent}»`);
   });
@@ -902,10 +931,12 @@ function renderChrome() {
 async function init() {
   renderChrome();
   const load = async (u, fb) => { try { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return await r.json(); } catch (e) { console.warn(`${u} not loaded`, e); return fb; } };
-  const [real, extra, crests, teams, tennis] = await Promise.all([
+  const [real, extra, crests, teams, tennis, tcat] = await Promise.all([
     load('data/real-matches.json', { competitions: {}, days: {} }), load('data/real-matches-extra.json', { competitions: {}, days: {} }),
     load('data/crests.json', {}), load('data/bofp-teams.json', []), load('data/tennis-calendar.json', { tournaments: [] }),
+    load('data/tennis-catalog.json', {}),
   ]);
+  CATALOG.tennis = tennisTree(tcat);
   REAL = mergeReal(real, extra);
   CRESTS = { ...EXTRA_CRESTS, ...crests };
   BOFP_TEAMS = teams;

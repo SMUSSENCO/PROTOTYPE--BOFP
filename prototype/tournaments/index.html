@@ -406,6 +406,13 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .node.d3{padding-left:98px;min-height:44px}
 .node.d1 .nm,.node.d2 .nm,.node.d3 .nm{font-size:14px;font-weight:600;margin:0}
 .node.d2 .nm,.node.d3 .nm{color:var(--text-2)}
+.node .dt{flex:none;font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.01em}
+.dr-rank{display:grid;gap:6px;padding:2px 16px 12px}
+.rk{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 12px 0 14px;border-radius:14px;text-align:left;
+  background:linear-gradient(170deg,var(--glass-a),var(--glass-b) 70%);box-shadow:inset 0 0 0 1px var(--line),inset 0 1px 0 var(--glass-edge)}
+.rk > svg:first-child{width:20px;height:20px;color:var(--accent);flex:none}
+.rk .nm{flex:1;font-size:14px;font-weight:700}
+.rk > svg:last-child{width:16px;height:16px;color:var(--text-3)}
 
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 140px);transform:translate(-50%,12px);opacity:0;z-index:40;max-width:calc(100% - 48px);padding:12px 16px;border-radius:14px;font-size:13px;font-weight:600;line-height:1.35;transition:opacity .2s,transform .25s var(--ease);pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}

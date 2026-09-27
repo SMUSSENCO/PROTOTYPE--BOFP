@@ -244,7 +244,18 @@ async function check(name, fn) {
       if (await ten.count()) {
         await ten.locator('[data-rail]').click(); await page.waitForTimeout(450);
         assert.ok(await ten.locator('.m-sc .set').count() >= 4, 'no set scores');
-        assert.match(await ten.locator('.m-team .nm').first().innerText(), / \/ /, 'tennis sides must be pairs');
+        assert.doesNotMatch(await ten.locator('.m-team .nm').first().innerText(), / \/ /, 'tennis sides are real players');
+        const id = await ten.getAttribute('data-id');
+        await ten.locator('.sw').click();
+        const t2 = page.locator(`.t[data-id="${id}"]`);
+        assert.match(await t2.locator('.sw-note').innerText(), /игроков BofP/);
+        assert.equal(await t2.locator('.m-sc .set').count(), 0, 'BofP mode shows points, not sets');
+        for (const v of await t2.locator('.m-sc span').allInnerTexts()) assert.ok(+v >= 0 && +v <= 100, `points out of range: ${v}`);
+      }
+      const epl = page.locator('.t[data-id="epl"]');
+      if (await epl.count()) {
+        await epl.locator('[data-rail]').click(); await page.waitForTimeout(450);
+        assert.equal(await epl.locator('.sw').getAttribute('aria-checked'), 'true', 'national league must start on BofP');
       }
       await page.screenshot({ path: path.join(SHOTS, `${tag}-past.png`) });
       await day('2024-08-21');
@@ -254,7 +265,10 @@ async function check(name, fn) {
       await page.locator('#catalogBtn').click(); await page.waitForTimeout(500);
       const d = await box('#drawer');
       assert.ok(d.x >= -1 && d.x < 2, `drawer x=${d.x}`);
-      assert.match(await page.locator('#drawer').innerText(), /BofP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
+      const txt = await page.locator('#drawer').innerText();
+      assert.match(txt, /Рейтинг альянсов[\s\S]*Рейтинг сборных альянсов[\s\S]*BofP Series/i);
+      assert.match(txt, /Сборные Альянсов[\s\S]*BofP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
+      assert.match(txt, /Конференции\s[\s\S]*Конфедерации — сборные/i);
       const body = page.locator('#drawer .dr-body');
       const bfp = page.locator('#drawer [data-dnode]', { hasText: 'BofP Еврокубки' });
       await bfp.click();
@@ -276,10 +290,14 @@ async function check(name, fn) {
       await page.locator('#drawer [data-dnode]', { hasText: 'Лига A' }).first().click();
       assert.match(await page.locator('#drawer').innerText(), /Группа A1/);
       await page.locator('#drawer [data-drsport="tennis"]').click();
-      assert.match(await page.locator('#drawer').innerText(), /ATP Masters 1000[\s\S]*WTA 125/);
+      assert.match(await page.locator('#drawer').innerText(), /Теннисный рейтинг[\s\S]*ATP Masters 1000[\s\S]*WTA 125/i);
+      assert.doesNotMatch(await page.locator('#drawer').innerText(), /Рейтинг альянсов/i);
       assert.doesNotMatch(await page.locator('#drawer').innerText(), /ITF/);
       await page.locator('#drawer [data-dnode]', { hasText: 'ATP Masters 1000' }).click();
-      assert.match(await page.locator('#drawer').innerText(), /Индиан-Уэллс[\s\S]*Цинциннати/);
+      assert.match(await page.locator('#drawer').innerText(), /Индиан-Уэллс\s*04\.03-15\.03[\s\S]*Цинциннати\s*13\.08-23\.08/);
+      await page.locator('#drawer [data-dnode]', { hasText: 'ATP Challenger' }).click();
+      await page.locator('#drawer [data-dnode]', { hasText: 'Challenger 175' }).click();
+      assert.match(await page.locator('#drawer').innerText(), /Challenger 175[\s\S]*\d{2}\.\d{2}-\d{2}\.\d{2}/);
       await page.screenshot({ path: path.join(SHOTS, `${tag}-drawer.png`) });
       await page.keyboard.press('Escape'); await page.waitForTimeout(450);
       assert.ok((await box('#drawer')).x < -100, 'drawer did not close');
