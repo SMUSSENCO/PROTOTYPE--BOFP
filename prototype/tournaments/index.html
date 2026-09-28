@@ -271,6 +271,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .tl-node.passed i{background:var(--tl);box-shadow:none}
 .tl-node.cur i{width:18px;height:18px;background:var(--tl);box-shadow:0 0 0 4px color-mix(in srgb,var(--tl) 22%,transparent);animation:pulse 2s 1.1s ease-in-out infinite}
 .tl-node.act i{background:var(--accent);box-shadow:0 0 0 4px var(--glow);animation:none}
+/* international break: a pause sign that cuts the line */
+.tl-node.pause i{width:12px;height:18px;border-radius:0;background:linear-gradient(90deg,var(--tl) 0 3px,transparent 3px 9px,var(--tl) 9px 12px);box-shadow:none;opacity:.6;animation:none}
+.tl-node.pause[aria-pressed="true"] i{box-shadow:none;opacity:1;transform:scale(1.3)}
+.tl-node.pause.passed i,.tl-node.pause.cur i{opacity:1}
 .tl-node.final i{width:26px;height:26px;display:grid;place-items:center;background:var(--node);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tl) 60%,transparent);color:var(--tl)}
 .tl-node.final i svg,.tl-node.auction i svg{width:14px;height:14px}
 .tl-node.auction i{width:26px;height:26px;display:grid;place-items:center;background:var(--node);box-shadow:inset 0 0 0 2px var(--accent);color:var(--accent-text)}

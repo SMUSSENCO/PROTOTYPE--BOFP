@@ -263,6 +263,9 @@ async function check(name, fn) {
       if (await epl.count()) {
         await epl.locator('[data-rail]').click(); await page.waitForTimeout(450);
         assert.equal(await epl.locator('.sw').getAttribute('aria-checked'), 'true', 'national league must start on BofP');
+        assert.equal(await epl.locator('.tl-node.pause').count(), 4, 'Sep, Oct, Nov and March international breaks');
+        await epl.locator('.tl-node.final').click();
+        assert.match(await page.locator('.t[data-id="epl"] .tl-card').innerText(), /Завершение чемпионата[\s\S]*выдача наград/);
       }
       await page.screenshot({ path: path.join(SHOTS, `${tag}-past.png`) });
       await day('2024-08-21');

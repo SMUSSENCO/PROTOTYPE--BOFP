@@ -112,13 +112,16 @@ const UECL_STAGES = [
   { n: '1/2 финала', f: '2025-05-01', t: '2025-05-08', ms: [] },
   { n: 'Финал · Вроцлав', f: '2025-05-28', t: '2025-05-28', ms: ['Тарчиньский Арена'], final: true },
 ];
-/* domestic league: start, summer window close, winter window, extra stages, last round */
+/* FIFA international windows 2024/25: national leagues stop for them */
+const FIFA_BREAKS = [['2024-09-02', '2024-09-10'], ['2024-10-07', '2024-10-15'], ['2024-11-11', '2024-11-19'], ['2025-03-17', '2025-03-25'], ['2025-06-02', '2025-06-10']];
+/* domestic league: start, summer window close, international breaks, winter window, extra stages, last round */
 function league(s) {
   const st = [{ n: 'Старт сезона', f: s.start, t: s.start, ms: [`${s.rounds} туров`] }];
   if (s.windowClose) st.push({ n: 'Закрытие летнего окна', f: s.windowClose, t: s.windowClose, ms: ['Последний день трансферов до зимы'] });
   if (s.winterFrom) st.push({ n: 'Зимнее трансферное окно', f: s.winterFrom, t: s.winterTo, ms: [] });
+  for (const [f, t] of FIFA_BREAKS) if (f > s.start && f < s.end) st.push({ n: 'Пауза на матчи сборных', f, t, ms: ['Туры чемпионата не проводятся'], pause: true });
   for (const x of s.extra || []) st.push({ n: x.n, f: x.f, t: x.t || x.f, ms: [] });
-  st.push({ n: 'Последний тур', f: s.end, t: s.end, ms: ['Чемпион, еврокубки, вылет'], final: true });
+  st.push({ n: 'Завершение чемпионата', f: s.end, t: s.end, ms: ['Последний тур, выдача наград'], final: true });
   return st.sort((a, b) => a.f.localeCompare(b.f) || !!a.final - !!b.final);
 }
 const ACL_STAGES = [
@@ -531,7 +534,7 @@ function timelineHTML(t, day) {
   const picked = state.stage[t.id], act = !!actionOf(t, day);
   const nodes = st.map((s, i) => {
     const passed = at(s.t, '23:59') < nowT;
-    const cls = ['tl-node', s.final ? 'final' : '', s.auction ? 'auction' : '', passed && i !== cur ? 'passed' : '', i === cur ? 'cur' : '', i === cur && act ? 'act' : ''].join(' ');
+    const cls = ['tl-node', s.final ? 'final' : '', s.auction ? 'auction' : '', s.pause ? 'pause' : '', passed && i !== cur ? 'passed' : '', i === cur ? 'cur' : '', i === cur && act ? 'act' : ''].join(' ');
     return `<button class="${cls}" style="left:${pos[i].toFixed(2)}%" data-stage="${i}" aria-pressed="${i === picked}" aria-label="${esc(s.n)} ${ddmm(s.f)}"><i>${s.final ? I.trophy : s.auction ? I.gavel : ''}</i></button>`;
   }).join('');
   let card = '';
