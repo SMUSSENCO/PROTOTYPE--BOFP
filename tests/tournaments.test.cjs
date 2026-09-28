@@ -526,6 +526,11 @@ async function check(name, fn) {
       await page.locator('.t[data-id="g5"] [data-rail]').click();
       await step(12); await onScreen(12);
       assert.match(await page.locator('.tour-tx').textContent(), /также отмечены/);
+      await page.locator('.tour-back').click();
+      await step(11);
+      assert.equal(await page.locator('.t[data-id="g5"].open').count(), 1, 'a card the visitor opened must stay open');
+      await next();
+      await step(12);
       await next();
       await step(13); await onScreen(13);
       await page.locator('.t[data-id="g5"] .lg-h').nth(1).click();

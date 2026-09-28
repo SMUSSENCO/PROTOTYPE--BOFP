@@ -477,7 +477,8 @@ function buildTournaments(day) {
   if (day === TODAY) out.night.push(...auctions.filter(c => c.night));
   out.custom = customCards(day);
   const needs = c => { const k = (c.auction || statusFor(c.id, day) || {}).kind; return c.mineTeam && (k === 'predict' || k === 'squad') ? 1 : 0; };
-  const order = (a, b) => (b.sport === 'foot') - (a.sport === 'foot') || needs(b) - needs(a) || !!b.mineTeam - !!a.mineTeam;
+  // only a pending action lifts a tournament; once the pick is made it goes back to its usual place
+  const order = (a, b) => (b.sport === 'foot') - (a.sport === 'foot') || needs(b) - needs(a);
   for (const k in out) out[k] = out[k].filter(c => state.sports.has(c.sport)).sort(order);
   return out;
 }

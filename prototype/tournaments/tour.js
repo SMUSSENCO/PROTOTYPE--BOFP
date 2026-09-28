@@ -10,7 +10,9 @@
   const close = id => { const c = card(id); if (c && c.classList.contains('open')) c.querySelector('[data-rail]').click(); };
   const into = (el, block = 'center') => el && el.scrollIntoView({ block, behavior: 'smooth' });
   const scrollTop = () => { const sc = q('#scroll'); sc.scrollTo({ top: 0, behavior: 'smooth' }); };
-  let hintTapped = false, favAt = 0;
+  let hintTapped = false, favAt = 0, wasOpen = false;
+  // a card the visitor already opened stays open; the step then just waits for «Далее»
+  const isOpen = id => !!card(id) && card(id).classList.contains('open');
   const drawer = on => { if (q('#drawer').classList.contains('show') !== on) setDrawer(on); };
   const mode = (id, on) => { if (on) state.mode[id] = true; else delete state.mode[id]; rerenderCard(id); };
 
@@ -26,7 +28,7 @@
       text: 'Здесь находятся рейтинги футбола и тенниса. Длительным нажатием на турнир вы можете добавить серию или турнир в избранное.', act: 'Изучите каталог и закройте его.' },
     { el: () => [q('#dates')], pad: 0, before: () => { drawer(false); centerDay(true); },
       text: 'Календарь. Цифра сверху — число матчей, ждущих прогноза. Иконка молотка снизу — в этот день есть аукцион.' },
-    { el: () => [card('ucl')], before: () => { drawer(false); close('ucl'); into(card('ucl')); }, wait: () => card('ucl') && card('ucl').classList.contains('open'),
+    { el: () => [card('ucl')], before: () => { drawer(false); wasOpen = isOpen('ucl'); into(card('ucl')); }, wait: () => !wasOpen && isOpen('ucl'),
       text: 'Число матчей в турнире, матчи в лайве и кнопка прогноза — прямо на карточке. Клик на логотип — переход на экран турнира (заглушка).', act: 'Разверните турнир.' },
     { el: () => [q('.t[data-id="ucl"] .sw')], pad: 8,
       before: () => { open('ucl'); mode('ucl', false); setTimeout(() => into(q('.t[data-id="ucl"] .sw-row')), 60); },
@@ -43,7 +45,7 @@
     { el: () => { const h = q('[data-fold="fav"]'); return h ? [h, h.nextElementSibling] : []; },
       before: () => { if (!FAV.cards.size) { FAV.cards.add('ucl'); saveFav(); renderList(); } close('ucl'); setTimeout(() => into(q('[data-fold="fav"]'), 'start'), 60); },
       text: 'Появился блок «Избранные». Эти турниры всегда стоят выше остальных, если в этот день есть их матчи. Убрать турнир из избранного можно так же — длительным нажатием.' },
-    { el: () => [card('g5')], before: () => { close('g5'); into(card('g5')); }, wait: () => card('g5') && card('g5').classList.contains('open'),
+    { el: () => [card('g5')], before: () => { wasOpen = isOpen('g5'); into(card('g5')); }, wait: () => !wasOpen && isOpen('g5'),
       text: 'BIG 5 — лиги игроков проекта.', act: 'Разверните турнир.' },
     { el: () => [q('.t[data-id="g5"] .tl')],
       before: () => { open('g5'); state.stage.g5 = BIG5_STAGES.length - 1; rerenderCard('g5'); setTimeout(() => into(q('.t[data-id="g5"] .tl')), 60); },
