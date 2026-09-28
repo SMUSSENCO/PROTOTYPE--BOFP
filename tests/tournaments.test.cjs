@@ -276,7 +276,7 @@ async function check(name, fn) {
       const d = await box('#drawer');
       assert.ok(d.x >= -1 && d.x < 2, `drawer x=${d.x}`);
       const txt = await page.locator('#drawer').innerText();
-      assert.match(txt, /Рейтинг альянсов[\s\S]*Рейтинг игроков \/ отбор в сборные[\s\S]*BofP Series/i);
+      assert.match(txt, /Рейтинг альянсов[\s\S]*Рейтинг игроков \/ отбор в сборные альянсов[\s\S]*BofP Series/i);
       assert.match(txt, /Сборные Альянсов[\s\S]*BofP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
       assert.match(txt, /Конференции\s[\s\S]*Конфедерации — сборные/i);
       const body = page.locator('#drawer .dr-body');
@@ -435,9 +435,8 @@ async function check(name, fn) {
       await page.locator('[data-qclose]').click();
       assert.equal(await page.locator('#drawer h2').innerText(), 'Все турниры');
       await page.keyboard.press('Escape'); await page.waitForTimeout(450);
-      await page.locator('#searchBtn').click(); await page.waitForTimeout(500);
-      assert.ok(await page.locator('#drQ').count(), 'header search opens the catalog search');
-      await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(450);
+      await page.locator('#searchBtn').click(); await page.waitForTimeout(300);
+      assert.match(await page.locator('#toast').innerText(), /Глобальный поиск/, 'header search is a stub for the global search');
     });
 
     await check(`[${tag}] touch targets ≥ 44px`, async () => {

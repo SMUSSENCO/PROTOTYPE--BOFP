@@ -829,7 +829,7 @@ function tennisTree(c) {
     ] },
   ];
 }
-const RATINGS = { foot: ['Рейтинг альянсов', 'Рейтинг игроков / отбор в сборные'], tennis: ['Теннисный рейтинг'] };
+const RATINGS = { foot: ['Рейтинг альянсов', 'Рейтинг игроков / отбор в сборные альянсов'], tennis: ['Теннисный рейтинг'] };
 function treeHTML(items, key, depth, trail = []) {
   return items.map((it, i) => {
     const node = typeof it === 'string' ? { t: it } : it, k = `${key}.${i}`, has = !!(node.kids && node.kids.length);
@@ -1024,7 +1024,7 @@ function bind() {
     if (!b) return;
     if (b.dataset.tab !== 'cups') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
   });
-  $('#searchBtn').addEventListener('click', () => { state.drQ = ''; renderDrawer(); setDrawer(true); setTimeout(() => $('#drQ') && $('#drQ').focus(), 380); });
+  $('#searchBtn').addEventListener('click', () => toast('Глобальный поиск — заглушка'));
   $('#drawer').addEventListener('input', e => { if (e.target.id === 'drQ') { state.drQ = e.target.value; $('#drHits').innerHTML = searchHTML(state.drQ); } });
   $('#drawer').addEventListener('keydown', e => { if (e.target.id === 'drQ' && e.key === 'Escape') { e.stopPropagation(); state.drQ = null; renderDrawer(); } });
   $('#profileBtn').addEventListener('click', () => toast('Откроется профиль'));
