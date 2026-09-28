@@ -14,49 +14,49 @@
   const drawer = on => { if (q('#drawer').classList.contains('show') !== on) setDrawer(on); };
   const mode = (id, on) => { if (on) state.mode[id] = true; else delete state.mode[id]; rerenderCard(id); };
 
-  // short, business-style copy; `act` is what the visitor has to do before the tour moves on
+  // short, business-style copy in white; `act` (yellow) is what the visitor is asked to do.
+  // every step has «Далее»; `wait` moves on by itself, `free` lets the visitor explore until `wait` holds,
+  // `play` keeps the spotlight tappable without waiting
   const STEPS = [
     { el: () => [q('#catalogBtn')], before: () => drawer(false), wait: () => q('#drawer').classList.contains('show'),
-      text: 'Каталог всех турниров.', act: 'Нажмите на кнопку' },
+      text: 'Каталог всех турниров.', act: 'Нажмите на кнопку.' },
     { el: () => [q('#drawer')], pad: 0, before: () => drawer(true),
       text: 'Любой турнир — за 3 клика.' },
-    // free play: no veil, nothing blocked; the tour waits until the catalog is closed
     { el: () => [q('#drawer .dr-rank')], free: true, before: () => drawer(true), wait: () => !q('#drawer').classList.contains('show'),
-      text: 'Рейтинги футбола и тенниса (заглушка). Долгое нажатие — турнир в избранное. Изучите каталог и закройте его.' },
+      text: 'Рейтинги футбола и тенниса (заглушка). Долгое нажатие — турнир в избранное.', act: 'Изучите каталог и закройте его.' },
     { el: () => [q('#dates')], pad: 0, before: () => { drawer(false); centerDay(true); },
       text: 'Календарь. Сверху — матчи, ждущие прогноза. Снизу — аукционы.' },
-    { el: () => [card('ucl')], before: () => { close('ucl'); into(card('ucl')); }, wait: () => card('ucl') && card('ucl').classList.contains('open'),
-      text: 'Матчи дня, лайв и прогноз — прямо на карточке. Клик на логотип — экран турнира (заглушка).', act: 'Разверните турнир' },
+    { el: () => [card('ucl')], before: () => { drawer(false); close('ucl'); into(card('ucl')); }, wait: () => card('ucl') && card('ucl').classList.contains('open'),
+      text: 'Число матчей в турнире, матчи в лайве и кнопка прогноза — прямо на карточке. Клик на логотип — переход на экран турнира (заглушка).', act: 'Разверните турнир.' },
     { el: () => [q('.t[data-id="ucl"] .sw')], pad: 8,
       before: () => { open('ucl'); mode('ucl', false); setTimeout(() => into(q('.t[data-id="ucl"] .sw-row')), 60); },
       wait: () => !!state.mode.ucl, delay: 500,
-      text: 'Реальные результаты или результаты игроков проекта.', act: 'Нажмите на свитч' },
-    { el: () => [q('.t[data-id="ucl"] .matches')],
+      text: 'Реальные результаты или результаты игроков проекта.', act: 'Нажмите на свитч.' },
+    { el: () => [q('.t[data-id="ucl"] .sw-row'), q('.t[data-id="ucl"] .matches')], play: true,
       before: () => { open('ucl'); if (!state.mode.ucl) mode('ucl', true); document.documentElement.classList.add('tour-score'); setTimeout(() => into(q('.t[data-id="ucl"] .matches')), 60); },
-      text: 'Счёт сменился: теперь это результаты игроков проекта.' },
+      text: 'Счёт меняется вместе со свитчем: реальные матчи или результаты игроков проекта.', act: 'Переключайте свитч.' },
     { el: () => [q('.t[data-id="ucl"] .tl')], before: () => { open('ucl'); setTimeout(() => into(q('.t[data-id="ucl"] .tl')), 60); },
       text: 'Таймлайн — текущая стадия турнира.' },
     { el: () => [q('.t[data-id="ucl"] .t-head')], before: () => { close('ucl'); favAt = FAV.cards.size; into(card('ucl')); },
       wait: () => FAV.cards.size !== favAt, delay: 700,
-      text: 'Избранные турниры всегда сверху.', act: 'Зажмите карточку' },
-    { el: () => [q('[data-fold="fav"]'), q('[data-fold="real"]'), q('[data-fold="series"]')], before: () => { close('ucl'); into(q('.section-h'), 'start'); },
-      text: 'Все турниры проекта — в одном блоке. Жёлтый — единственный маркер действия.' },
+      text: 'Избранные турниры всегда сверху. Чтобы добавить турнир в избранное,', act: 'зажмите карточку турнира.' },
     { el: () => [card('g5')], before: () => { close('g5'); into(card('g5')); }, wait: () => card('g5') && card('g5').classList.contains('open'),
-      text: 'BIG 5 — лиги игроков проекта.', act: 'Разверните турнир' },
+      text: 'BIG 5 — лиги игроков проекта.', act: 'Разверните турнир.' },
     { el: () => [q('.t[data-id="g5"] .tl')],
       before: () => { open('g5'); state.stage.g5 = BIG5_STAGES.length - 1; rerenderCard('g5'); setTimeout(() => into(q('.t[data-id="g5"] .tl')), 60); },
-      text: 'Аукционы отмечены на таймлайне.' },
-    { el: () => [q('.t[data-id="g5"] .seg'), ...qa('.t[data-id="g5"] .lg-h')],
+      text: 'Аукционы также отмечены на таймлайне.' },
+    { el: () => [q('.t[data-id="g5"] .seg'), ...qa('.t[data-id="g5"] .lg-h')], free: true,
       before: () => { open('g5'); delete state.stage.g5; rerenderCard('g5'); qa('.t[data-id="g5"] .lg.open .lg-h').forEach(h => h.click()); setTimeout(() => into(q('.t[data-id="g5"] .seg'), 'center'), 80); },
-      text: 'Ваша лига и конференция выделены. Любую лигу можно развернуть.' },
+      wait: () => !card('g5') || !card('g5').classList.contains('open'),
+      text: 'Ваша лига и конференция выделены.', act: 'Разверните лиги, изучите и сверните турнир.' },
     { el: () => [q('#hintDn .key')], skip: () => !q('#hintDn').classList.contains('show'),
       before: () => { close('g5'); hintTapped = false; scrollTop(); setTimeout(updateHint, 500); }, wait: () => hintTapped, delay: 900,
-      text: 'Переход к турнирам ниже экрана, где нужно действие.', act: 'Нажмите' },
+      text: 'Переход к турнирам ниже экрана, где нужно действие.', act: 'Нажмите на кнопку.' },
     { el: () => { const h = q('[data-fold="night"]'); return h ? [h, h.nextElementSibling] : []; }, skip: () => !q('[data-fold="night"]'),
       before: () => into(q('[data-fold="night"]'), 'start'),
       text: 'Составы фиксируются за сутки, часть матчей — ночью. Отдельный блок, чтобы ничего не пропустить.' },
     { el: () => [q('[data-tab="wallet"]')], pad: 4,
-      text: 'Профиль — в хедере. Здесь — портфель акций.' },
+      text: 'Здесь теперь — портфель акций.' },
   ];
 
   let i = -1, raf = 0, holes = [], root, tip;
@@ -75,6 +75,7 @@
       if (!b) return;
       if (b.dataset.tour === 'skip') finish();
       else if (b.dataset.tour === 'back') go(i - 1, -1);
+      else if (STEPS[i].free) root.classList.add('tipoff');
       else go(i + 1);
     });
     // only the spotlighted controls stay tappable
@@ -85,7 +86,7 @@
     if (i < 0 || !e.isTrusted || e.target.closest('.tour-tip')) return;
     const s = STEPS[i];
     if (s.free) return;
-    if (s.wait && holes.some(r => e.clientX >= r.x && e.clientX <= r.x + r.w && e.clientY >= r.y && e.clientY <= r.y + r.h)) return;
+    if ((s.wait || s.play) && holes.some(r => e.clientX >= r.x && e.clientX <= r.x + r.w && e.clientY >= r.y && e.clientY <= r.y + r.h)) return;
     e.preventDefault(); e.stopPropagation();
   }
 
@@ -99,14 +100,17 @@
     if (s.before) s.before();
     const last = i === STEPS.length - 1;
     root.querySelector('.tour-n').textContent = `Обучение · ${i + 1} из ${STEPS.length}`;
-    root.querySelector('.tour-tx').textContent = s.text;
+    const tx = root.querySelector('.tour-tx');
+    tx.textContent = s.text;
+    if (s.act) { const a = document.createElement('span'); a.className = 'tour-act'; a.textContent = ' ' + s.act; tx.appendChild(a); }
     root.querySelector('.tour-dots').innerHTML = STEPS.map((_, k) => `<i class="${k === i ? 'on' : k < i ? 'was' : ''}"></i>`).join('');
     root.querySelector('.tour-do').innerHTML = (i ? '<button class="tour-back" data-tour="back">Назад</button>' : '')
-      + (s.free ? '' : s.wait ? `<span class="tour-wait">${s.act || 'Нажмите на выделенное'}</span>` : `<button class="tour-next" data-tour="next">${last ? 'Готово' : 'Далее'}</button>`);
+      + `<button class="tour-next" data-tour="next">${last ? 'Готово' : 'Далее'}</button>`;
     root.classList.toggle('waiting', !!s.wait);
     root.classList.toggle('free', !!s.free);
+    root.classList.remove('tipoff');
     tip.classList.remove('in'); void tip.offsetWidth; tip.classList.add('in');
-    if (!s.wait) setTimeout(() => { const b = root.querySelector('.tour-next'); if (b) b.focus({ preventScroll: true }); }, 50);
+    setTimeout(() => { const b = root.querySelector('.tour-next'); if (b) b.focus({ preventScroll: true }); }, 50);
   }
   function finish() {
     document.documentElement.classList.remove('tour-score');
