@@ -34,7 +34,7 @@
       text: 'Реальные результаты или результаты игроков проекта.', act: 'Нажмите на свитч.' },
     { el: () => [q('.t[data-id="ucl"] .sw-row'), q('.t[data-id="ucl"] .matches')], play: true,
       before: () => { open('ucl'); if (!state.mode.ucl) mode('ucl', true); document.documentElement.classList.add('tour-score'); setTimeout(() => into(q('.t[data-id="ucl"] .matches')), 60); },
-      text: 'Счёт меняется вместе со свитчем: реальные матчи или результаты игроков проекта.', act: 'Переключайте свитч.' },
+      tip: 'top', text: 'Счёт меняется вместе со свитчем: реальные матчи или результаты игроков проекта.', act: 'Переключайте свитч.' },
     { el: () => [q('.t[data-id="ucl"] .tl')], play: true, before: () => { open('ucl'); setTimeout(() => into(q('.t[data-id="ucl"] .tl')), 60); },
       text: 'Таймлайн — текущая стадия турнира с фиксацией важных событий.', act: 'Нажмите на любой рубеж и изучите информацию.' },
     { el: () => [q('.t[data-id="ucl"] .t-head')], before: () => { close('ucl'); favAt = FAV.cards.size; into(card('ucl')); },
@@ -53,7 +53,7 @@
       wait: () => !card('g5') || !card('g5').classList.contains('open'),
       next: () => close('g5'),
       text: 'Ваши лига и конференция помечены. Вы можете развернуть любую лигу и изучить календарь.' },
-    { el: () => [q('#hintDn .key')], skip: () => !q('#hintDn').classList.contains('show'),
+    { el: () => [q('#hintDn .key')], hint: true, skip: () => !q('#hintDn').classList.contains('show'),
       before: () => { close('g5'); hintTapped = false; scrollTop(); setTimeout(updateHint, 500); }, wait: () => hintTapped, delay: 900,
       text: 'Переход к турнирам ниже экрана, где нужно действие.', act: 'Нажмите на кнопку.' },
     { el: () => { const h = q('[data-fold="night"]'); return h ? [h, h.nextElementSibling.querySelector('.t')] : []; }, pad: 4, skip: () => !q('[data-fold="night"]'),
@@ -114,12 +114,13 @@
     root.classList.toggle('waiting', !!s.wait);
     root.classList.toggle('free', !!s.free);
     document.documentElement.classList.toggle('tour-lock', !s.free);
+    document.documentElement.classList.toggle('tour-nohint', !s.hint);
     root.classList.remove('tipoff');
     tip.classList.remove('in'); void tip.offsetWidth; tip.classList.add('in');
     setTimeout(() => { const b = root.querySelector('.tour-next'); if (b) b.focus({ preventScroll: true }); }, 50);
   }
   function finish() {
-    document.documentElement.classList.remove('tour-lock');
+    document.documentElement.classList.remove('tour-lock', 'tour-nohint');
     document.documentElement.classList.remove('tour-score');
     i = -1;
     cancelAnimationFrame(raf);
@@ -147,7 +148,8 @@
     const top = Math.min(...holes.map(h => h.y), vh), bottom = Math.max(...holes.map(h => h.y + h.h), 0);
     const th = tip.offsetHeight, gap = 14, bar = 96;
     let y;
-    if (s.free) y = vh - th - 12;
+    if (s.tip === 'top') y = 8;
+    else if (s.free) y = vh - th - 12;
     else if (!holes.length) y = (vh - th) / 2;
     else if (bottom + gap + th <= vh - bar) y = bottom + gap;
     else if (top - gap - th >= 8) y = top - gap - th;

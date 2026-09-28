@@ -313,14 +313,10 @@ async function check(name, fn) {
       assert.ok((await box('#drawer')).x < -100, 'drawer did not close');
     });
 
-    await check(`[${tag}] light theme from the menu tab`, async () => {
-      await page.locator('[data-tab="menu"]').click();
-      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light');
-      const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-      assert.equal(bg, 'rgb(242, 240, 232)');
-      await page.screenshot({ path: path.join(SHOTS, `${tag}-light.png`) });
+    await check(`[${tag}] dark theme only for now`, async () => {
       await page.locator('[data-tab="menu"]').click();
       assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'dark');
+      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgb(10, 10, 8)');
     });
 
     await check(`[${tag}] user tournaments: bottom block, folded, create button first, no backgrounds`, async () => {
@@ -503,6 +499,8 @@ async function check(name, fn) {
       const real = await page.locator('.t[data-id="ucl"] .m-sc').allInnerTexts();
       await page.locator('.t[data-id="ucl"] .sw').click();
       await step(7); await onScreen(7);
+      { const t = await tip.boundingBox(), m = await page.locator('.t[data-id="ucl"] .matches').boundingBox();
+        assert.ok(t.y + t.height <= m.y + 2, 'the tip must not cover the matches on step 7'); }
       assert.notDeepEqual(await page.locator('.t[data-id="ucl"] .m-sc').allInnerTexts(), real, 'scores must change with the switch');
       await page.locator('.t[data-id="ucl"] .sw').click();
       assert.deepEqual(await page.locator('.t[data-id="ucl"] .m-sc').allInnerTexts(), real, 'the switch must stay playable on step 7');

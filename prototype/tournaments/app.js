@@ -1021,12 +1021,7 @@ function bind() {
   $('#tabbar').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
-    if (b.dataset.tab === 'menu') {
-      const root = document.documentElement;
-      const dark = root.dataset.theme ? root.dataset.theme === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches;
-      root.dataset.theme = dark ? 'light' : 'dark';
-      toast(dark ? 'Светлая тема' : 'Тёмная тема');
-    } else if (b.dataset.tab !== 'cups') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
+    if (b.dataset.tab !== 'cups') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
   });
   $('#searchBtn').addEventListener('click', () => { state.drQ = ''; renderDrawer(); setDrawer(true); setTimeout(() => $('#drQ') && $('#drQ').focus(), 380); });
   $('#drawer').addEventListener('input', e => { if (e.target.id === 'drQ') { state.drQ = e.target.value; $('#drHits').innerHTML = searchHTML(state.drQ); } });
@@ -1044,6 +1039,9 @@ function renderChrome() {
     .map(([k, l, ic, cur]) => `<button class="tab" data-tab="${k}" ${cur ? 'aria-current="page"' : ''} aria-label="${l}">${ic}<span class="lb">${l}</span></button>`).join('');
   renderSports();
 }
+
+// light theme is parked for now: the prototype is dark only, whatever the device prefers
+document.documentElement.dataset.theme = 'dark';
 
 async function init() {
   renderChrome();
