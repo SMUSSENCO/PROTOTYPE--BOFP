@@ -276,6 +276,7 @@ const FAV = (() => {
   try { const v = JSON.parse(localStorage.getItem('bofp-fav')) || {}; return { cards: new Set(v.cards || []), cat: new Map(v.cat || []) }; }
   catch (e) { return { cards: new Set(), cat: new Map() }; }
 })();
+const FAV_MAX = 15;
 function saveFav() { try { localStorage.setItem('bofp-fav', JSON.stringify({ cards: [...FAV.cards], cat: [...FAV.cat] })); } catch (e) { /* private mode */ } }
 function longPress(root, sel, fn) {
   let timer = 0, x = 0, y = 0, fired = false;
@@ -678,10 +679,10 @@ function section(key, title, cards, day, icon, pre = '', page = 0) {
     <div class="cards" ${folded ? 'hidden' : ''}>${pre}${cards.slice(0, shown).map(x => cardHTML(x, day)).join('')}${more}</div>`;
 }
 function renderList() {
-  const day = state.day, t = tournamentsFor(day), parts = [];
-  // favourites leave their blocks and always open the list
-  const fav = [];
-  for (const k of ['real', 'series', 'night', 'custom']) t[k] = t[k].filter(c => FAV.cards.has(c.id) ? (fav.push(c), false) : true);
+  const day = state.day, all = tournamentsFor(day), parts = [];
+  // favourites leave their blocks and always open the list (copies: tournamentsFor is cached)
+  const fav = [], t = {};
+  for (const k of ['real', 'series', 'night', 'custom']) t[k] = all[k].filter(c => FAV.cards.has(c.id) ? (fav.push(c), false) : true);
   if (fav.length) parts.push(section('fav', 'Избранные', fav, day, I.star));
   if (t.real.length) parts.push(section('real', 'Турниры', t.real, day));
   if (t.series.length) parts.push(section('series', 'BofP Series', t.series, day));
@@ -862,6 +863,7 @@ function toggleIn(btn, key, openKeyIsCollapse) {
 /* ================= events ================= */
 function toggleCardFav(head) {
   const id = head.closest('.t').dataset.id, on = !FAV.cards.has(id);
+  if (on && FAV.cards.size >= FAV_MAX) return toast(`В избранное можно добавить до ${FAV_MAX} турниров`);
   on ? FAV.cards.add(id) : FAV.cards.delete(id);
   saveFav();
   toast(on ? 'Турнир добавлен в избранное' : 'Турнир убран из избранного');
@@ -871,6 +873,7 @@ function toggleCardFav(head) {
 }
 function toggleCatFav(node) {
   const k = node.dataset.fk, on = !FAV.cat.has(k);
+  if (on && FAV.cat.size >= FAV_MAX) return toast(`В избранное можно добавить до ${FAV_MAX} турниров`);
   on ? FAV.cat.set(k, node.dataset.path) : FAV.cat.delete(k);
   saveFav();
   toast(on ? 'Добавлено в избранное' : 'Убрано из избранного');

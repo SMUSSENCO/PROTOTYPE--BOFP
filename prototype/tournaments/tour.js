@@ -17,8 +17,11 @@
       text: 'Начнём с хедера. Нажмите на кнопку «Все турниры» в левом углу.' },
     { el: () => [q('#drawer')], pad: 0,
       text: 'Здесь открывается глобальная ветка турниров: поиск любого турнира занимает 3 клика. Долгое нажатие на турнир добавит его в избранное — он появится вверху списка.' },
-    { el: () => [q('#drawer .dr-rank'), q('#drawer [data-close]')], wait: () => !q('#drawer').classList.contains('show'),
-      text: 'Здесь также находятся рейтинги футбола и тенниса (пока это заглушки). Закройте экран, чтобы продолжить.' },
+    { el: () => [q('#drawer .dr-rank')],
+      text: 'Здесь также находятся рейтинги футбола и тенниса (пока это заглушки).' },
+    // free play: no veil, nothing blocked; the tour waits until the catalog is closed
+    { el: () => [], free: true, wait: () => !q('#drawer').classList.contains('show'),
+      text: 'Покликайте сами: раскройте ветки, добавьте турниры в избранное долгим нажатием. Закройте каталог, когда закончите, — обучение продолжится.' },
     { el: () => [q('#dates')], pad: 0, before: () => centerDay(true),
       text: 'Календарь: можно переключиться на любой день. Сверху — число матчей, требующих прогноз, снизу — наличие аукционов.' },
     { el: () => [card('ucl')], before: () => { close('ucl'); into(card('ucl')); }, after: () => open('ucl'),
@@ -73,6 +76,7 @@
   function guard(e) {
     if (i < 0 || !e.isTrusted || e.target.closest('.tour-tip')) return;
     const s = STEPS[i];
+    if (s.free) return;
     if (s.wait && holes.some(r => e.clientX >= r.x && e.clientX <= r.x + r.w && e.clientY >= r.y && e.clientY <= r.y + r.h)) return;
     e.preventDefault(); e.stopPropagation();
   }
@@ -90,8 +94,9 @@
     root.querySelector('.tour-n').textContent = `Обучение · ${i + 1} из ${STEPS.length}`;
     root.querySelector('.tour-tx').textContent = s.text;
     root.querySelector('.tour-dots').innerHTML = STEPS.map((_, k) => `<i class="${k === i ? 'on' : k < i ? 'was' : ''}"></i>`).join('');
-    root.querySelector('.tour-do').innerHTML = s.wait ? '<span class="tour-wait">Нажмите на выделенное</span>' : `<button class="tour-next" data-tour="next">${last ? 'Готово' : 'Далее'}</button>`;
+    root.querySelector('.tour-do').innerHTML = s.free ? '' : s.wait ? '<span class="tour-wait">Нажмите на выделенное</span>' : `<button class="tour-next" data-tour="next">${last ? 'Готово' : 'Далее'}</button>`;
     root.classList.toggle('waiting', !!s.wait);
+    root.classList.toggle('free', !!s.free);
     tip.classList.remove('in'); void tip.offsetWidth; tip.classList.add('in');
     if (!s.wait) setTimeout(() => { const b = root.querySelector('.tour-next'); if (b) b.focus({ preventScroll: true }); }, 50);
   }
@@ -124,7 +129,8 @@
     const top = Math.min(...holes.map(h => h.y), vh), bottom = Math.max(...holes.map(h => h.y + h.h), 0);
     const th = tip.offsetHeight, gap = 14, bar = 96;
     let y;
-    if (!holes.length) y = (vh - th) / 2;
+    if (s.free) y = vh - th - 12;
+    else if (!holes.length) y = (vh - th) / 2;
     else if (bottom + gap + th <= vh - bar) y = bottom + gap;
     else if (top - gap - th >= 8) y = top - gap - th;
     else y = Math.max(8, vh - bar - th - 8);

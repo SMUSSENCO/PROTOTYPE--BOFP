@@ -428,6 +428,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 /* ---------- guided tour ---------- */
 .tour{position:fixed;inset:0;z-index:60;pointer-events:none}
 .tour-veil{position:absolute;inset:0;width:100%;height:100%}
+.tour.free .tour-veil{display:none}
+.tour.free .tour-ft{display:none}
+.tour.free .tour-tx{margin-bottom:2px;font-size:13px}
+.tour.free .tour-tip{padding:10px 14px}
+.tour.free .tour-tip{box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 1px var(--accent)}
 .tour-veil > rect{fill:rgba(0,0,0,.74)}
 .tour-rings rect{fill:none;stroke:var(--accent);stroke-width:2;filter:drop-shadow(0 0 6px var(--glow))}
 .tour.waiting .tour-rings rect{animation:tourPulse 1.4s ease-in-out infinite}
