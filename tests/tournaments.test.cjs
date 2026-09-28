@@ -429,7 +429,19 @@ async function check(name, fn) {
       assert.match(await page.locator('#drawer .fav-band + .fav-node').innerText(), /Random Cup/);
       await hold(page.locator('#drawer .fav-node'));
       assert.equal(await page.locator('#drawer .fav-band').count(), 0);
+      await page.locator('#drawer [data-qopen]').click();
+      await page.locator('#drQ').fill('цинц');
+      const hits = await page.locator('#drHits .node .nm').allInnerTexts();
+      assert.ok(hits.length >= 2 && hits.every(h => /Цинциннати/.test(h)), `search results: ${hits}`);
+      assert.match(await page.locator('#drHits').innerText(), /ATP Masters 1000[\s\S]*WTA 1000/i);
+      await page.locator('#drQ').fill('zzz');
+      assert.match(await page.locator('#drHits').innerText(), /Ничего не найдено/);
+      await page.locator('[data-qclose]').click();
+      assert.equal(await page.locator('#drawer h2').innerText(), 'Все турниры');
       await page.keyboard.press('Escape'); await page.waitForTimeout(450);
+      await page.locator('#searchBtn').click(); await page.waitForTimeout(500);
+      assert.ok(await page.locator('#drQ').count(), 'header search opens the catalog search');
+      await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(450);
     });
 
     await check(`[${tag}] touch targets ≥ 44px`, async () => {
@@ -449,7 +461,7 @@ async function check(name, fn) {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(url);
-    await check(`[${tag}] tour: 15 steps, «Далее» everywhere, yellow only for the action`, async () => {
+    await check(`[${tag}] tour: 16 steps, «Далее» everywhere, yellow only for the action`, async () => {
       const tip = page.locator('.tour-tip');
       await tip.waitFor();
       const step = async n => { await page.waitForFunction(n => document.querySelector('.tour-n')?.textContent.includes(`${n} из`), n, { timeout: 8000 }); await page.waitForTimeout(700); };
@@ -467,7 +479,7 @@ async function check(name, fn) {
       await step(1); await onScreen(1);
       assert.match(await page.locator('.tour-tx .tour-act').textContent(), /Нажмите/);
       await page.locator('#searchBtn').click({ force: true });
-      assert.match(await page.locator('.tour-n').textContent(), /1 из 15/, 'a tap outside the spotlight must be ignored');
+      assert.match(await page.locator('.tour-n').textContent(), /1 из 16/, 'a tap outside the spotlight must be ignored');
       await page.locator('#catalogBtn').click();
       await step(2); await onScreen(2); await next();
       await step(3); await onScreen(3);
@@ -496,25 +508,37 @@ async function check(name, fn) {
       assert.deepEqual(await page.locator('.t[data-id="ucl"] .m-sc').allInnerTexts(), real, 'the switch must stay playable on step 7');
       await page.locator('.t[data-id="ucl"] .sw').click();
       await next();
-      await step(8); await onScreen(8); await next();
+      await step(8);
+      await page.locator('.t[data-id="ucl"] .tl-node').nth(2).click();
+      await page.waitForTimeout(300);
+      assert.equal(await page.locator('.t[data-id="ucl"] .tl-card').count(), 1, 'milestones must open their notes during the tour');
+      await onScreen(8);
+      const sc = await page.locator('#scroll').evaluate(n => n.scrollTop);
+      await page.mouse.wheel(0, 600); await page.waitForTimeout(300);
+      assert.equal(await page.locator('#scroll').evaluate(n => n.scrollTop), sc, 'the screen must not scroll during a spotlight step');
+      await next();
       await step(9); await onScreen(9);
-      assert.match(await page.locator('.tour-act').textContent(), /зажмите карточку турнира/);
+      assert.match(await page.locator('.tour-act').textContent(), /Зажмите карточку турнира и добавьте свой первый турнир/);
       await hold(page.locator('.t[data-id="ucl"] .t-main'));
       await step(10); await onScreen(10);
       assert.equal(await page.locator('[data-fold="fav"] + .cards .t[data-id="ucl"]').count(), 1, 'the long press must add to favourites');
-      await page.locator('.t[data-id="g5"] [data-rail]').click();
+      assert.match(await page.locator('.tour-tx').textContent(), /Избранные[\s\S]*так же/);
+      await next();
       await step(11); await onScreen(11);
+      await page.locator('.t[data-id="g5"] [data-rail]').click();
+      await step(12); await onScreen(12);
       assert.match(await page.locator('.tour-tx').textContent(), /также отмечены/);
       await next();
-      await step(12); await onScreen(12);
+      await step(13); await onScreen(13);
       await page.locator('.t[data-id="g5"] .lg-h').nth(1).click();
       assert.ok(await page.locator('.t[data-id="g5"] .lg.open').count(), 'leagues must open during the free step');
-      assert.match(await page.locator('.tour-n').textContent(), /12 из/);
-      await page.locator('.t[data-id="g5"] [data-rail]').click();
-      await step(13); await onScreen(13);
+      assert.match(await page.locator('.tour-n').textContent(), /13 из/);
+      await next();
+      await step(14); await onScreen(14);
+      assert.equal(await page.locator('.t[data-id="g5"].open').count(), 0, '«Далее» must fold BIG 5');
       await page.locator('#hintDn').click();
-      await step(14); await onScreen(14); await next();
-      await step(15); await onScreen(15);
+      await step(15); await onScreen(15); await next();
+      await step(16); await onScreen(16);
       assert.match(await page.locator('.tour-tx').textContent(), /Здесь теперь — портфель акций/);
       await page.locator('.tour-next', { hasText: 'Готово' }).click();
       await page.waitForTimeout(300);

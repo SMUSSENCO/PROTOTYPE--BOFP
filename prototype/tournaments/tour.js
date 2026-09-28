@@ -23,9 +23,9 @@
     { el: () => [q('#drawer')], pad: 0, before: () => drawer(true),
       text: 'Любой турнир — за 3 клика.' },
     { el: () => [q('#drawer .dr-rank')], free: true, before: () => drawer(true), wait: () => !q('#drawer').classList.contains('show'),
-      text: 'Рейтинги футбола и тенниса (заглушка). Долгое нажатие — турнир в избранное.', act: 'Изучите каталог и закройте его.' },
+      text: 'Здесь находятся рейтинги футбола и тенниса. Длительным нажатием на турнир вы можете добавить серию или турнир в избранное.', act: 'Изучите каталог и закройте его.' },
     { el: () => [q('#dates')], pad: 0, before: () => { drawer(false); centerDay(true); },
-      text: 'Календарь. Сверху — матчи, ждущие прогноза. Снизу — аукционы.' },
+      text: 'Календарь. Цифра сверху — число матчей, ждущих прогноза. Иконка молотка снизу — в этот день есть аукцион.' },
     { el: () => [card('ucl')], before: () => { drawer(false); close('ucl'); into(card('ucl')); }, wait: () => card('ucl') && card('ucl').classList.contains('open'),
       text: 'Число матчей в турнире, матчи в лайве и кнопка прогноза — прямо на карточке. Клик на логотип — переход на экран турнира (заглушка).', act: 'Разверните турнир.' },
     { el: () => [q('.t[data-id="ucl"] .sw')], pad: 8,
@@ -35,11 +35,14 @@
     { el: () => [q('.t[data-id="ucl"] .sw-row'), q('.t[data-id="ucl"] .matches')], play: true,
       before: () => { open('ucl'); if (!state.mode.ucl) mode('ucl', true); document.documentElement.classList.add('tour-score'); setTimeout(() => into(q('.t[data-id="ucl"] .matches')), 60); },
       text: 'Счёт меняется вместе со свитчем: реальные матчи или результаты игроков проекта.', act: 'Переключайте свитч.' },
-    { el: () => [q('.t[data-id="ucl"] .tl')], before: () => { open('ucl'); setTimeout(() => into(q('.t[data-id="ucl"] .tl')), 60); },
-      text: 'Таймлайн — текущая стадия турнира.' },
+    { el: () => [q('.t[data-id="ucl"] .tl')], play: true, before: () => { open('ucl'); setTimeout(() => into(q('.t[data-id="ucl"] .tl')), 60); },
+      text: 'Таймлайн — текущая стадия турнира с фиксацией важных событий.', act: 'Нажмите на любой рубеж и изучите информацию.' },
     { el: () => [q('.t[data-id="ucl"] .t-head')], before: () => { close('ucl'); favAt = FAV.cards.size; into(card('ucl')); },
       wait: () => FAV.cards.size !== favAt, delay: 700,
-      text: 'Избранные турниры всегда сверху. Чтобы добавить турнир в избранное,', act: 'зажмите карточку турнира.' },
+      text: 'Избранные турниры всегда сверху.', act: 'Зажмите карточку турнира и добавьте свой первый турнир в избранное.' },
+    { el: () => { const h = q('[data-fold="fav"]'); return h ? [h, h.nextElementSibling] : []; },
+      before: () => { if (!FAV.cards.size) { FAV.cards.add('ucl'); saveFav(); renderList(); } close('ucl'); setTimeout(() => into(q('[data-fold="fav"]'), 'start'), 60); },
+      text: 'Появился блок «Избранные». Эти турниры всегда стоят выше остальных, если в этот день есть их матчи. Убрать турнир из избранного можно так же — длительным нажатием.' },
     { el: () => [card('g5')], before: () => { close('g5'); into(card('g5')); }, wait: () => card('g5') && card('g5').classList.contains('open'),
       text: 'BIG 5 — лиги игроков проекта.', act: 'Разверните турнир.' },
     { el: () => [q('.t[data-id="g5"] .tl')],
@@ -48,11 +51,12 @@
     { el: () => [q('.t[data-id="g5"] .seg'), ...qa('.t[data-id="g5"] .lg-h')], free: true,
       before: () => { open('g5'); delete state.stage.g5; rerenderCard('g5'); qa('.t[data-id="g5"] .lg.open .lg-h').forEach(h => h.click()); setTimeout(() => into(q('.t[data-id="g5"] .seg'), 'center'), 80); },
       wait: () => !card('g5') || !card('g5').classList.contains('open'),
-      text: 'Ваша лига и конференция выделены.', act: 'Разверните лиги, изучите и сверните турнир.' },
+      next: () => close('g5'),
+      text: 'Ваши лига и конференция помечены. Вы можете развернуть любую лигу и изучить календарь.' },
     { el: () => [q('#hintDn .key')], skip: () => !q('#hintDn').classList.contains('show'),
       before: () => { close('g5'); hintTapped = false; scrollTop(); setTimeout(updateHint, 500); }, wait: () => hintTapped, delay: 900,
       text: 'Переход к турнирам ниже экрана, где нужно действие.', act: 'Нажмите на кнопку.' },
-    { el: () => { const h = q('[data-fold="night"]'); return h ? [h, h.nextElementSibling] : []; }, skip: () => !q('[data-fold="night"]'),
+    { el: () => { const h = q('[data-fold="night"]'); return h ? [h, h.nextElementSibling.querySelector('.t')] : []; }, pad: 4, skip: () => !q('[data-fold="night"]'),
       before: () => into(q('[data-fold="night"]'), 'start'),
       text: 'Составы фиксируются за сутки, часть матчей — ночью. Отдельный блок, чтобы ничего не пропустить.' },
     { el: () => [q('[data-tab="wallet"]')], pad: 4,
@@ -75,6 +79,7 @@
       if (!b) return;
       if (b.dataset.tour === 'skip') finish();
       else if (b.dataset.tour === 'back') go(i - 1, -1);
+      else if (STEPS[i].next) STEPS[i].next();
       else if (STEPS[i].free) root.classList.add('tipoff');
       else go(i + 1);
     });
@@ -108,11 +113,13 @@
       + `<button class="tour-next" data-tour="next">${last ? 'Готово' : 'Далее'}</button>`;
     root.classList.toggle('waiting', !!s.wait);
     root.classList.toggle('free', !!s.free);
+    document.documentElement.classList.toggle('tour-lock', !s.free);
     root.classList.remove('tipoff');
     tip.classList.remove('in'); void tip.offsetWidth; tip.classList.add('in');
     setTimeout(() => { const b = root.querySelector('.tour-next'); if (b) b.focus({ preventScroll: true }); }, 50);
   }
   function finish() {
+    document.documentElement.classList.remove('tour-lock');
     document.documentElement.classList.remove('tour-score');
     i = -1;
     cancelAnimationFrame(raf);

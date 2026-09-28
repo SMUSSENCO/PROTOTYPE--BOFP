@@ -272,7 +272,7 @@ const ROUND_SIZE = { 'Финал': 1, '1/2 финала': 2, '1/4 финала':
 
 /* ================= state ================= */
 let REAL = { competitions: {}, days: {} }, CRESTS = {}, TEAM_IMG = {}, TENNIS = [];
-const state = { day: TODAY, open: new Set(), mode: {}, big5Side: {}, lgOpen: new Set(), stage: {}, folded: new Set(['custom']), more: new Set(), pages: {}, sports: new Set(['foot', 'tennis']), drOpen: new Set(['g0']), drSport: 'foot' };
+const state = { day: TODAY, open: new Set(), mode: {}, big5Side: {}, lgOpen: new Set(), stage: {}, folded: new Set(['custom']), more: new Set(), pages: {}, sports: new Set(['foot', 'tennis']), drOpen: new Set(['g0']), drSport: 'foot', drQ: null };
 
 /* favourites: long press on a card or a catalog row; kept in this browser only */
 const FAV = (() => {
@@ -285,9 +285,10 @@ function longPress(root, sel, fn) {
   let timer = 0, x = 0, y = 0, fired = false;
   const stop = () => clearTimeout(timer);
   root.addEventListener('pointerdown', e => {
+    fired = false; // a re-rendered target never gets its click, so the flag must not outlive the next press
     const el = e.target.closest(sel);
     if (!el || e.button) return;
-    fired = false; x = e.clientX; y = e.clientY; stop();
+    x = e.clientX; y = e.clientY; stop();
     timer = setTimeout(() => { fired = true; if (navigator.vibrate) navigator.vibrate(15); fn(el); }, 550);
   });
   root.addEventListener('pointermove', e => { if (Math.hypot(e.clientX - x, e.clientY - y) > 10) stop(); });
@@ -655,7 +656,7 @@ function renderDates() {
     let frame = '', badges = '';
     if (cnt || auc) {
       // the mask breaks the stroke under the top badge and under the gavel
-      const tw = cnt > 1 ? 26 : 22, bw = auc > 1 ? 26 : 20;
+      const tw = cnt > 9 ? 40 : 32, bw = auc > 1 ? 34 : 26;
       frame = `<svg class="frame" viewBox="0 0 60 62" aria-hidden="true"><defs><mask id="mk${i}"><rect x="-4" y="-4" width="68" height="70" fill="#fff"/>${cnt ? `<rect x="${30 - tw / 2}" y="-4" width="${tw}" height="9" fill="#000"/>` : ''}${auc ? `<rect x="${30 - bw / 2}" y="57" width="${bw}" height="9" fill="#000"/>` : ''}</mask></defs>
         <rect class="base" x="1" y="1" width="58" height="60" rx="15" mask="url(#mk${i})"/>${alert ? `<rect class="runner" x="1" y="1" width="58" height="60" rx="15" pathLength="200" mask="url(#mk${i})"/>` : ''}</svg>`;
       badges = `${cnt ? `<span class="top-b num">${I.game}${cnt}</span>` : ''}${auc ? `<span class="bot-b num">${I.gavel}${auc > 1 ? auc : ''}</span>` : ''}`;
@@ -847,9 +848,37 @@ function favBand(sport) {
     return `<button class="node d0 fav-node" data-leaf data-fk="${k}" data-path="${esc(path)}"><span class="fl ic"><span class="g">${I.star}</span></span><span class="tx">${parts.length ? `<span class="sm">${esc(parts.join(' · '))}</span>` : ''}<span class="nm">${esc(nm)}</span></span>${I.right}</button>`;
   }).join('')}`;
 }
+/* catalog search: every node of both trees, keyed like the tree so favourites work from results too */
+function catIndex() {
+  const out = [];
+  for (const sport of ['foot', 'tennis']) CATALOG[sport].forEach((g, gi) => {
+    const walk = (items, key, trail) => items.forEach((it, i) => {
+      const node = typeof it === 'string' ? { t: it } : it, k = `${key}.${i}`, path = [...trail, node.t];
+      out.push({ k, path, sport, dt: node.dt });
+      if (node.kids) walk(node.kids, k, path);
+    });
+    walk(g.items, `${sport}g${gi}`, []);
+  });
+  return out;
+}
+function searchHTML(q) {
+  const s = q.trim().toLowerCase();
+  if (!s) return '<p class="dr-note">Введите название турнира, серии, страны или города</p>';
+  const hits = catIndex().filter(n => n.path[n.path.length - 1].toLowerCase().includes(s));
+  if (!hits.length) return `<p class="dr-note">Ничего не найдено по запросу «${esc(q.trim())}»</p>`;
+  return hits.slice(0, 60).map(n => {
+    const nm = n.path[n.path.length - 1], ctx = [n.sport === 'foot' ? 'Футбол' : 'Теннис', ...n.path.slice(0, -1)].join(' · ');
+    return `<button class="node d0 hit" data-leaf data-fk="${n.k}" data-path="${esc(n.path.join(' · '))}"><span class="tx"><span class="sm">${esc(ctx)}</span><span class="nm">${esc(nm)}</span></span>${FAV.cat.has(n.k) ? `<span class="fav-star">${I.star}</span>` : ''}${n.dt ? `<span class="dt num">${n.dt}</span>` : ''}${I.right}</button>`;
+  }).join('');
+}
 function renderDrawer() {
   const sport = state.drSport, groups = CATALOG[sport];
-  $('#drawer').innerHTML = `<div class="dr-h"><h2>Все турниры</h2><button class="icon-btn" data-close aria-label="Закрыть">${I.close}</button></div>
+  if (state.drQ != null) {
+    $('#drawer').innerHTML = `<div class="dr-h dr-find"><span class="dr-in">${I.search}<input id="drQ" type="search" placeholder="Поиск турнира" autocomplete="off" value="${esc(state.drQ)}" aria-label="Поиск турнира"></span><button class="dr-cancel" data-qclose>Отмена</button></div>
+      <div class="dr-body" id="drHits">${searchHTML(state.drQ)}</div>`;
+    return;
+  }
+  $('#drawer').innerHTML = `<div class="dr-h"><h2>Все турниры</h2><button class="icon-btn" data-qopen aria-label="Поиск турнира">${I.search}</button><button class="icon-btn" data-close aria-label="Закрыть">${I.close}</button></div>
     <div class="seg dr-seg" role="tablist">${[['foot', 'Футбол'], ['tennis', 'Теннис']].map(([k, l]) => `<button role="tab" data-drsport="${k}" aria-selected="${k === sport}">${l}</button>`).join('')}</div>
     <div class="dr-body"><div class="dr-rank">${RATINGS[sport].map(r => `<button class="rk" data-rank>${I.rank}<span class="nm">${r}</span>${I.right}</button>`).join('')}</div>${favBand(sport)}${groups.map((g, gi) => {
       const key = `${sport}g${gi}`, open = !state.drOpen.has('x' + key);
@@ -970,11 +999,13 @@ function bind() {
     if (e.target.closest('[data-toggle]')) { state.open.has(id) ? state.open.delete(id) : state.open.add(id); delete state.stage[id]; rerenderCard(id, true); }
   });
 
-  $('#catalogBtn').addEventListener('click', () => setDrawer(true));
+  $('#catalogBtn').addEventListener('click', () => { if (state.drQ != null) { state.drQ = null; renderDrawer(); } setDrawer(true); });
   $('#scrim').addEventListener('click', () => setDrawer(false));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#drawer').classList.contains('show')) { setDrawer(false); $('#catalogBtn').focus(); } });
   $('#drawer').addEventListener('click', e => {
     if (e.target.closest('[data-close]')) { setDrawer(false); $('#catalogBtn').focus(); return; }
+    if (e.target.closest('[data-qopen]')) { state.drQ = ''; renderDrawer(); $('#drQ').focus(); return; }
+    if (e.target.closest('[data-qclose]')) { state.drQ = null; renderDrawer(); return; }
     const sp = e.target.closest('[data-drsport]');
     if (sp) { state.drSport = sp.dataset.drsport; renderDrawer(); return; }
     const band = e.target.closest('[data-band]');
@@ -997,7 +1028,9 @@ function bind() {
       toast(dark ? 'Светлая тема' : 'Тёмная тема');
     } else if (b.dataset.tab !== 'cups') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
   });
-  $('#searchBtn').addEventListener('click', () => toast('Поиск — отдельный экран, делаем позже'));
+  $('#searchBtn').addEventListener('click', () => { state.drQ = ''; renderDrawer(); setDrawer(true); setTimeout(() => $('#drQ') && $('#drQ').focus(), 380); });
+  $('#drawer').addEventListener('input', e => { if (e.target.id === 'drQ') { state.drQ = e.target.value; $('#drHits').innerHTML = searchHTML(state.drQ); } });
+  $('#drawer').addEventListener('keydown', e => { if (e.target.id === 'drQ' && e.key === 'Escape') { e.stopPropagation(); state.drQ = null; renderDrawer(); } });
   $('#profileBtn').addEventListener('click', () => toast('Откроется профиль'));
   window.addEventListener('resize', () => { movePad(false); updateHint(); });
   setInterval(tick, 1000);
