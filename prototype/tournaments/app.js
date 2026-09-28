@@ -251,6 +251,9 @@ const BUFFS = [
 ];
 
 /* tennis: real 125+ events of the window; the switch shows BofP players' points instead of sets */
+/* BofP users who play the tennis events; shown instead of the real players when the switch is on */
+const BOFP_USERS = ['Смусенко', 'Ахметов', 'Ким', 'Орлова', 'Жумабаев', 'Лисицына', 'Нурланов', 'Беляев', 'Сейткали', 'Гарипова', 'Томпсон', 'Мукашев', 'Руденко', 'Есенова',
+  'Каримов', 'Полякова', 'Абдрахман', 'Чен', 'Дюсенов', 'Соколова', 'Иманбаев', 'Литвин', 'Оспанова', 'Гуревич', 'Тулегенов', 'Власова', 'Бекмуханов', 'Зайцева'];
 const PLAYERS = {
   ATP: ['Я. Синнер', 'К. Алькарас', 'А. Зверев', 'Д. Медведев', 'Т. Фриц', 'К. Рууд', 'Н. Джокович', 'А. де Минаур', 'А. Рублёв', 'Г. Димитров', 'Т. Пол', 'Х. Хуркач',
     'Б. Шелтон', 'Х. Руне', 'С. Циципас', 'К. Хачанов', 'У. Умбер', 'Ф. Тиафо', 'С. Корда', 'Л. Музетти', 'А. Попырин', 'Ф. Коболли', 'Дж. Дрейпер', 'Ф. Оже-Альяссим',
@@ -361,16 +364,19 @@ function tennisCards(day) {
     const r = rng(t.id + day);
     const pool = [...(PLAYERS[t.tour] || PLAYERS.ATP)], players = [];
     while (players.length < n * 2 && pool.length) players.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
+    const upool = [...BOFP_USERS], users = [];
+    while (users.length < n * 2 && upool.length) users.push(upool.splice(Math.floor(r() * upool.length), 1)[0]);
     const matches = Array.from({ length: n }, (_, i) => {
       const id = `${t.id}-${day}-${i}`, rr = rng(id), three = rr() < .4, firstWins = rr() < .5;
       const set = w => { const lo = Math.floor(rr() * 5); return w ? [6, lo] : [lo, 6]; };
       const seq = three ? [firstWins, !firstWins, firstWins] : [firstWins, firstWins];
-      return { id, comp: t.id, round, home: players[i * 2], away: players[i * 2 + 1], kickoff: ['17:00', '18:30', '20:00', '21:30', '23:00'][i % 5], tennis: true, sets: seq.map(set) };
+      return { id, comp: t.id, round, home: players[i * 2], away: players[i * 2 + 1], users: [users[i * 2], users[i * 2 + 1]], kickoff: ['17:00', '18:30', '20:00', '21:30', '23:00'][i % 5], tennis: true, sets: seq.map(set) };
     });
     const stages = Object.entries(t.days).sort().map(([d, rn], i, arr) => ({ n: rn, f: d, t: d, ms: [], final: i === arr.length - 1 && rn === 'Финал' }));
     if (!stages.length || stages[0].f > t.start) stages.unshift({ n: 'Старт турнира', f: t.start, t: t.start, ms: [`Сетка на ${t.drawSize || '—'} участников`, t.surface || ''].filter(Boolean) });
     if (!stages.some(s => s.final)) stages.push({ n: 'Финал', f: t.end, t: t.end, ms: [], final: true });
-    out.push({ join: day > TODAY && t.tour === 'ATP' ? TENNIS_PRICE[t.category] || 20000 : null, id: t.id, type: 'tennis', sport: 'tennis', name: `${t.tour} ${t.name}`, short: `${t.tour} ${t.nameRu || t.name}`, sub: `${t.category} · ${round}`,
+    const fresh = addDays(t.start, 3) >= TODAY; // just started or upcoming
+    out.push({ fresh, join: day > TODAY && t.tour === 'ATP' ? TENNIS_PRICE[t.category] || 20000 : null, id: t.id, type: 'tennis', sport: 'tennis', name: `${t.tour} ${t.name}`, short: `${t.tour} ${t.nameRu || t.name}`, sub: `${t.category} · ${round}`,
       iconSvg: I.tennis, bgTint: t.tour === 'WTA' ? 'linear-gradient(120deg,#3b1450,#9a4fc0)' : 'linear-gradient(120deg,#0b2a5b,#2a73cf)', stages, matches, mineTeam: null });
   }
   return out;
@@ -536,7 +542,8 @@ function matchRow(m, day, mineTeam, t, playersMode) {
     else if (showBuffs) { const b = buffFor(playersMode && !m.bofp ? { ...m, bofp: true } : m, k); if (b) extra = `<img class="bf ${b.card ? 'card' : ''}" src="${A}buffs/${b.f}.webp" alt="${b.t}" title="${b.t}">`; }
     return `<div class="m-team ${won(k) ? '' : 'lose'}">${crest(name)}<span class="nm">${esc(name)}</span>${extra}</div>`;
   };
-  const body = `${time}<div class="m-teams">${team(m.home, 0)}${team(m.away, 1)}</div>${score}`;
+  const [hn, an] = m.tennis && playersMode && m.users ? m.users : [m.home, m.away];
+  const body = `${time}<div class="m-teams">${team(hn, 0)}${team(an, 1)}</div>${score}`;
   if (!me) return `<div class="m ${ms.s}">${body}</div>`;
   let cta = '';
   if (ms.s === 'sched' && st.kind === 'predict') cta = `<button class="act predict" data-act="predict" data-deadline="${at(mDate(m, day), m.kickoff)}"><span class="l">${I.game}Сделать прогноз</span><span class="tm num" data-left></span></button>`;
@@ -592,7 +599,7 @@ function cardHTML(t, day) {
     ${art ? `<div class="t-art" aria-hidden="true">${art}</div>` : ''}
     <div class="t-head" data-toggle>
       <button class="t-icon ${t.flagIcon ? 'is-flag' : ''}" data-screen aria-label="Открыть турнир ${esc(t.name)}">${icon}</button>
-      <div class="t-main"><span class="t-title" title="${esc(t.name)}">${esc(t.short)}</span><span class="t-meta">${esc(t.sub)}</span></div>
+      <div class="t-main"><span class="t-tr"><span class="t-title" title="${esc(t.name)}">${esc(t.short)}</span>${t.fresh ? '<span class="new">NEW</span>' : ''}</span><span class="t-meta">${esc(t.sub)}</span></div>
       <div class="t-act">${actionChip(t, day)}</div>
       <button class="t-rail" data-rail aria-expanded="${open}" aria-label="${open ? 'Свернуть' : 'Развернуть'}: ${esc(t.name)}${live ? `, в эфире ${live}` : ''}">${I.chevron}${countHTML(ms.length, live)}</button>
     </div>
@@ -779,7 +786,7 @@ function tennisTree(c) {
     ] },
   ];
 }
-const RATINGS = { foot: ['Рейтинг альянсов', 'Рейтинг сборных альянсов'], tennis: ['Теннисный рейтинг'] };
+const RATINGS = { foot: ['Рейтинг альянсов', 'Рейтинг игроков / отбор в сборные'], tennis: ['Теннисный рейтинг'] };
 function treeHTML(items, key, depth) {
   return items.map((it, i) => {
     const node = typeof it === 'string' ? { t: it } : it, k = `${key}.${i}`, has = !!(node.kids && node.kids.length);

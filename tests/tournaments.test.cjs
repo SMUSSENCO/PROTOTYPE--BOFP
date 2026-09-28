@@ -100,6 +100,8 @@ async function check(name, fn) {
     await check(`[${tag}] sport chips filter the list`, async () => {
       const tennis = page.locator('[data-sport="tennis"]');
       assert.ok(await page.locator('.t[data-id^="atp-"], .t[data-id^="wta-"]').count() > 0, 'no tennis events');
+      assert.ok(await page.locator('.t[data-id="atp-us-open-2024"] .t-tr .new').count() === 1, 'new tennis event without the NEW badge');
+      assert.equal(await page.locator('.t[data-id="atp-cincinnati-2024"] .new').count(), 0, 'old event marked NEW');
       await tennis.click();
       assert.equal(await tennis.getAttribute('aria-pressed'), 'false');
       assert.equal(await page.locator('.t[data-id^="atp-"], .t[data-id^="wta-"]').count(), 0, 'tennis still listed');
@@ -246,10 +248,13 @@ async function check(name, fn) {
         assert.ok(await ten.locator('.m-sc .set').count() >= 4, 'no set scores');
         assert.doesNotMatch(await ten.locator('.m-team .nm').first().innerText(), / \/ /, 'tennis sides are real players');
         const id = await ten.getAttribute('data-id');
+        const realNames = await ten.locator('.m-team .nm').allInnerTexts();
         await ten.locator('.sw').click();
         const t2 = page.locator(`.t[data-id="${id}"]`);
         assert.match(await t2.locator('.sw-note').innerText(), /игроков BofP/);
         assert.equal(await t2.locator('.m-sc .set').count(), 0, 'BofP mode shows points, not sets');
+        const bofpNames = await t2.locator('.m-team .nm').allInnerTexts();
+        assert.ok(bofpNames.every(n => !realNames.includes(n)), 'the switch must swap real players for BofP players');
         for (const v of await t2.locator('.m-sc span').allInnerTexts()) assert.ok(+v >= 0 && +v <= 100, `points out of range: ${v}`);
       }
       const epl = page.locator('.t[data-id="epl"]');
@@ -266,7 +271,7 @@ async function check(name, fn) {
       const d = await box('#drawer');
       assert.ok(d.x >= -1 && d.x < 2, `drawer x=${d.x}`);
       const txt = await page.locator('#drawer').innerText();
-      assert.match(txt, /Рейтинг альянсов[\s\S]*Рейтинг сборных альянсов[\s\S]*BofP Series/i);
+      assert.match(txt, /Рейтинг альянсов[\s\S]*Рейтинг игроков \/ отбор в сборные[\s\S]*BofP Series/i);
       assert.match(txt, /Сборные Альянсов[\s\S]*BofP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
       assert.match(txt, /Конференции\s[\s\S]*Конфедерации — сборные/i);
       const body = page.locator('#drawer .dr-body');
