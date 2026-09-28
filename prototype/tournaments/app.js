@@ -309,7 +309,16 @@ const isMine = (m, team) => !!team && (m.home === team || m.away === team);
 const shortRound = r => (r || '').replace(/,\s*\d-й матч/, '');
 const mDate = (m, day) => m.date || day;
 
+/* players' results on a real match must visibly differ from the real score */
 function matchState(m, day, playersMode) {
+  const st = rawState(m, day, playersMode);
+  if (playersMode && !m.bofp && !m.tennis && st.score) {
+    const real = rawState(m, day, false).score;
+    if (real && real[0] === st.score[0] && real[1] === st.score[1]) st.score = [st.score[0] + 1, st.score[1]];
+  }
+  return st;
+}
+function rawState(m, day, playersMode) {
   const d = mDate(m, day), ko = at(d, m.kickoff), el = (now() - ko) / 60000;
   const long = m.tennis ? 150 : 112;
   let final = m.bofp || playersMode ? fakeScore((playersMode && !m.bofp ? 'p' : '') + m.id) : m.score;
@@ -321,7 +330,7 @@ function matchState(m, day, playersMode) {
   if (m.tennis) return { s: 'live', min: 'Live', score: m.sets.slice(0, Math.min(m.sets.length, 1 + Math.floor(el / 45))) };
   const min = el <= 45 ? Math.max(1, Math.ceil(el)) : el < 60 ? 'Пер.' : Math.min(90, Math.ceil(el - 15));
   const cur = typeof min === 'number' ? min : 45;
-  const score = (final || [0, 0]).map((g, k) => { let n = 0; for (let i = 0; i < g; i++) if (1 + hash(`${m.id}|${k}|${i}`) % 90 <= cur) n++; return n; });
+  const score = (final || [0, 0]).map((g, k) => { let n = 0; for (let i = 0; i < g; i++) if (1 + hash(`${playersMode ? 'p' : ''}${m.id}|${k}|${i}`) % 90 <= cur) n++; return n; });
   return { s: 'live', min: typeof min === 'number' ? `${min}'` : min, score };
 }
 
@@ -522,7 +531,7 @@ function timelineHTML(t, day) {
   const picked = state.stage[t.id], act = !!actionOf(t, day);
   const nodes = st.map((s, i) => {
     const passed = at(s.t, '23:59') < nowT;
-    const cls = ['tl-node', s.final ? 'final' : '', s.auction ? 'auction' : '', passed ? 'passed' : '', i === cur && act ? 'act' : ''].join(' ');
+    const cls = ['tl-node', s.final ? 'final' : '', s.auction ? 'auction' : '', passed && i !== cur ? 'passed' : '', i === cur ? 'cur' : '', i === cur && act ? 'act' : ''].join(' ');
     return `<button class="${cls}" style="left:${pos[i].toFixed(2)}%" data-stage="${i}" aria-pressed="${i === picked}" aria-label="${esc(s.n)} ${ddmm(s.f)}"><i>${s.final ? I.trophy : s.auction ? I.gavel : ''}</i></button>`;
   }).join('');
   let card = '';
@@ -530,7 +539,7 @@ function timelineHTML(t, day) {
     const s = st[picked], dates = s.f === s.t ? ddmmyy(s.f) : `${ddmmyy(s.f)} — ${ddmmyy(s.t)}`;
     card = `<div class="tl-card"><div class="n"><span>${esc(s.n)}${picked === cur ? ' · сейчас' : ''}</span>${s.go ? `<button class="tl-go" data-go>Перейти${I.right}</button>` : ''}</div><div class="d num">${dates}</div>${s.ms.length ? `<ul>${s.ms.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>`;
   }
-  return `<div class="tl" style="--w:${here.toFixed(2)}%"><div class="tl-track"><div class="tl-line"></div><div class="tl-fill"></div>${nodes}<span class="tl-here" aria-hidden="true"></span></div>
+  return `<div class="tl" style="--w:${here.toFixed(2)}%"><div class="tl-track"><div class="tl-line"></div><div class="tl-fill"></div>${nodes}</div>
     <div class="tl-dates num"><span>${ddmm(st[0].f)}</span>${st[st.length - 1].auction ? `<span class="auc">${I.gavel}${ddmm(st[st.length - 1].f)}</span>` : `<span>${ddmm(st[st.length - 1].t)}</span>`}</div>${card}</div>`;
 }
 
@@ -940,7 +949,7 @@ function bind() {
     const act = e.target.closest('[data-act]');
     if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на ваш матч' : act.dataset.act === 'join' ? `Вступление в турнир за ${(+act.dataset.price).toLocaleString('ru-RU')} монет` : 'Откроется аукцион: выкупите место в составе до дедлайна'); return; }
     if (e.target.closest('[data-screen]')) { toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
-    if (e.target.closest('[data-go]')) { toast('Откроется аукцион за свободный слот'); return; }
+    if (e.target.closest('[data-go]')) { toast('Переход на страницу аукциона'); return; }
     if (e.target.closest('[data-sw]')) { state.mode[id] = !modeOf(findCard(id)); rerenderCard(id); return; }
     const node = e.target.closest('[data-stage]');
     if (node) { const k = +node.dataset.stage; state.stage[id] = state.stage[id] === k ? undefined : k; rerenderCard(id); return; }
