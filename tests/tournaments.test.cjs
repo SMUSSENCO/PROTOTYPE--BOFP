@@ -404,6 +404,26 @@ async function check(name, fn) {
       await day('2024-08-21');
     });
 
+    await check(`[${tag}] favourites: long press moves a card to the top block and back; catalog too`, async () => {
+      const hold = async loc => { await loc.scrollIntoViewIfNeeded(); const b = await loc.boundingBox(); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down(); await page.waitForTimeout(750); await page.mouse.up(); await page.waitForTimeout(250); };
+      await hold(page.locator('.t[data-id="g5"] .t-main'));
+      assert.equal(await page.locator('.section-h').first().getAttribute('data-fold'), 'fav', 'favourites must open the list');
+      assert.equal(await page.locator('[data-fold="fav"] + .cards .t[data-id="g5"]').count(), 1);
+      assert.equal(await page.locator('[data-fold="series"] + .cards .t[data-id="g5"]').count(), 0, 'favourite must leave its block');
+      assert.equal(await page.locator('.t[data-id="g5"]').evaluate(e => e.classList.contains('open')), false, 'long press must not open the card');
+      await page.screenshot({ path: path.join(SHOTS, `${tag}-favourites.png`) });
+      await hold(page.locator('.t[data-id="g5"] .t-main'));
+      assert.equal(await page.locator('[data-fold="fav"]').count(), 0);
+      await page.locator('#catalogBtn').click(); await page.waitForTimeout(450);
+      assert.notEqual(await page.locator('#drawer .rk svg').first().evaluate(e => getComputedStyle(e).color), ACCENT, 'ratings must not be yellow');
+      await page.locator('#drawer [data-drsport="foot"]').click();
+      await hold(page.locator('#drawer .node', { hasText: 'Random Cup' }));
+      assert.match(await page.locator('#drawer .fav-band + .fav-node').innerText(), /Random Cup/);
+      await hold(page.locator('#drawer .fav-node'));
+      assert.equal(await page.locator('#drawer .fav-band').count(), 0);
+      await page.keyboard.press('Escape'); await page.waitForTimeout(450);
+    });
+
     await check(`[${tag}] touch targets ≥ 44px`, async () => {
       for (const sel of ['#catalogBtn', '#searchBtn', '#profileBtn', '.day', '.t-rail', '.t-icon', '.tab', '.section-h']) {
         const b = await box(sel);
@@ -421,7 +441,7 @@ async function check(name, fn) {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(url);
-    await check(`[${tag}] tour: 14 steps, waits for taps, keeps the tip on screen`, async () => {
+    await check(`[${tag}] tour: 15 steps, waits for taps, keeps the tip on screen`, async () => {
       const tip = page.locator('.tour-tip');
       await tip.waitFor();
       const step = async n => { await page.waitForFunction(n => document.querySelector('.tour-n')?.textContent.includes(`${n} из`), n); await page.waitForTimeout(700); };
@@ -448,25 +468,42 @@ async function check(name, fn) {
       assert.ok(await page.locator('.t[data-id="ucl"].open').count(), 'UCL must open for the switch');
       await next();
       await step(7); await onScreen(7); await next();
-      await step(8); await onScreen(8); await next();
-      await step(9); await onScreen(9);
-      await page.locator('.t[data-id="g5"] [data-rail]').click();
+      await step(8); await onScreen(8);
+      assert.match(await page.locator('.tour-tx').textContent(), /избранное/i);
+      await next();
+      await step(9); await onScreen(9); await next();
       await step(10); await onScreen(10);
+      await page.locator('.t[data-id="g5"] [data-rail]').click();
+      await step(11); await onScreen(11);
       assert.match(await page.locator('.t[data-id="g5"] .tl-card').textContent(), /свободный слот в Первой лиге[\s\S]*|Перейти/);
       assert.equal(await page.locator('.t[data-id="g5"] .tl-go').count(), 1, 'auction card needs the "Перейти" button');
       await next();
-      await step(11); await onScreen(11); await next();
-      await step(12); await onScreen(12);
-      await page.locator('#hintDn').click();
+      await step(12); await onScreen(12); await next();
       await step(13); await onScreen(13);
+      await page.locator('#hintDn').click();
+      await step(14); await onScreen(14);
       assert.match(await page.locator('.tour-tx').textContent(), /ночью/);
       await next();
-      await step(14); await onScreen(14);
+      await step(15); await onScreen(15);
       await page.locator('.tour-next', { hasText: 'Готово' }).click();
       await page.waitForTimeout(300);
       assert.equal(await page.locator('.tour').count(), 0, 'tour did not close');
       await page.locator('[data-tab="menu"]').click();
       assert.deepEqual(errors, [], errors.join(' | '));
+    });
+    await page.close();
+  }
+
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await page.goto(url);
+    await check('[390] tour can be skipped at any step', async () => {
+      await page.locator('.tour-skip').click();
+      await page.waitForTimeout(200);
+      assert.equal(await page.locator('.tour').count(), 0);
+      await page.locator('.t[data-id="ucl"] [data-rail]').click();
+      await page.waitForTimeout(300);
+      assert.ok(await page.locator('.t[data-id="ucl"].open').count(), 'the screen must work after skipping');
     });
     await page.close();
   }

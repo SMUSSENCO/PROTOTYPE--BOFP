@@ -7,6 +7,7 @@ const I = {
   right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3.2 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.6l6-.9z"/></svg>',
   rank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 21V9h6v12M3 21v-7h6M15 21v-9.5h6V21M2 21h20"/><path d="m12 2.5.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 4.6l2-.3z"/></svg>',
   table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3.5 5 5 4v4M3.5 11.5h2.2l-2.2 2.5h2.2M3.5 17h2.2v4H3.5M3.8 19h1.9"/></svg>',
   globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg>',
@@ -269,6 +270,29 @@ const ROUND_SIZE = { 'Финал': 1, '1/2 финала': 2, '1/4 финала':
 /* ================= state ================= */
 let REAL = { competitions: {}, days: {} }, CRESTS = {}, TEAM_IMG = {}, TENNIS = [];
 const state = { day: TODAY, open: new Set(), mode: {}, big5Side: {}, lgOpen: new Set(), stage: {}, folded: new Set(['custom']), more: new Set(), pages: {}, sports: new Set(['foot', 'tennis']), drOpen: new Set(['g0']), drSport: 'foot' };
+
+/* favourites: long press on a card or a catalog row; kept in this browser only */
+const FAV = (() => {
+  try { const v = JSON.parse(localStorage.getItem('bofp-fav')) || {}; return { cards: new Set(v.cards || []), cat: new Map(v.cat || []) }; }
+  catch (e) { return { cards: new Set(), cat: new Map() }; }
+})();
+function saveFav() { try { localStorage.setItem('bofp-fav', JSON.stringify({ cards: [...FAV.cards], cat: [...FAV.cat] })); } catch (e) { /* private mode */ } }
+function longPress(root, sel, fn) {
+  let timer = 0, x = 0, y = 0, fired = false;
+  const stop = () => clearTimeout(timer);
+  root.addEventListener('pointerdown', e => {
+    const el = e.target.closest(sel);
+    if (!el || e.button) return;
+    fired = false; x = e.clientX; y = e.clientY; stop();
+    timer = setTimeout(() => { fired = true; if (navigator.vibrate) navigator.vibrate(15); fn(el); }, 550);
+  });
+  root.addEventListener('pointermove', e => { if (Math.hypot(e.clientX - x, e.clientY - y) > 10) stop(); });
+  root.addEventListener('pointerup', stop);
+  root.addEventListener('pointercancel', stop);
+  // the tap that ends a long press must not also open the card
+  root.addEventListener('click', e => { if (fired) { fired = false; e.stopPropagation(); e.preventDefault(); } }, true);
+  root.addEventListener('contextmenu', e => { if (e.target.closest(sel)) e.preventDefault(); });
+}
 
 /* ================= helpers ================= */
 const EXTRA_CRESTS = { 'Фенербахче': 'fenerbahce', 'Бешикташ': 'besiktasjk', 'Бенфика': 'sl-benfica', 'Порту': 'fc-porto', 'Аякс': 'ajax', 'Галатасарай': 'galatasaray-as' };
@@ -559,7 +583,7 @@ function listHTML(key, rows) {
 }
 function big5Body(t, day) {
   const side = state.big5Side[t.id] || t.mineSide || 'West';
-  const tabs = ['West', 'East'].map(s => `<button role="tab" data-side="${s}" aria-selected="${s === side}">${s}${t.mineSide === s ? '<span class="me-dot" aria-label="твоя конференция"></span>' : ''}</button>`).join('');
+  const tabs = ['West', 'East'].map(s => `<button role="tab" data-side="${s}" aria-selected="${s === side}">${s}${t.mineSide === s ? '<span class="me-dot" aria-label="ваша конференция"></span>' : ''}</button>`).join('');
   const lgs = [...t.struct[side]].sort((a, b) => b.mine - a.mine).map(lg => {
     const key = `${t.id}|${side}|${lg.liga}`;
     const open = state.lgOpen.has(key) || (lg.mine && !state.lgOpen.has('x' + key));
@@ -599,7 +623,7 @@ function cardHTML(t, day) {
     ${art ? `<div class="t-art" aria-hidden="true">${art}</div>` : ''}
     <div class="t-head" data-toggle>
       <button class="t-icon ${t.flagIcon ? 'is-flag' : ''}" data-screen aria-label="Открыть турнир ${esc(t.name)}">${icon}</button>
-      <div class="t-main"><span class="t-tr"><span class="t-title" title="${esc(t.name)}">${esc(t.short)}</span>${t.fresh ? '<span class="new">NEW</span>' : ''}</span><span class="t-meta">${esc(t.sub)}</span></div>
+      <div class="t-main"><span class="t-tr"><span class="t-title" title="${esc(t.name)}">${esc(t.short)}</span>${FAV.cards.has(t.id) ? `<span class="fav-star" aria-label="В избранном">${I.star}</span>` : ''}${t.fresh ? '<span class="new">NEW</span>' : ''}</span><span class="t-meta">${esc(t.sub)}</span></div>
       <div class="t-act">${actionChip(t, day)}</div>
       <button class="t-rail" data-rail aria-expanded="${open}" aria-label="${open ? 'Свернуть' : 'Развернуть'}: ${esc(t.name)}${live ? `, в эфире ${live}` : ''}">${I.chevron}${countHTML(ms.length, live)}</button>
     </div>
@@ -624,7 +648,7 @@ function renderDates() {
       badges = `${cnt ? `<span class="top-b num">${I.game}${cnt}</span>` : ''}${auc ? `<span class="bot-b num">${I.gavel}${auc > 1 ? auc : ''}</span>` : ''}`;
     }
     const pastMine = past && playerMatchCount(d) ? '<span class="mine-dot"></span>' : '';
-    const label = `${today ? 'Сегодня' : wd(d)}, ${ddmm(d)}${cnt ? `, твоих матчей: ${cnt}` : ''}${auc ? `, аукционов: ${auc}` : ''}${alert ? ', требуется действие' : ''}`;
+    const label = `${today ? 'Сегодня' : wd(d)}, ${ddmm(d)}${cnt ? `, ваших матчей: ${cnt}` : ''}${auc ? `, аукционов: ${auc}` : ''}${alert ? ', требуется действие' : ''}`;
     items.push(`<button class="day ${past ? 'past' : ''} ${today ? 'today' : ''} ${alert ? 'alert' : ''} ${cnt || auc ? 'framed' : ''}" role="tab" data-day="${d}" aria-selected="${d === state.day}" aria-label="${label}">
       ${frame}<span class="wd">${today ? 'Сегодня' : wd(d)}</span><span class="dd num">${ddmm(d)}</span>${badges}${pastMine}</button>`);
   }
@@ -655,6 +679,10 @@ function section(key, title, cards, day, icon, pre = '', page = 0) {
 }
 function renderList() {
   const day = state.day, t = tournamentsFor(day), parts = [];
+  // favourites leave their blocks and always open the list
+  const fav = [];
+  for (const k of ['real', 'series', 'night', 'custom']) t[k] = t[k].filter(c => FAV.cards.has(c.id) ? (fav.push(c), false) : true);
+  if (fav.length) parts.push(section('fav', 'Избранные', fav, day, I.star));
   if (t.real.length) parts.push(section('real', 'Турниры', t.real, day));
   if (t.series.length) parts.push(section('series', 'BofP Series', t.series, day));
   if (t.night.length) {
@@ -662,7 +690,7 @@ function renderList() {
     parts.push(section('night', auction ? 'Ночные турниры и аукцион' : 'Ночные турниры', t.night, day, auction ? `${I.moon}${I.gavel}` : I.moon));
   }
   parts.push(section('custom', 'Пользовательские', t.custom, day, I.user, `<button class="create" data-create>${I.plus}Создать турнир</button>`, 5));
-  if (parts.length === 1) parts.unshift(`<p class="empty">${state.sports.size ? 'В этот день матчей нет.<br>Выбери другую дату в календаре.' : 'Выбери вид спорта: футбол или теннис.'}</p>`);
+  if (parts.length === 1) parts.unshift(`<p class="empty">${state.sports.size ? 'В этот день матчей нет.<br>Выберите другую дату в календаре.' : 'Выберите вид спорта: футбол или теннис.'}</p>`);
   $('#list').innerHTML = parts.join('');
   tick();
   requestAnimationFrame(updateHint);
@@ -700,7 +728,7 @@ function updateHint() {
   const key = [...kinds].sort().join();
   if (btn.dataset.k !== key) {
     btn.dataset.k = key;
-    btn.setAttribute('aria-label', kinds.has('squad') && kinds.has('predict') ? 'Ниже: прогноз и аукцион' : kinds.has('squad') ? 'Ниже: аукцион, попади в состав' : 'Ниже: нужен прогноз');
+    btn.setAttribute('aria-label', kinds.has('squad') && kinds.has('predict') ? 'Ниже: прогноз и аукцион' : kinds.has('squad') ? 'Ниже: аукцион, попадите в состав' : 'Ниже: нужен прогноз');
     btn.innerHTML = `<span class="key"><span class="arr">${I.chevron}</span><span class="ics">${kinds.has('predict') ? I.game : ''}${kinds.has('squad') ? `<span class="gv">${I.gavel}</span>` : ''}</span></span>`;
   }
 }
@@ -787,21 +815,30 @@ function tennisTree(c) {
   ];
 }
 const RATINGS = { foot: ['Рейтинг альянсов', 'Рейтинг игроков / отбор в сборные'], tennis: ['Теннисный рейтинг'] };
-function treeHTML(items, key, depth) {
+function treeHTML(items, key, depth, trail = []) {
   return items.map((it, i) => {
     const node = typeof it === 'string' ? { t: it } : it, k = `${key}.${i}`, has = !!(node.kids && node.kids.length);
+    const path = [...trail, node.t];
     const open = state.drOpen.has(k);
     const lead = node.flag ? `<span class="fl">${FLAGS[node.flag]}</span>` : node.img ? `<span class="fl ic"><img src="${esc(node.img)}" alt=""></span>`
       : depth === 0 ? `<span class="fl ic"><span class="g">${node.icon || I.cup}</span></span>` : '';
-    return `<button class="node d${Math.min(depth, 3)}" ${has ? `data-dnode="${k}" aria-expanded="${open}"` : 'data-leaf'}>${lead}<span class="tx">${node.sm ? `<span class="sm">${esc(node.sm)}</span>` : ''}<span class="nm">${esc(node.t)}</span></span>${node.dt ? `<span class="dt num">${node.dt}</span>` : ''}${has ? I.chevron : I.right}</button>
-      ${has ? `<div class="kids" ${open ? '' : 'hidden'}>${treeHTML(node.kids, k, depth + 1)}</div>` : ''}`;
+    return `<button class="node d${Math.min(depth, 3)}" ${has ? `data-dnode="${k}" aria-expanded="${open}"` : 'data-leaf'} data-fk="${k}" data-path="${esc(path.join(' · '))}">${lead}<span class="tx">${node.sm ? `<span class="sm">${esc(node.sm)}</span>` : ''}<span class="nm">${esc(node.t)}</span></span>${FAV.cat.has(k) ? `<span class="fav-star">${I.star}</span>` : ''}${node.dt ? `<span class="dt num">${node.dt}</span>` : ''}${has ? I.chevron : I.right}</button>
+      ${has ? `<div class="kids" ${open ? '' : 'hidden'}>${treeHTML(node.kids, k, depth + 1, path)}</div>` : ''}`;
   }).join('');
+}
+function favBand(sport) {
+  const list = [...FAV.cat].filter(([k]) => k.startsWith(sport));
+  if (!list.length) return '';
+  return `<div class="band fav-band"><span>Избранные</span>${I.star}</div>${list.map(([k, path]) => {
+    const parts = path.split(' · '), nm = parts.pop();
+    return `<button class="node d0 fav-node" data-leaf data-fk="${k}" data-path="${esc(path)}"><span class="fl ic"><span class="g">${I.star}</span></span><span class="tx">${parts.length ? `<span class="sm">${esc(parts.join(' · '))}</span>` : ''}<span class="nm">${esc(nm)}</span></span>${I.right}</button>`;
+  }).join('')}`;
 }
 function renderDrawer() {
   const sport = state.drSport, groups = CATALOG[sport];
   $('#drawer').innerHTML = `<div class="dr-h"><h2>Все турниры</h2><button class="icon-btn" data-close aria-label="Закрыть">${I.close}</button></div>
     <div class="seg dr-seg" role="tablist">${[['foot', 'Футбол'], ['tennis', 'Теннис']].map(([k, l]) => `<button role="tab" data-drsport="${k}" aria-selected="${k === sport}">${l}</button>`).join('')}</div>
-    <div class="dr-body"><div class="dr-rank">${RATINGS[sport].map(r => `<button class="rk" data-rank>${I.rank}<span class="nm">${r}</span>${I.right}</button>`).join('')}</div>${groups.map((g, gi) => {
+    <div class="dr-body"><div class="dr-rank">${RATINGS[sport].map(r => `<button class="rk" data-rank>${I.rank}<span class="nm">${r}</span>${I.right}</button>`).join('')}</div>${favBand(sport)}${groups.map((g, gi) => {
       const key = `${sport}g${gi}`, open = !state.drOpen.has('x' + key);
       return `<button class="band" data-band="${key}" aria-expanded="${open}"><span>${esc(g.g)}</span>${I.chevron}</button><div ${open ? '' : 'hidden'}>${treeHTML(g.items, key, 0)}</div>`;
     }).join('')}</div>`;
@@ -823,7 +860,31 @@ function toggleIn(btn, key, openKeyIsCollapse) {
 }
 
 /* ================= events ================= */
+function toggleCardFav(head) {
+  const id = head.closest('.t').dataset.id, on = !FAV.cards.has(id);
+  on ? FAV.cards.add(id) : FAV.cards.delete(id);
+  saveFav();
+  toast(on ? 'Турнир добавлен в избранное' : 'Турнир убран из избранного');
+  renderList();
+  const el = document.querySelector(`.t[data-id="${id}"]`);
+  if (el) { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+}
+function toggleCatFav(node) {
+  const k = node.dataset.fk, on = !FAV.cat.has(k);
+  on ? FAV.cat.set(k, node.dataset.path) : FAV.cat.delete(k);
+  saveFav();
+  toast(on ? 'Добавлено в избранное' : 'Убрано из избранного');
+  // keep the pressed row under the finger while the favourites band grows or shrinks
+  const row = `#drawer .node:not(.fav-node)[data-fk="${k}"]`, before = $(row) && $(row).getBoundingClientRect().top;
+  const top = $('#drawer .dr-body').scrollTop;
+  renderDrawer();
+  const body = $('#drawer .dr-body');
+  body.scrollTop = top;
+  if (before != null && $(row)) body.scrollTop += $(row).getBoundingClientRect().top - before;
+}
 function bind() {
+  longPress($('#list'), '.t-head', toggleCardFav);
+  longPress($('#drawer'), '.node', toggleCatFav);
   $('#dates').addEventListener('click', e => {
     const b = e.target.closest('[data-day]');
     if (!b || b.dataset.day === state.day) return;
@@ -874,7 +935,7 @@ function bind() {
     const more = e.target.closest('[data-more]');
     if (more) { const k = more.dataset.more; state.more.has(k) ? state.more.delete(k) : state.more.add(k); rerenderCard(id); return; }
     const act = e.target.closest('[data-act]');
-    if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на твой матч' : act.dataset.act === 'join' ? `Вступление в турнир за ${(+act.dataset.price).toLocaleString('ru-RU')} монет` : 'Откроется аукцион: выкупи место в составе до дедлайна'); return; }
+    if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на ваш матч' : act.dataset.act === 'join' ? `Вступление в турнир за ${(+act.dataset.price).toLocaleString('ru-RU')} монет` : 'Откроется аукцион: выкупите место в составе до дедлайна'); return; }
     if (e.target.closest('[data-screen]')) { toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
     if (e.target.closest('[data-go]')) { toast('Откроется аукцион за свободный слот'); return; }
     if (e.target.closest('[data-sw]')) { state.mode[id] = !modeOf(findCard(id)); rerenderCard(id); return; }
