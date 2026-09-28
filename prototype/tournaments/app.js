@@ -147,7 +147,7 @@ const BIG5_STAGES = [
   { n: 'Тур 10 · экватор', f: '2024-08-21', t: '2024-08-21', ms: [] },
   { n: 'Тур 15', f: '2024-08-26', t: '2024-08-26', ms: [] },
   { n: 'Тур 19 · финиш', f: '2024-08-30', t: '2024-08-30', ms: [], final: true },
-  { n: 'Аукцион', f: '2024-08-31', t: '2024-08-31', ms: ['Последний день месяца: торги за игроков на следующий месяц'], auction: true },
+  { n: 'Аукцион', f: '2024-08-31', t: '2024-08-31', ms: ['Последний день месяца — аукцион за свободный слот в Первой лиге'], auction: true, go: true },
 ];
 const RANDOM_STAGES = [
   { n: 'Жеребьёвка', f: '2024-08-10', t: '2024-08-10', ms: ['Соперников выбирает случай'] },
@@ -503,7 +503,7 @@ function timelineHTML(t, day) {
   let card = '';
   if (picked != null) {
     const s = st[picked], dates = s.f === s.t ? ddmmyy(s.f) : `${ddmmyy(s.f)} — ${ddmmyy(s.t)}`;
-    card = `<div class="tl-card"><div class="n">${esc(s.n)}${picked === cur ? ' · сейчас' : ''}</div><div class="d num">${dates}</div>${s.ms.length ? `<ul>${s.ms.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>`;
+    card = `<div class="tl-card"><div class="n"><span>${esc(s.n)}${picked === cur ? ' · сейчас' : ''}</span>${s.go ? `<button class="tl-go" data-go>Перейти${I.right}</button>` : ''}</div><div class="d num">${dates}</div>${s.ms.length ? `<ul>${s.ms.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>`;
   }
   return `<div class="tl" style="--w:${here.toFixed(2)}%"><div class="tl-track"><div class="tl-line"></div><div class="tl-fill"></div>${nodes}<span class="tl-here" aria-hidden="true"></span></div>
     <div class="tl-dates num"><span>${ddmm(st[0].f)}</span>${st[st.length - 1].auction ? `<span class="auc">${I.gavel}${ddmm(st[st.length - 1].f)}</span>` : `<span>${ddmm(st[st.length - 1].t)}</span>`}</div>${card}</div>`;
@@ -876,6 +876,7 @@ function bind() {
     const act = e.target.closest('[data-act]');
     if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на твой матч' : act.dataset.act === 'join' ? `Вступление в турнир за ${(+act.dataset.price).toLocaleString('ru-RU')} монет` : 'Откроется аукцион: выкупи место в составе до дедлайна'); return; }
     if (e.target.closest('[data-screen]')) { toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
+    if (e.target.closest('[data-go]')) { toast('Откроется аукцион за свободный слот'); return; }
     if (e.target.closest('[data-sw]')) { state.mode[id] = !modeOf(findCard(id)); rerenderCard(id); return; }
     const node = e.target.closest('[data-stage]');
     if (node) { const k = +node.dataset.stage; state.stage[id] = state.stage[id] === k ? undefined : k; rerenderCard(id); return; }

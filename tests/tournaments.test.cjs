@@ -46,7 +46,7 @@ async function check(name, fn) {
     page.on('console', m => m.type() === 'error' && (m.location().url || '').startsWith(url) && errors.push(m.text()));
     page.on('requestfailed', r => r.url().startsWith(url) && errors.push(`${r.url()} ${r.failure().errorText}`));
     page.on('response', r => r.url().startsWith(url) && r.status() >= 400 && errors.push(`${r.status()} ${r.url()}`));
-    await page.goto(url);
+    await page.goto(url + '?notour');
     await page.waitForSelector('.t');
     await page.evaluate(() => document.fonts.ready);
     const box = sel => page.locator(sel).first().boundingBox();
@@ -411,6 +411,63 @@ async function check(name, fn) {
       }
     });
 
+    await page.close();
+  }
+
+  // the guided tour, walked end to end like a first-time visitor
+  for (const vp of [{ width: 390, height: 844 }, { width: 360, height: 740 }]) {
+    const tag = `${vp.width}`;
+    const page = await browser.newPage({ viewport: vp, deviceScaleFactor: 2, reducedMotion: 'reduce', ignoreHTTPSErrors: true, colorScheme: 'dark' });
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto(url);
+    await check(`[${tag}] tour: 14 steps, waits for taps, keeps the tip on screen`, async () => {
+      const tip = page.locator('.tour-tip');
+      await tip.waitFor();
+      const step = async n => { await page.waitForFunction(n => document.querySelector('.tour-n')?.textContent.includes(`${n} из`), n); await page.waitForTimeout(700); };
+      const next = async () => page.locator('.tour-next').click();
+      const onScreen = async n => {
+        await page.screenshot({ path: path.join(SHOTS, `${tag}-tour-${String(n).padStart(2, '0')}.png`) });
+        const b = await tip.boundingBox();
+        assert.ok(b.y >= 0 && b.y + b.height <= vp.height, `step ${n}: tip off screen (${b.y})`);
+        const ring = await page.evaluate(() => { const r = document.querySelector('.tour-rings rect')?.getBoundingClientRect(); return r && { y: r.y, height: r.height }; });
+        assert.ok(ring && !(b.y < ring.y + ring.height - 8 && b.y + b.height > ring.y + 8) || n === 2, `step ${n}: tip covers the spotlight`);
+      };
+      await step(1); await onScreen(1);
+      assert.equal(await page.locator('.tour-next').count(), 0, 'step 1 must wait for the tap');
+      await page.locator('#searchBtn').click({ force: true });
+      assert.ok(await page.locator('.tour-n').textContent().then(t => t.includes('1 из')), 'a tap outside the spotlight must be ignored');
+      await page.locator('#catalogBtn').click();
+      await step(2); await onScreen(2); await next();
+      await step(3); await onScreen(3);
+      assert.match(await page.locator('.tour-tx').textContent(), /рейтинги/);
+      await page.locator('#drawer [data-close]').click();
+      await step(4); await onScreen(4); await next();
+      await step(5); await onScreen(5); await next();
+      await step(6); await onScreen(6);
+      assert.ok(await page.locator('.t[data-id="ucl"].open').count(), 'UCL must open for the switch');
+      await next();
+      await step(7); await onScreen(7); await next();
+      await step(8); await onScreen(8); await next();
+      await step(9); await onScreen(9);
+      await page.locator('.t[data-id="g5"] [data-rail]').click();
+      await step(10); await onScreen(10);
+      assert.match(await page.locator('.t[data-id="g5"] .tl-card').textContent(), /свободный слот в Первой лиге[\s\S]*|Перейти/);
+      assert.equal(await page.locator('.t[data-id="g5"] .tl-go').count(), 1, 'auction card needs the "Перейти" button');
+      await next();
+      await step(11); await onScreen(11); await next();
+      await step(12); await onScreen(12);
+      await page.locator('#hintDn').click();
+      await step(13); await onScreen(13);
+      assert.match(await page.locator('.tour-tx').textContent(), /ночью/);
+      await next();
+      await step(14); await onScreen(14);
+      await page.locator('.tour-next', { hasText: 'Готово' }).click();
+      await page.waitForTimeout(300);
+      assert.equal(await page.locator('.tour').count(), 0, 'tour did not close');
+      await page.locator('[data-tab="menu"]').click();
+      assert.deepEqual(errors, [], errors.join(' | '));
+    });
     await page.close();
   }
 
