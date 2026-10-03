@@ -1022,7 +1022,7 @@ function bind() {
   $('#tabbar').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
-    if (b.dataset.tab !== 'cups') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
+    if (b.dataset.tab !== 'cups' && b.dataset.tab !== 'wallet') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
   });
   $('#searchBtn').addEventListener('click', () => toast('Глобальный поиск — заглушка'));
   $('#drawer').addEventListener('input', e => { if (e.target.id === 'drQ') { state.drQ = e.target.value; $('#drHits').innerHTML = searchHTML(state.drQ); } });

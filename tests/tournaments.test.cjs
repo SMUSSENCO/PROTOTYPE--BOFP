@@ -439,6 +439,52 @@ async function check(name, fn) {
       assert.match(await page.locator('#toast').innerText(), /Глобальный поиск/, 'header search is a stub for the global search');
     });
 
+    await check(`[${tag}] stocks: portfolio tab, sorting, dividends, stock card, leaderboard, player profile, trade sheet`, async () => {
+      await page.locator('[data-tab="wallet"]').click(); await page.waitForTimeout(300);
+      assert.equal(await page.locator('#stocks').isVisible(), true, 'the portfolio tab opens the stocks market');
+      const names = () => page.locator('#stocks .sx-tbl .sx-tr:not(.tot) .l b').allInnerTexts();
+      assert.equal((await names())[0], 'Барселона', 'portfolio sorted by value by default');
+      await page.locator('[data-sort="pf:q"]').click();
+      const qs = await page.locator('#stocks .sx-tbl .sx-tr:not(.tot) span:nth-child(2)').allInnerTexts();
+      const nums = qs.map(x => +x.replace(/\s/g, ''));
+      assert.deepEqual(nums, [...nums].sort((a, b) => b - a), 'sort by quantity');
+      await page.locator('[data-sort="pf:q"]').click();
+      const up = (await page.locator('#stocks .sx-tbl .sx-tr:not(.tot) span:nth-child(2)').allInnerTexts()).map(x => +x.replace(/\s/g, ''));
+      assert.deepEqual(up, [...up].sort((a, b) => a - b), 'second click reverses');
+      await page.locator('[data-pf="div"]').click();
+      assert.match(await page.locator('#stocks').innerText(), /Чемпионские[\s\S]*Победитель Лиги чемпионов[\s\S]*каждые 10 акций[\s\S]*Чемпион АПЛ[\s\S]*100[\s\S]*Италии[\s\S]*200[\s\S]*Франции[\s\S]*600[\s\S]*Германии[\s\S]*600/i);
+      await page.locator('[data-tab2="market"]').click();
+      assert.match(await page.locator('#stocks .sx-th').innerText(), /Рейтинг УЕФА/i);
+      await page.locator('[data-lg="epl"]').click();
+      assert.ok(await page.locator('#stocks .sx-row[data-club="Арсенал"]').count() && !(await page.locator('#stocks .sx-row[data-club="Барселона"]').count()), 'league filter');
+      await page.locator('[data-mkt="orders"]').click();
+      assert.match(await page.locator('#stocks [data-st="active"]').innerText(), /\d/, 'active filter shows a counter');
+      const gray = await page.locator('#stocks .sx-ord.cancelled .o2').first().evaluate(e => getComputedStyle(e).filter);
+      assert.match(gray, /grayscale/, 'cancelled orders are black and white');
+      assert.doesNotMatch(await page.locator('#stocks .sx-ord.cancelled .oi').first().evaluate(e => getComputedStyle(e).filter), /grayscale/, 'icon keeps colour');
+      await page.locator('[data-tab2="portfolio"]').click(); await page.locator('[data-pf="stocks"]').click();
+      await page.locator('#stocks [data-club="Барселона"]').click(); await page.waitForTimeout(450);
+      assert.match(await page.locator('#sxCard .sx-own').innerText(), /Ваши акции[\s\S]*388[\s\S]*В резерве[\s\S]*12[\s\S]*У игроков[\s\S]*Топ-3/i);
+      await page.locator('#sxCard [data-lb]').click(); await page.waitForTimeout(450);
+      assert.equal(await page.locator('#sxModal .lbr').count(), 100, 'top-100 leaderboard');
+      await page.locator('#sxModal [data-sort="lb:qty"]').click();
+      await page.locator('#sxModal .lbr').first().click(); await page.waitForTimeout(450);
+      assert.match(await page.locator('#sxPlayer .sx-pbar').innerText(), /Торговый профиль игрока/i);
+      await page.locator('#sxPlayer [data-pclose]').click(); await page.waitForTimeout(450);
+      assert.equal(await page.locator('#sxPlayer.show').count() + await page.locator('#sxModal.show').count() + await page.locator('#sxCard.show').count(), 0, 'closing returns to my portfolio');
+      await page.locator('#stocks [data-club="Барселона"]').click(); await page.waitForTimeout(450);
+      await page.locator('#sxCard [data-trade="buy"]').click(); await page.waitForTimeout(450);
+      const green = await page.locator('#sxTrade .sx-go').evaluate(e => getComputedStyle(e).backgroundImage);
+      assert.match(green, /70, 227, 160/, 'buy is green');
+      await page.locator('#sxTrade [data-pay="tokens"]').click();
+      assert.match(await page.locator('#sxTrade .sx-go').innerText(), /0,38/, '12 158 × 1,005 / 32 000 ≈ 0,38 tokens');
+      await page.locator('#sxTrade [data-tside="sell"]').click();
+      assert.match(await page.locator('#sxTrade .sx-go').evaluate(e => getComputedStyle(e).backgroundImage), /255, 122, 107/, 'sell is red');
+      await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+      await page.locator('[data-tab="cups"]').click(); await page.waitForTimeout(300);
+      assert.equal(await page.locator('#stocks').isVisible(), false);
+    });
+
     await check(`[${tag}] touch targets ≥ 44px`, async () => {
       for (const sel of ['#catalogBtn', '#searchBtn', '#profileBtn', '.day', '.t-rail', '.t-icon', '.tab', '.section-h']) {
         const b = await box(sel);
