@@ -176,15 +176,62 @@
         ${op ? `<div class="dcond"><span>${esc(cond)}</span><span class="num">${fmt(rate, 1)}%</span><span class="num">${fmt(sum)}</span></div>` : ''}`; }).join('')}
       <div class="dtot"><span>${d.rows.length} клуба</span><span class="num">${fmt(d.rows.reduce((s, r) => s + (MINE[r[0]] ? MINE[r[0]].q : 0), 0))}</span><span class="num">${fmt(total)}</span></div></section>`;
   }
+  /* title odds the way analysts build them (ClubElo / Opta supercomputer style):
+     Elo ratings -> per-match win/draw/loss probabilities -> the whole season simulated 5 000 times */
+  const ELO = { 'Манчестер Сити': 2040, 'Реал Мадрид': 2000, 'Арсенал': 1990, 'Ливерпуль': 1960, 'Интер': 1960, 'Бавария': 1950, 'Байер Леверкузен': 1940,
+    'Барселона': 1920, 'ПСЖ': 1900, 'Атлетико Мадрид': 1880, 'РБ Лейпциг': 1860, 'Боруссия Дортмунд': 1850, 'Аталанта': 1850, 'Ювентус': 1840, 'Астон Вилла': 1830,
+    'Милан': 1830, 'Челси': 1820, 'Ньюкасл Юнайтед': 1820, 'Спортинг': 1820, 'Тоттенхэм': 1810, 'Наполи': 1810, 'Бенфика': 1810, 'Манчестер Юнайтед': 1800,
+    'Рома': 1790, 'ПСВ': 1790, 'Лацио': 1780, 'Порту': 1780, 'Фейеноорд': 1770, 'Марсель': 1760, 'Лион': 1740, 'Галатасарай': 1730, 'Фенербахче': 1720 };
+  const FILL = { epl: 1730, laliga: 1700, seriea: 1690, bundesliga: 1690, ligue1: 1650 };
+  const UCL_IN = ['Реал Мадрид', 'Манчестер Сити', 'Бавария', 'ПСЖ', 'Ливерпуль', 'Интер', 'Боруссия Дортмунд', 'РБ Лейпциг', 'Барселона', 'Байер Леверкузен',
+    'Атлетико Мадрид', 'Аталанта', 'Ювентус', 'Бенфика', 'Арсенал', 'Милан', 'Фейеноорд', 'Спортинг', 'ПСВ', 'Астон Вилла'];
+  function match(ra, rb, r, home = 65) {
+    const e = 1 / (1 + 10 ** (-(ra + home - rb) / 400)), draw = 0.28 - 0.2 * Math.abs(e - 0.5), x = r();
+    return x < e - draw / 2 ? 3 : x < e + draw / 2 ? 1 : 0;
+  }
+  let ODDS = null;
+  function odds() {
+    if (ODDS) return ODDS;
+    ODDS = {};
+    const r = rng('odds2425'), N = 5000;
+    for (const lg of ['epl', 'seriea', 'ligue1', 'bundesliga']) {
+      const named = CLUBS.filter(c => c.lg === lg).map(c => ({ n: c.n, e: ELO[c.n] }));
+      const size = lg === 'bundesliga' || lg === 'ligue1' ? 18 : 20;
+      const teams = [...named, ...Array.from({ length: size - named.length }, (_, i) => ({ n: `${lg}${i}`, e: FILL[lg] + (r() - 0.5) * 140 }))];
+      const wins = {};
+      for (let s2 = 0; s2 < N; s2++) {
+        const pts = teams.map(() => 0);
+        for (let a = 0; a < teams.length; a++) for (let b = 0; b < teams.length; b++) if (a !== b) { const g = match(teams[a].e, teams[b].e, r); pts[a] += g; pts[b] += g === 3 ? 0 : g === 1 ? 1 : 3; }
+        let best = 0; for (let k = 1; k < pts.length; k++) if (pts[k] > pts[best] || (pts[k] === pts[best] && r() < 0.5)) best = k;
+        wins[teams[best].n] = (wins[teams[best].n] || 0) + 1;
+      }
+      ODDS[lg] = Object.fromEntries(Object.entries(wins).map(([k, v]) => [k, v / N]));
+    }
+    // Champions League: league phase as a noisy cut to 16, then two-legged ties and a final
+    const field = [...UCL_IN.map(n => ({ n, e: ELO[n] })), ...Array.from({ length: 16 }, (_, i) => ({ n: `ucl${i}`, e: 1680 + r() * 120 }))], wins = {};
+    const tie = (a, b) => { const e = 1 / (1 + 10 ** (-(a.e - b.e) * 1.35 / 400)); return r() < e ? a : b; };
+    for (let s2 = 0; s2 < N; s2++) {
+      let round = field.map(t => ({ t, k: t.e + (r() - 0.5) * 260 })).sort((x, y) => y.k - x.k).slice(0, 16).map(x => x.t);
+      while (round.length > 1) { round.sort(() => r() - 0.5); const nx = []; for (let k = 0; k < round.length; k += 2) nx.push(tie(round[k], round[k + 1])); round = nx; }
+      wins[round[0].n] = (wins[round[0].n] || 0) + 1;
+    }
+    ODDS.ucl = Object.fromEntries(Object.entries(wins).map(([k, v]) => [k, v / N]));
+    return ODDS;
+  }
   function champBlock() {
+    const o = odds();
     const rows = CHAMP.map(ch => {
-      const own = Object.entries(MINE).filter(([n]) => ch.lg ? CLUB[n].lg === ch.lg : true).map(([n, h]) => ({ n, q: h.q, t: Math.floor(h.q / ch.per) * 0.5 })).filter(x => x.t > 0);
-      const best = own.reduce((m, x) => Math.max(m, x.t), 0), k = `champ:${ch.t}`, op = S.open.has(k);
-      return { best, html: `<button class="ctr" data-dopen="${esc(k)}" aria-expanded="${op}"><span class="fl">${FLAGS[ch.icon]}</span><span class="ct"><b>${ch.t}</b><small>0,5 ${INF} за каждые ${ch.per} акций</small></span><span class="cv num">${best ? `до ${fmt(best, 1)}` : '—'}${ICO.chev}</span></button>
-        ${op ? `<div class="ccond">${own.length ? own.map(x => `<div><span>${crest(x.n)}${esc(x.n)}</span><span class="num">${fmt(x.q)} акц.</span><span class="num">${fmt(x.t, 1)} ${INF}</span></div>`).join('') : '<div><span>Нет акций клубов этого турнира</span></div>'}<p>Начисление — если клуб станет чемпионом сезона 2024/25</p></div>` : ''}` };
+      const table = o[ch.lg || 'ucl'], fav = Object.entries(table).filter(([n]) => CLUB[n]).sort((a, b) => b[1] - a[1])[0];
+      const own = Object.entries(MINE).filter(([n]) => ch.lg ? CLUB[n].lg === ch.lg : UCL_IN.includes(n))
+        .map(([n, h]) => ({ n, q: h.q, t: Math.floor(h.q / ch.per) * 0.5, p: table[n] || 0 })).sort((a, b) => b.p - a.p);
+      const k = `champ:${ch.t}`, op = S.open.has(k), top = own[0];
+      return `<button class="ctr" data-dopen="${esc(k)}" aria-expanded="${op}"><span class="fl">${FLAGS[ch.icon]}</span><span class="ct"><b>${ch.t}</b><small>0,5 ${INF} за каждые ${ch.per} акций</small></span>
+          <span class="cv num">${top ? `${esc(top.n)} <em>${fmt(top.p * 100, 1)}%</em>` : '—'}${ICO.chev}</span></button>
+        ${op ? `<div class="ccond"><div class="hd"><span>Клуб</span><span>Акций</span><span>Шанс</span><span>Жетоны</span></div>
+          ${own.length ? own.map(x => `<div><span>${crest(x.n)}${esc(x.n)}</span><span class="num">${fmt(x.q)}</span><span class="num pr">${fmt(x.p * 100, 1)}%</span><span class="num">${x.t ? `${fmt(x.t, 1)} ${INF}` : '—'}</span></div>`).join('') : '<div><span>Нет акций клубов этого турнира</span></div>'}
+          <p>Фаворит: ${esc(fav[0])} — ${fmt(fav[1] * 100, 1)}%. Шанс считается по модели Эло: рейтинг силы клубов → вероятности исхода каждого матча → 5 000 симуляций сезона.</p></div>` : ''}`;
     });
-    const max = rows.reduce((s, r) => s + r.best, 0);
-    return `<section class="sx-div glass champ"><div class="dh"><div><b>Чемпионские</b><small>Жетоны влияния за акции чемпионов</small></div><div class="dv"><b class="num">0 ${INF}</b><small>из ${fmt(max, 1)} возможных</small></div></div>${rows.map(r => r.html).join('')}</section>`;
+    return `<section class="sx-div glass champ"><div class="dh"><div><b>Чемпионские</b><small>Жетоны влияния за акции чемпионов сезона 2024/25</small></div></div>${rows.join('')}</section>`;
   }
   function portfolio(book = MINE, key = 'pf') {
     if (S.pf === 'stocks' || key === 'other') return (key === 'pf' ? chips('pf', [['stocks', 'Акции'], ['div', 'Дивиденды']], S.pf) : '') + bookTable(book, key);
@@ -202,23 +249,62 @@
       <div class="seg sx-seg" role="tablist">${[['summary', 'Сводка'], ['market', 'Рынок'], ['portfolio', 'Портфель']].map(([k, l]) => `<button role="tab" data-tab2="${k}" aria-selected="${k === S.tab}">${l}</button>`).join('')}</div></div>
       <div class="sx-scroll" id="sxScroll">${body}</div>`;
   }
-  const keepScroll = fn => { const sc = q('#sxScroll'), top = sc ? sc.scrollTop : 0; fn(); const n = q('#sxScroll'); if (n) n.scrollTop = top; };
+  // re-rendering must not jump: keep the vertical position and every horizontal filter strip where it was
+  const STRIPS = '.sx-chips,.sx-lgs,.sx-chips2';
+  const keepScroll = (fn, root = '#stocks', sc = '#sxScroll') => {
+    const box = q(sc), top = box ? box.scrollTop : 0, xs = [...document.querySelectorAll(`${root} :is(${STRIPS})`)].map(e => e.scrollLeft);
+    fn();
+    const n = q(sc); if (n) n.scrollTop = top;
+    document.querySelectorAll(`${root} :is(${STRIPS})`).forEach((e, i) => { if (xs[i] != null) e.scrollLeft = xs[i]; });
+  };
 
   /* ---------- stock card ---------- */
+  /* full chart: price grid on the right, dates below, tap or drag to read any point */
+  const PERIODS = { live: [40, 3 * 60e3], '1d': [48, 30 * 60e3], '1w': [56, 3 * 3600e3], '1m': [30, 864e5], '3m': [60, 1.5 * 864e5] };
+  let SERIES = null;
+  function series(c) {
+    const [n, step] = PERIODS[S.period], r = rng(c.n + S.period), end = Date.parse(`${TODAY}T21:10:00+03:00`);
+    const vol = { live: 0.002, '1d': 0.004, '1w': 0.009, '1m': 0.018, '3m': 0.03 }[S.period];
+    const v = [c.p];
+    for (let i = 1; i < n; i++) v.unshift(v[0] * (1 + (r() - 0.5) * vol * 2));
+    return v.map((p, i) => ({ t: end - (n - 1 - i) * step, p: Math.round(p), vol: 1 + Math.floor(r() * 40) }));
+  }
+  const tLabel = (t, long) => new Date(t).toLocaleString('ru-RU', S.period === 'live' || S.period === '1d'
+    ? { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow', ...(long ? { day: 'numeric', month: 'short' } : {}) }
+    : { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow', ...(long ? { weekday: 'short' } : {}) });
   function chartSVG(c) {
-    const n = { live: 40, '1d': 48, '1w': 42, '1m': 30, '3m': 60 }[S.period], r = rng(c.n + S.period);
-    const pts = [c.p];
-    for (let i = 1; i < n; i++) pts.unshift(pts[0] * (1 + (r() - 0.5) * 0.03));
-    const min = Math.min(...pts), max = Math.max(...pts), W = 340, H = 120;
-    const xy = pts.map((v, i) => [i / (n - 1) * W, H - 8 - (v - min) / Math.max(1, max - min) * (H - 20)]);
-    const line = xy.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join('');
-    const vols = Array.from({ length: 30 }, () => r());
-    const up = pts[n - 1] >= pts[0];
-    return `<svg class="sx-chart ${up ? 'up' : 'dn'}" viewBox="0 0 ${W} ${H + 60}" preserveAspectRatio="none" role="img" aria-label="График цены">
-      <path class="ar" d="${line}L${W} ${H}L0 ${H}Z"/><path class="ln" d="${line}"/>
-      <line class="ref" x1="0" x2="${W}" y1="${xy[n - 1][1]}" y2="${xy[n - 1][1]}"/>
-      ${vols.map((v, i) => `<rect class="${(hash(c.n + i) % 3) ? 'g' : 'r'}" x="${i * W / 30 + 1}" y="${H + 58 - v * 44}" width="${W / 30 - 3}" height="${v * 44}" rx="1.5"/>`).join('')}</svg>
-      <div class="sx-ax num"><span>${fmt(max)}</span><span>${fmt(min)}</span></div>`;
+    const pts = SERIES = series(c), n = pts.length;
+    const lo = Math.min(...pts.map(x => x.p)), hi = Math.max(...pts.map(x => x.p));
+    // round grid steps: 4 price lines that wrap the range
+    const raw = (hi - lo) / 3 || 1, mag = 10 ** Math.floor(Math.log10(raw)), stepP = [1, 2, 2.5, 5, 10].map(k => k * mag).find(k => k >= raw);
+    const g0 = Math.floor(lo / stepP) * stepP, grid = [0, 1, 2, 3, 4].map(i => g0 + i * stepP).filter(v => v <= hi + stepP);
+    const min = grid[0], max = grid[grid.length - 1], H = 100;
+    const y = v => (1 - (v - min) / Math.max(1, max - min)) * H;
+    const line = pts.map((x, i) => `${i ? 'L' : 'M'}${(i / (n - 1) * 100).toFixed(2)} ${y(x.p).toFixed(2)}`).join('');
+    const up = pts[n - 1].p >= pts[0].p, vmax = Math.max(...pts.map(x => x.vol));
+    const ticks = [0.12, 0.5, 0.88].map(f => Math.round(f * (n - 1)));
+    return `<div class="sx-cw ${up ? 'up' : 'dn'}" data-chart>
+        <div class="plot"><svg viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">
+          ${grid.map(v => `<line class="gl" x1="0" x2="100" y1="${y(v)}" y2="${y(v)}"/>`).join('')}
+          <path class="ar" d="${line}L100 ${H}L0 ${H}Z"/><path class="ln" d="${line}"/></svg>
+          ${grid.map(v => `<span class="gy num" style="top:${y(v)}%">${fmt(v)}</span>`).join('')}
+          ${ticks.map(i => `<span class="gx" style="left:${i / (n - 1) * 100}%"></span>`).join('')}
+          <span class="cx" hidden></span><span class="cd" hidden></span><span class="ct" hidden></span></div>
+        <div class="vols">${pts.map((x, i) => `<i class="${i && x.p < pts[i - 1].p ? 'r' : 'g'}" style="height:${x.vol / vmax * 100}%"></i>`).join('')}</div>
+        <div class="dates num">${ticks.map(i => `<span style="left:${i / (n - 1) * 100}%">${tLabel(pts[i].t)}</span>`).join('')}</div>
+      </div><p class="sx-hintc">Нажмите или проведите по графику, чтобы увидеть цену в любой момент</p>`;
+  }
+  function pointAt(wrap, clientX) {
+    const plot = wrap.querySelector('.plot'), r = plot.getBoundingClientRect(), n = SERIES.length;
+    const i = Math.max(0, Math.min(n - 1, Math.round((clientX - r.left) / r.width * (n - 1)))), x = SERIES[i];
+    const ys = [...plot.querySelectorAll('.gy')].map(e => [+e.textContent.replace(/\s/g, ''), parseFloat(e.style.top)]);
+    const [vTop, pTop] = ys[ys.length - 1], [vBot, pBot] = ys[0];
+    const top = pBot + (x.p - vBot) / (vTop - vBot || 1) * (pTop - pBot), left = i / (n - 1) * 100;
+    const [cx, cd, ct] = ['.cx', '.cd', '.ct'].map(s2 => plot.querySelector(s2));
+    cx.hidden = cd.hidden = ct.hidden = false;
+    cx.style.left = cd.style.left = `${left}%`; cd.style.top = `${top}%`;
+    ct.innerHTML = `<b class="num">${fmt(x.p)}</b><span>${tLabel(x.t, true)}</span>`;
+    ct.style.left = `${Math.min(Math.max(left, 18), 82)}%`;
   }
   function bookHTML(c) {
     const qt = quotes(c), step = Math.max(1, Math.round(c.p * 0.0015)), r = rng('ob' + c.n);
@@ -347,6 +433,11 @@
       if (d.tab2) { S.tab = d.tab2; return render(); }
       for (const k of ['sum', 'lg', 'mkt', 'side', 'st', 'pf', 'div']) if (d[k] != null) { S[k] = d[k]; return keepScroll(render); }
     });
+    const card = q('#sxCard');
+    let dragging = false;
+    card.addEventListener('pointerdown', e => { const w = e.target.closest('[data-chart]'); if (!w) return; dragging = true; pointAt(w, e.clientX); });
+    card.addEventListener('pointermove', e => { const w = e.target.closest('[data-chart]'); if (w && (dragging || e.pointerType === 'mouse')) pointAt(w, e.clientX); });
+    window.addEventListener('pointerup', () => { dragging = false; });
     q('#sxCard').addEventListener('click', e => {
       const t = e.target.closest('button'); if (!t) return;
       const d = t.dataset;
@@ -360,7 +451,7 @@
       else if (d.dside) S.dside = d.dside;
       else if (d.dst) S.dst = d.dst;
       else return;
-      detail(); q('#sxCardBody').scrollTop = top;
+      keepScroll(detail, '#sxCard', '#sxCardBody');
     });
     q('#sxModal').addEventListener('click', e => {
       const t = e.target.closest('button'); if (!t) return;

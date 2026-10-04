@@ -453,8 +453,18 @@ async function check(name, fn) {
       assert.deepEqual(up, [...up].sort((a, b) => a - b), 'second click reverses');
       await page.locator('[data-pf="div"]').click();
       assert.match(await page.locator('#stocks').innerText(), /Чемпионские[\s\S]*Победитель Лиги чемпионов[\s\S]*каждые 10 акций[\s\S]*Чемпион АПЛ[\s\S]*100[\s\S]*Италии[\s\S]*200[\s\S]*Франции[\s\S]*600[\s\S]*Германии[\s\S]*600/i);
+      await page.locator('[data-div="champ"]').click();
+      assert.equal(await page.locator('#stocks .champ .dv').count(), 0, 'no hypothetical totals in the corner');
+      await page.locator('#stocks [data-dopen^="champ"]').first().click();
+      assert.match(await page.locator('#stocks .champ .ccond').innerText(), /Шанс[\s\S]*\d+,\d%[\s\S]*Эло/i, 'title odds per club');
       await page.locator('[data-tab2="market"]').click();
       assert.match(await page.locator('#stocks .sx-th').innerText(), /Рейтинг УЕФА/i);
+      await page.locator('[data-mkt="orders"]').click();
+      await page.locator('#stocks .sx-chips2').evaluate(e => (e.scrollLeft = 200));
+      const x0 = await page.locator('#stocks .sx-chips2').evaluate(e => e.scrollLeft);
+      await page.locator('#stocks [data-st="cancelled"]').evaluate(e => e.click());
+      assert.equal(await page.locator('#stocks .sx-chips2').evaluate(e => e.scrollLeft), x0, 'filters stay where they were');
+      await page.locator('[data-st="all"]').click(); await page.locator('[data-mkt="stocks"]').click();
       await page.locator('[data-lg="epl"]').click();
       assert.ok(await page.locator('#stocks .sx-row[data-club="Арсенал"]').count() && !(await page.locator('#stocks .sx-row[data-club="Барселона"]').count()), 'league filter');
       await page.locator('[data-mkt="orders"]').click();
@@ -465,6 +475,10 @@ async function check(name, fn) {
       await page.locator('[data-tab2="portfolio"]').click(); await page.locator('[data-pf="stocks"]').click();
       await page.locator('#stocks [data-club="Барселона"]').click(); await page.waitForTimeout(450);
       assert.match(await page.locator('#sxCard .sx-own').innerText(), /Ваши акции[\s\S]*388[\s\S]*В резерве[\s\S]*12[\s\S]*У игроков[\s\S]*Топ-3/i);
+      { await page.locator('#sxCard .sx-cw .plot').evaluate(e => e.scrollIntoView({ block: 'center' })); const plot = await page.locator('#sxCard .sx-cw .plot').boundingBox();
+        assert.ok(await page.locator('#sxCard .sx-cw .gy').count() >= 3 && await page.locator('#sxCard .sx-cw .dates span').count() === 3, 'price lines and dates');
+        await page.mouse.click(plot.x + plot.width * 0.4, plot.y + plot.height / 2);
+        assert.match(await page.locator('#sxCard .sx-cw .ct').innerText(), /\d[\s\S]*([а-я]{3}\.?|\d{2}:\d{2})/, 'tapping the chart shows price and date'); }
       await page.locator('#sxCard [data-lb]').click(); await page.waitForTimeout(450);
       assert.equal(await page.locator('#sxModal .lbr').count(), 100, 'top-100 leaderboard');
       await page.locator('#sxModal [data-sort="lb:qty"]').click();
