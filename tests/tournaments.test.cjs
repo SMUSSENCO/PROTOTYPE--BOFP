@@ -474,7 +474,9 @@ async function check(name, fn) {
       { await page.locator('#sxCard .sx-cw .plot').evaluate(e => e.scrollIntoView({ block: 'center' })); const plot = await page.locator('#sxCard .sx-cw .plot').boundingBox();
         assert.ok(await page.locator('#sxCard .sx-cw .gy').count() >= 3 && await page.locator('#sxCard .sx-cw .dates span').count() === 3, 'price lines and dates');
         await page.mouse.click(plot.x + plot.width * 0.4, plot.y + plot.height / 2);
-        assert.match(await page.locator('#sxCard .sx-cw .ct').innerText(), /\d[\s\S]*([а-я]{3}\.?|\d{2}:\d{2})/, 'tapping the chart shows price and date'); }
+        assert.match(await page.locator('#sxCard .sx-cw .ct').innerText(), /\d[\s\S]*([а-я]{3}\.?|\d{2}:\d{2})/, 'tapping the chart shows price and date');
+        assert.match(await page.locator('#sxCard .sx-cw .ct').innerText(), /Объём \d+ акц/, 'tooltip shows the traded volume');
+        assert.match(await page.locator('#sxCard .sx-vsum').innerText(), /Объём за период[\s\S]*Оборот/); }
       await page.locator('#sxCard [data-lb]').click(); await page.waitForTimeout(450);
       assert.equal(await page.locator('#sxModal .lbr').count(), 100, 'top-100 leaderboard');
       await page.locator('#sxModal [data-sort="lb:qty"]').click();

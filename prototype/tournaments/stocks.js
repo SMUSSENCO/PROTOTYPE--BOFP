@@ -206,6 +206,7 @@
   const tLabel = (t, long) => new Date(t).toLocaleString('ru-RU', S.period === 'live' || S.period === '1d'
     ? { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow', ...(long ? { day: 'numeric', month: 'short' } : {}) }
     : { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow', ...(long ? { weekday: 'short' } : {}) });
+  const fmtBig = v => v >= 1e6 ? `${fmt(v / 1e6, 1)} М` : v >= 1e3 ? `${fmt(v / 1e3, 0)} к` : fmt(v);
   function chartSVG(c) {
     const pts = SERIES = series(c), n = pts.length;
     const lo = Math.min(...pts.map(x => x.p)), hi = Math.max(...pts.map(x => x.p));
@@ -224,9 +225,10 @@
           ${grid.map(v => `<span class="gy num" style="top:${y(v)}%">${fmt(v)}</span>`).join('')}
           ${ticks.map(i => `<span class="gx" style="left:${i / (n - 1) * 100}%"></span>`).join('')}
           <span class="cx" hidden></span><span class="cd" hidden></span><span class="ct" hidden></span></div>
-        <div class="vols">${pts.map((x, i) => `<i class="${i && x.p < pts[i - 1].p ? 'r' : 'g'}" style="height:${x.vol / vmax * 100}%"></i>`).join('')}</div>
+        <div class="vols"><span class="vl">Объём</span><span class="vy num">${fmt(vmax)}</span><span class="vy0 num">0</span>${pts.map((x, i) => `<i class="${i && x.p < pts[i - 1].p ? 'r' : 'g'}" style="height:${x.vol / vmax * 100}%"></i>`).join('')}</div>
         <div class="dates num">${ticks.map(i => `<span style="left:${i / (n - 1) * 100}%">${tLabel(pts[i].t)}</span>`).join('')}</div>
-      </div><p class="sx-hintc">Нажмите или проведите по графику, чтобы увидеть цену в любой момент</p>`;
+      </div><div class="sx-vsum num"><span>Объём за период <b>${fmt(pts.reduce((a, x) => a + x.vol, 0))} акц.</b></span><span>Оборот <b>${fmtBig(pts.reduce((a, x) => a + x.vol * x.p, 0))}</b>${COIN()}</span></div>
+      <p class="sx-hintc">Нажмите или проведите по графику: цена, объём и оборот в любой момент</p>`;
   }
   function pointAt(wrap, clientX) {
     const plot = wrap.querySelector('.plot'), r = plot.getBoundingClientRect(), n = SERIES.length;
@@ -237,7 +239,8 @@
     const [cx, cd, ct] = ['.cx', '.cd', '.ct'].map(s2 => plot.querySelector(s2));
     cx.hidden = cd.hidden = ct.hidden = false;
     cx.style.left = cd.style.left = `${left}%`; cd.style.top = `${top}%`;
-    ct.innerHTML = `<b class="num">${fmt(x.p)}</b><span>${tLabel(x.t, true)}</span>`;
+    ct.innerHTML = `<b class="num">${fmt(x.p)}</b><span>${tLabel(x.t, true)}</span><span class="v num">Объём ${fmt(x.vol)} акц. · ${fmtBig(x.vol * x.p)}</span>`;
+    wrap.querySelectorAll('.vols i').forEach((b, k) => b.classList.toggle('on', k === i));
     ct.style.left = `${Math.min(Math.max(left, 18), 82)}%`;
   }
   function bookHTML(c) {
