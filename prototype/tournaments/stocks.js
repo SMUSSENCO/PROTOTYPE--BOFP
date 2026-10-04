@@ -25,8 +25,7 @@
     users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.6c2.3.1 4 1.5 4.6 4"/></svg>',
     cup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v3M8 20h8M9.5 17h5"/></svg>',
   };
-  // placeholders until the real art arrives: influence token and activity token
-  const INF = '<svg class="tkn" viewBox="0 0 24 24" aria-label="жетон влияния"><path d="M12 2.5 20.2 7v10L12 21.5 3.8 17V7z" fill="#7C5CFF" stroke="#C9BCFF" stroke-width="1.2"/><path d="m12 7.2 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z" fill="#fff"/></svg>';
+  // placeholder until the real art arrives: activity token
   const ACT = '<svg class="tkn" viewBox="0 0 24 24" aria-label="жетон активности"><path d="M12 2.5 20.2 7v10L12 21.5 3.8 17V7z" fill="#1FB5A8" stroke="#A8F0E8" stroke-width="1.2"/><path d="M13.2 6 8.5 13h3.2l-1 5 4.8-7.2h-3.3z" fill="#fff"/></svg>';
   const COIN = () => `<img class="cn" src="${A}buffs/coin.webp" alt="">`;
 
@@ -71,14 +70,6 @@
     quarter: { t: 'Квартальные дивиденды', sub: '13 недель', rows: [['Барселона', 3, 36, 64020, 'Ла Лига, места 1–4', 5.5], ['Ливерпуль', 2, 20, 31180, 'АПЛ, места 1–4', 6.0], ['Челси', 1, 15, 13510, 'АПЛ, места 5–8', 4.4]] },
     year: { t: 'Годовые дивиденды', sub: 'Сезон 2024/25', rows: [['Барселона', 5, 120, 236420, 'Чемпион Ла Лиги', 12.0], ['Ливерпуль', 4, 80, 112440, 'Чемпион АПЛ', 10.0], ['Лацио', 0, 30, 8760, 'Серия А, места 1–4', 6.5]] },
   };
-  // championship dividends: 0.5 influence token per N shares of the champion
-  const CHAMP = [
-    { t: 'Победитель Лиги чемпионов', per: 10, lg: null, icon: 'eu' },
-    { t: 'Чемпион АПЛ', per: 100, lg: 'epl', icon: 'gb-eng' },
-    { t: 'Чемпион Италии', per: 200, lg: 'seriea', icon: 'it' },
-    { t: 'Чемпион Франции', per: 600, lg: 'ligue1', icon: 'fr' },
-    { t: 'Чемпион Германии', per: 600, lg: 'bundesliga', icon: 'de' },
-  ];
   const watch = new Set(['Реал Мадрид', 'Бавария']);
 
   /* ---------- generated market details (deterministic per club) ---------- */
@@ -176,68 +167,11 @@
         ${op ? `<div class="dcond"><span>${esc(cond)}</span><span class="num">${fmt(rate, 1)}%</span><span class="num">${fmt(sum)}</span></div>` : ''}`; }).join('')}
       <div class="dtot"><span>${d.rows.length} клуба</span><span class="num">${fmt(d.rows.reduce((s, r) => s + (MINE[r[0]] ? MINE[r[0]].q : 0), 0))}</span><span class="num">${fmt(total)}</span></div></section>`;
   }
-  /* title odds the way analysts build them (ClubElo / Opta supercomputer style):
-     Elo ratings -> per-match win/draw/loss probabilities -> the whole season simulated 5 000 times */
-  const ELO = { 'Манчестер Сити': 2040, 'Реал Мадрид': 2000, 'Арсенал': 1990, 'Ливерпуль': 1960, 'Интер': 1960, 'Бавария': 1950, 'Байер Леверкузен': 1940,
-    'Барселона': 1920, 'ПСЖ': 1900, 'Атлетико Мадрид': 1880, 'РБ Лейпциг': 1860, 'Боруссия Дортмунд': 1850, 'Аталанта': 1850, 'Ювентус': 1840, 'Астон Вилла': 1830,
-    'Милан': 1830, 'Челси': 1820, 'Ньюкасл Юнайтед': 1820, 'Спортинг': 1820, 'Тоттенхэм': 1810, 'Наполи': 1810, 'Бенфика': 1810, 'Манчестер Юнайтед': 1800,
-    'Рома': 1790, 'ПСВ': 1790, 'Лацио': 1780, 'Порту': 1780, 'Фейеноорд': 1770, 'Марсель': 1760, 'Лион': 1740, 'Галатасарай': 1730, 'Фенербахче': 1720 };
-  const FILL = { epl: 1730, laliga: 1700, seriea: 1690, bundesliga: 1690, ligue1: 1650 };
-  const UCL_IN = ['Реал Мадрид', 'Манчестер Сити', 'Бавария', 'ПСЖ', 'Ливерпуль', 'Интер', 'Боруссия Дортмунд', 'РБ Лейпциг', 'Барселона', 'Байер Леверкузен',
-    'Атлетико Мадрид', 'Аталанта', 'Ювентус', 'Бенфика', 'Арсенал', 'Милан', 'Фейеноорд', 'Спортинг', 'ПСВ', 'Астон Вилла'];
-  function match(ra, rb, r, home = 65) {
-    const e = 1 / (1 + 10 ** (-(ra + home - rb) / 400)), draw = 0.28 - 0.2 * Math.abs(e - 0.5), x = r();
-    return x < e - draw / 2 ? 3 : x < e + draw / 2 ? 1 : 0;
-  }
-  let ODDS = null;
-  function odds() {
-    if (ODDS) return ODDS;
-    ODDS = {};
-    const r = rng('odds2425'), N = 5000;
-    for (const lg of ['epl', 'seriea', 'ligue1', 'bundesliga']) {
-      const named = CLUBS.filter(c => c.lg === lg).map(c => ({ n: c.n, e: ELO[c.n] }));
-      const size = lg === 'bundesliga' || lg === 'ligue1' ? 18 : 20;
-      const teams = [...named, ...Array.from({ length: size - named.length }, (_, i) => ({ n: `${lg}${i}`, e: FILL[lg] + (r() - 0.5) * 140 }))];
-      const wins = {};
-      for (let s2 = 0; s2 < N; s2++) {
-        const pts = teams.map(() => 0);
-        for (let a = 0; a < teams.length; a++) for (let b = 0; b < teams.length; b++) if (a !== b) { const g = match(teams[a].e, teams[b].e, r); pts[a] += g; pts[b] += g === 3 ? 0 : g === 1 ? 1 : 3; }
-        let best = 0; for (let k = 1; k < pts.length; k++) if (pts[k] > pts[best] || (pts[k] === pts[best] && r() < 0.5)) best = k;
-        wins[teams[best].n] = (wins[teams[best].n] || 0) + 1;
-      }
-      ODDS[lg] = Object.fromEntries(Object.entries(wins).map(([k, v]) => [k, v / N]));
-    }
-    // Champions League: league phase as a noisy cut to 16, then two-legged ties and a final
-    const field = [...UCL_IN.map(n => ({ n, e: ELO[n] })), ...Array.from({ length: 16 }, (_, i) => ({ n: `ucl${i}`, e: 1680 + r() * 120 }))], wins = {};
-    const tie = (a, b) => { const e = 1 / (1 + 10 ** (-(a.e - b.e) * 1.35 / 400)); return r() < e ? a : b; };
-    for (let s2 = 0; s2 < N; s2++) {
-      let round = field.map(t => ({ t, k: t.e + (r() - 0.5) * 260 })).sort((x, y) => y.k - x.k).slice(0, 16).map(x => x.t);
-      while (round.length > 1) { round.sort(() => r() - 0.5); const nx = []; for (let k = 0; k < round.length; k += 2) nx.push(tie(round[k], round[k + 1])); round = nx; }
-      wins[round[0].n] = (wins[round[0].n] || 0) + 1;
-    }
-    ODDS.ucl = Object.fromEntries(Object.entries(wins).map(([k, v]) => [k, v / N]));
-    return ODDS;
-  }
-  function champBlock() {
-    const o = odds();
-    const rows = CHAMP.map(ch => {
-      const table = o[ch.lg || 'ucl'], fav = Object.entries(table).filter(([n]) => CLUB[n]).sort((a, b) => b[1] - a[1])[0];
-      const own = Object.entries(MINE).filter(([n]) => ch.lg ? CLUB[n].lg === ch.lg : UCL_IN.includes(n))
-        .map(([n, h]) => ({ n, q: h.q, t: Math.floor(h.q / ch.per) * 0.5, p: table[n] || 0 })).sort((a, b) => b.p - a.p);
-      const k = `champ:${ch.t}`, op = S.open.has(k), top = own[0];
-      return `<button class="ctr" data-dopen="${esc(k)}" aria-expanded="${op}"><span class="fl">${FLAGS[ch.icon]}</span><span class="ct"><b>${ch.t}</b><small>0,5 ${INF} за каждые ${ch.per} акций</small></span>
-          <span class="cv num">${top ? `${esc(top.n)} <em>${fmt(top.p * 100, 1)}%</em>` : '—'}${ICO.chev}</span></button>
-        ${op ? `<div class="ccond"><div class="hd"><span>Клуб</span><span>Акций</span><span>Шанс</span><span>Жетоны</span></div>
-          ${own.length ? own.map(x => `<div><span>${crest(x.n)}${esc(x.n)}</span><span class="num">${fmt(x.q)}</span><span class="num pr">${fmt(x.p * 100, 1)}%</span><span class="num">${x.t ? `${fmt(x.t, 1)} ${INF}` : '—'}</span></div>`).join('') : '<div><span>Нет акций клубов этого турнира</span></div>'}
-          <p>Фаворит: ${esc(fav[0])} — ${fmt(fav[1] * 100, 1)}%. Шанс считается по модели Эло: рейтинг силы клубов → вероятности исхода каждого матча → 5 000 симуляций сезона.</p></div>` : ''}`;
-    });
-    return `<section class="sx-div glass champ"><div class="dh"><div><b>Чемпионские</b><small>Жетоны влияния за акции чемпионов сезона 2024/25</small></div></div>${rows.join('')}</section>`;
-  }
   function portfolio(book = MINE, key = 'pf') {
     if (S.pf === 'stocks' || key === 'other') return (key === 'pf' ? chips('pf', [['stocks', 'Акции'], ['div', 'Дивиденды']], S.pf) : '') + bookTable(book, key);
-    const blocks = { month: divBlock('month'), quarter: divBlock('quarter'), year: divBlock('year'), champ: champBlock() };
+    const blocks = { month: divBlock('month'), quarter: divBlock('quarter'), year: divBlock('year') };
     return chips('pf', [['stocks', 'Акции'], ['div', 'Дивиденды']], S.pf)
-      + chips('div', [['all', 'Все'], ['month', 'Месяц'], ['quarter', 'Квартал'], ['year', 'Год'], ['champ', 'Чемпионские']], S.div, 'mini')
+      + chips('div', [['all', 'Все'], ['month', 'Месяц'], ['quarter', 'Квартал'], ['year', 'Год']], S.div, 'mini')
       + (S.div === 'all' ? Object.values(blocks).join('') : blocks[S.div]);
   }
 

@@ -452,11 +452,7 @@ async function check(name, fn) {
       const up = (await page.locator('#stocks .sx-tbl .sx-tr:not(.tot) span:nth-child(2)').allInnerTexts()).map(x => +x.replace(/\s/g, ''));
       assert.deepEqual(up, [...up].sort((a, b) => a - b), 'second click reverses');
       await page.locator('[data-pf="div"]').click();
-      assert.match(await page.locator('#stocks').innerText(), /Чемпионские[\s\S]*Победитель Лиги чемпионов[\s\S]*каждые 10 акций[\s\S]*Чемпион АПЛ[\s\S]*100[\s\S]*Италии[\s\S]*200[\s\S]*Франции[\s\S]*600[\s\S]*Германии[\s\S]*600/i);
-      await page.locator('[data-div="champ"]').click();
-      assert.equal(await page.locator('#stocks .champ .dv').count(), 0, 'no hypothetical totals in the corner');
-      await page.locator('#stocks [data-dopen^="champ"]').first().click();
-      assert.match(await page.locator('#stocks .champ .ccond').innerText(), /Шанс[\s\S]*\d+,\d%[\s\S]*Эло/i, 'title odds per club');
+      assert.doesNotMatch(await page.locator('#stocks').innerText(), /Чемпионские/i, 'championship dividends are gone');
       await page.locator('[data-tab2="market"]').click();
       assert.match(await page.locator('#stocks .sx-th').innerText(), /Рейтинг УЕФА/i);
       await page.locator('[data-mkt="orders"]').click();
