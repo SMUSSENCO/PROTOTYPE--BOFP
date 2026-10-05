@@ -99,8 +99,54 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .header .grp{display:flex;align-items:center;gap:8px}
 .icon-btn{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}
 .icon-btn svg{width:20px;height:20px}
-.avatar{border-radius:50%}
+.avatar{border-radius:12px;overflow:hidden;padding:0}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .avatar svg{width:22px;height:22px}
+.sx-hd .grp{display:flex;align-items:center;gap:8px}
+/* tab bar icons: one vector animation each, played on tap */
+.tab .ti *{transform-box:fill-box;transform-origin:center}
+.ti .sp,.ti .st,.ti-case .coin,.ti-menu .dot,.ti-news .corner{opacity:0}
+.tab.play .ti-fire .f-out{transform-origin:50% 100%;animation:fireOut .9s var(--ease)}
+.tab.play .ti-fire .f-in{transform-origin:50% 100%;animation:fireIn .9s var(--ease)}
+.tab.play .ti-fire .s1{animation:spark .8s .05s ease-out}
+.tab.play .ti-fire .s2{animation:spark .8s .18s ease-out}
+.tab.play .ti-fire .s3{animation:spark .8s .3s ease-out}
+@keyframes fireOut{0%{transform:scale(1)}20%{transform:scale(.86,1.18) skewX(-6deg)}40%{transform:scale(1.08,.9) skewX(5deg)}60%{transform:scale(.95,1.08) skewX(-3deg)}100%{transform:none}}
+@keyframes fireIn{0%{transform:none}25%{transform:translateY(-1.5px) scale(1.25)}50%{transform:translateY(.5px) scale(.85)}75%{transform:translateY(-.8px) scale(1.1)}100%{transform:none}}
+@keyframes spark{0%{opacity:0;transform:translate(0,4px) scale(.4)}30%{opacity:1}100%{opacity:0;transform:translate(0,-6px) scale(1.2)}}
+.tab.play .ti-news .pg{transform-origin:0 50%;animation:pageFlip .8s var(--ease)}
+.tab.play .ti-news .ln{stroke-dasharray:1;animation:lineDraw .5s ease-out both}
+.tab.play .ti-news .l1{animation-delay:.3s}.tab.play .ti-news .l2{animation-delay:.42s}.tab.play .ti-news .l3{animation-delay:.54s}
+.tab.play .ti-news .corner{transform-origin:100% 100%;animation:corner .9s var(--ease)}
+@keyframes pageFlip{0%{transform:none}35%{transform:perspective(40px) rotateY(-55deg)}70%{transform:perspective(40px) rotateY(8deg)}100%{transform:none}}
+@keyframes lineDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes corner{0%,20%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.4)}}
+.tab.play .ti-cup .cup{transform-origin:50% 100%;animation:cupJump .9s var(--ease)}
+.tab.play .ti-cup .h1{transform-origin:100% 50%;animation:handle .9s ease}
+.tab.play .ti-cup .h2{transform-origin:0 50%;animation:handle .9s ease}
+.tab.play .ti-cup .st1{animation:twinkle .8s .25s ease-out}
+.tab.play .ti-cup .st2{animation:twinkle .8s .4s ease-out}
+.tab.play .ti-cup .st3{animation:twinkle .7s .1s ease-out}
+@keyframes cupJump{0%{transform:none}20%{transform:scale(1.1,.85)}45%{transform:translateY(-3.5px) rotate(-10deg)}65%{transform:translateY(-1px) rotate(8deg)}82%{transform:scale(1.05,.95)}100%{transform:none}}
+@keyframes handle{0%,100%{transform:none}40%{transform:scaleX(1.3)}70%{transform:scaleX(.85)}}
+@keyframes twinkle{0%{opacity:0;transform:scale(0) rotate(0)}40%{opacity:1;transform:scale(1.3) rotate(45deg)}100%{opacity:0;transform:scale(.5) rotate(90deg)}}
+.tab.play .ti-case .hd{transform-origin:50% 100%;animation:lid .9s var(--ease)}
+.tab.play .ti-case .body{transform-origin:50% 100%;animation:caseBob .9s var(--ease)}
+.tab.play .ti-case .coin{animation:coinPop 1s .15s var(--ease)}
+.tab.play .ti-case .lock{animation:lockClick .9s ease}
+@keyframes lid{0%,100%{transform:none}30%{transform:translateY(-2.5px) rotate(-14deg)}60%{transform:translateY(-1px) rotate(6deg)}}
+@keyframes caseBob{0%,100%{transform:none}25%{transform:scale(1.08,.9)}55%{transform:scale(.97,1.04)}}
+@keyframes coinPop{0%{opacity:0;transform:translateY(5px) scale(.3)}35%{opacity:1;transform:translateY(-6px) scale(1) rotateY(180deg)}70%{opacity:1;transform:translateY(-4px) scale(.9) rotateY(360deg)}100%{opacity:0;transform:translateY(4px) scale(.3)}}
+@keyframes lockClick{0%,100%{transform:none}50%{transform:translateY(1.2px)}}
+.tab.play .ti-menu .m1{animation:m1 .9s var(--ease)}
+.tab.play .ti-menu .m2{transform-origin:0 50%;animation:m2 .9s var(--ease)}
+.tab.play .ti-menu .m3{animation:m3 .9s var(--ease)}
+.tab.play .ti-menu .dot{animation:mdot .9s var(--ease)}
+@keyframes m1{0%,100%{transform:none}40%,70%{transform:translateY(5px) rotate(45deg) scaleX(.8)}}
+@keyframes m2{0%,100%{transform:none;opacity:1}30%,75%{transform:scaleX(0);opacity:0}}
+@keyframes m3{0%,100%{transform:none}40%,70%{transform:translateY(-5px) rotate(-45deg) scaleX(.8)}}
+@keyframes mdot{0%,30%{opacity:0;transform:translateX(-16px)}50%,80%{opacity:1;transform:none}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.tab.play .ti *{animation:none!important}}
 .balance{display:flex;align-items:center;gap:7px;height:36px;padding:0 6px 0 12px;border-radius:18px;font-weight:700;font-size:14px;letter-spacing:-.01em;white-space:nowrap}
 .balance img{width:24px;height:24px;object-fit:contain;flex:none}
 @media (max-width:374px){.balance{font-size:13px;gap:5px;padding-left:10px}.balance img{width:22px;height:22px}}
@@ -755,8 +801,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .sx-modal>.sx-lbl{flex:1}
 .sx-msub{margin:10px 2px 6px;font-size:12px;color:var(--text-3)}
 .sx-lbl{flex:1;min-height:0;overflow-y:auto;margin:0 calc(var(--gutter) * -1);padding:0 var(--gutter)}
-.sx-lb-h,.sx-modal .sx-th{grid-template-columns:24px minmax(0,1.9fr) .6fr .7fr .8fr .7fr;padding:0 0 6px}
-.lbr{display:grid;grid-template-columns:24px minmax(0,1.9fr) .6fr .7fr .8fr .7fr;gap:8px;align-items:center;width:100%;min-height:52px;border-top:1px solid var(--line);font-size:12.5px;text-align:right}
+.sx-lb-h,.sx-modal .sx-th{grid-template-columns:22px minmax(0,1fr) 40px 44px 52px 56px;gap:6px;padding:0 0 6px}
+.sx-modal .sx-th button{position:relative;min-width:0}
+.sx-modal .sx-th button.c{justify-content:center}
+.sx-modal .sx-th i{position:absolute;right:-9px;top:50%;transform:translateY(-50%)}
+.lbr{display:grid;grid-template-columns:22px minmax(0,1fr) 40px 44px 52px 56px;gap:6px;align-items:center;width:100%;min-height:52px;border-top:1px solid var(--line);font-size:12.5px;text-align:right}
 .lbr .pos{text-align:center;color:var(--text-3);font-weight:700}
 .lbr .l{display:flex;align-items:center;gap:8px;min-width:0;text-align:left}
 .av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;color:hsl(var(--h) 70% 92%);background:linear-gradient(160deg,hsl(var(--h) 45% 40%),hsl(var(--h) 45% 24%))}

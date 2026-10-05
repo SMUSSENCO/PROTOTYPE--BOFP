@@ -194,7 +194,7 @@
   function render() {
     const el = q('#stocks');
     const body = S.tab === 'summary' ? summary() : S.tab === 'market' ? market() : portfolio();
-    el.innerHTML = `<div class="sx-top"><div class="sx-hd"><h1>Биржа акций</h1><div class="balance glass num"><span>${fmt(BALANCE)}</span>${COIN()}</div></div>
+    el.innerHTML = `<div class="sx-top"><div class="sx-hd"><h1>Биржа акций</h1><div class="grp"><div class="balance glass num"><span>${fmt(BALANCE)}</span>${COIN()}</div><button class="icon-btn glass avatar" data-profile aria-label="Профиль">${AVATAR}</button></div></div>
       <div class="seg sx-seg" role="tablist">${[['summary', 'Сводка'], ['market', 'Рынок'], ['portfolio', 'Портфель']].map(([k, l]) => `<button role="tab" data-tab2="${k}" aria-selected="${k === S.tab}">${l}</button>`).join('')}</div></div>
       <div class="sx-scroll" id="sxScroll">${body}</div>`;
   }
@@ -269,7 +269,7 @@
     const bids = Array.from({ length: 7 }, (_, i) => ({ p: qt.bid - i * step, s: 1 + Math.floor(r() * 40) }));
     const mx = Math.max(...asks.map(x => x.s), ...bids.map(x => x.s));
     const row = (x, cls) => `<div class="obr ${cls}"><i style="width:${x.s / mx * 100}%"></i><span class="num">${fmt(x.p)}</span><span class="num">${x.s}</span></div>`;
-    return `<div class="sx-ob"><div class="obh"><span>Цена</span><span>Объём</span></div>${asks.map(x => row(x, 'a')).join('')}<div class="obm num">Спред ${fmt(qt.ask - qt.bid)} · ${fmt(c.sp, 2)}%</div>${bids.map(x => row(x, 'b')).join('')}</div>`;
+    return `<div class="sx-ob"><div class="obh"><span>Цена</span><span>Объём</span></div>${asks.map(x => row(x, 'a')).join('')}<div class="obm num">Спред ${fmt(qt.ask - qt.bid)}${COIN()} · ${fmt(c.sp, 2)}%</div>${bids.map(x => row(x, 'b')).join('')}</div>`;
   }
   function tradesHTML(c) {
     const r = rng('tr' + c.n); let t = Date.parse(`${TODAY}T21:10:00+03:00`), prev = c.p;
@@ -311,7 +311,7 @@
     const list = [...h.list].sort(by('lb', (x, k) => x[k]));
     q('#sxModal').innerHTML = `<div class="sx-mh"><span class="ttl">${crest(c.n)}Акционеры · ${esc(c.n)}</span><button class="ib" data-mclose aria-label="Закрыть">${ICO.close}</button></div>
       <p class="sx-msub">Топ-100 игроков · всего у игроков ${fmt(h.total)} акций</p>
-      ${sortHead('lb', [['pos', '#'], ['nick', 'Игрок', 'l'], ['pct', '%'], ['qty', 'Акций'], ['val', 'Стоимость'], ['ch', 'Изм.']])}
+      ${sortHead('lb', [['pos', '#', 'c'], ['nick', 'Игрок', 'l'], ['pct', '%'], ['qty', 'Акц.'], ['val', 'Сумма'], ['ch', 'Изм.']])}
       <div class="sx-lbl">${list.map(x => `<button class="lbr" data-player="${esc(x.nick)}" data-team="${esc(x.team)}"><span class="num pos">${x.pos}</span><span class="l"><span class="av" style="--h:${hash(x.nick) % 360}">${esc(x.nick.slice(0, 2).toUpperCase())}</span><span class="who"><b>${esc(x.nick)}</b><small>${TEAM_IMG[x.team] ? `<img src="${A}teams/${TEAM_IMG[x.team]}.webp" alt="">` : ''}${esc(x.team)}</small></span></span><span class="num">${fmt(x.pct, 2)}</span><span class="num">${fmt(x.qty)}</span><span class="num">${x.val >= 1e6 ? `${fmt(x.val / 1e6, 1)} М` : `${fmt(x.val / 1e3, 0)} к`}</span><span class="num ${tone(x.ch)}">${pct(x.ch)}</span></button>`).join('')}</div>`;
   }
   function openModal() { leaderboard(); q('#sxModal').classList.add('show'); q('#sxScrim').classList.add('show'); }
@@ -445,6 +445,7 @@
     const root = q('#stocks');
     root.addEventListener('click', e => {
       if (orderTap(e)) return;
+      if (e.target.closest('[data-profile]')) return toast('Откроется профиль');
       const t = e.target.closest('[data-tab2],[data-sum],[data-lg],[data-mkt],[data-side],[data-st],[data-pf],[data-div],[data-sort],[data-dopen],[data-club]');
       if (!t) return;
       const d = t.dataset;

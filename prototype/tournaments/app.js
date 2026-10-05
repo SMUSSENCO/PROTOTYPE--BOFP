@@ -25,12 +25,12 @@ const I = {
   moon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
   catalog: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12v2h3v2.5A4.5 4.5 0 0 1 16.9 12 5.5 5.5 0 0 1 13 15.4V18h3.5v3h-9v-3H11v-2.6A5.5 5.5 0 0 1 7.1 12 4.5 4.5 0 0 1 3 7.5V5h3zm0 4H5v.5A2.5 2.5 0 0 0 6.3 9.7 6 6 0 0 1 6 8zm12 0v1a6 6 0 0 1-.3 1.7A2.5 2.5 0 0 0 19 7.5V7z"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-  activity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.2-3.8 2.3-5 .3 1.6 1 2.4 1.9 2.8C11 8.5 11 6 12 3z"/></svg>',
-  news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
-  cupTab: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8"/></svg>',
-  briefcase: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg>',
+  activity: '<svg class="ti ti-fire" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path class="f-out" d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.2-3.8 2.3-5 .3 1.6 1 2.4 1.9 2.8C11 8.5 11 6 12 3z"/><path class="f-in" d="M12 18.2a2 2 0 0 1-2-2c0-1.3.9-2 1.6-3 .5 1.1 2.4 1.8 2.4 3a2 2 0 0 1-2 2z"/><circle class="sp s1" cx="8" cy="7" r=".9" fill="currentColor" stroke="none"/><circle class="sp s2" cx="16.5" cy="6" r=".8" fill="currentColor" stroke="none"/><circle class="sp s3" cx="12" cy="2.5" r=".7" fill="currentColor" stroke="none"/></svg>',
+  news: '<svg class="ti ti-news" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><g class="pg"><rect x="4" y="4" width="16" height="16" rx="3"/><path class="ln l1" pathLength="1" d="M8 9h8"/><path class="ln l2" pathLength="1" d="M8 13h8"/><path class="ln l3" pathLength="1" d="M8 17h5"/></g><path class="corner" d="M20 13.5 13.5 20H17a3 3 0 0 0 3-3z" fill="currentColor" stroke="none"/></svg>',
+  cupTab: '<svg class="ti ti-cup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><g class="cup"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path class="h1" d="M7 6H4v1a3 3 0 0 0 3 3"/><path class="h2" d="M17 6h3v1a3 3 0 0 1-3 3"/><path d="M12 13v4M8 20h8"/></g><path class="st st1" d="M3.5 2.5v3M2 4h3" stroke-width="1.4"/><path class="st st2" d="M20.5 13v3M19 14.5h3" stroke-width="1.4"/><path class="st st3" d="M19.5 1.5v2.4M18.3 2.7h2.4" stroke-width="1.3"/></svg>',
+  briefcase: '<svg class="ti ti-case" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><g class="coin"><circle cx="12" cy="9" r="3.2" fill="currentColor" stroke="none" opacity=".9"/></g><path class="hd" d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/><g class="body"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M3 12.5h18"/><path class="lock" d="M11 12.5v1.6h2v-1.6"/></g></svg>',
   user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20c1.3-3.6 4-5 7.5-5s6.2 1.4 7.5 5"/></svg>',
-  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  menu: '<svg class="ti ti-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path class="m1" d="M4 7h16"/><path class="m2" d="M4 12h16"/><path class="m3" d="M4 17h16"/><circle class="dot" cx="20" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>',
   shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/></svg>',
   crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8l4 4 4-7 4 7 4-4-2 11H6z"/></svg>',
 };
@@ -1022,6 +1022,9 @@ function bind() {
   $('#tabbar').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
+    // every tab icon plays its own vector animation on tap
+    b.classList.remove('play'); void b.offsetWidth; b.classList.add('play');
+    clearTimeout(b._anim); b._anim = setTimeout(() => b.classList.remove('play'), 1200);
     if (b.dataset.tab !== 'cups' && b.dataset.tab !== 'wallet') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
   });
   $('#searchBtn').addEventListener('click', () => toast('Глобальный поиск — заглушка'));
@@ -1032,10 +1035,12 @@ function bind() {
   setInterval(tick, 1000);
 }
 
+// the player's avatar: always in the header, a rounded square
+const AVATAR = `<img src="${A}teams/t01.webp" alt="">`;
 function renderChrome() {
   $('#catalogBtn').innerHTML = I.catalog;
   $('#searchBtn').innerHTML = I.search;
-  $('#profileBtn').innerHTML = I.user;
+  $('#profileBtn').innerHTML = AVATAR;
   $('#tabbar').innerHTML = [['activity', 'Активность', I.activity], ['news', 'Новости', I.news], ['cups', 'Турниры', I.cupTab, true], ['wallet', 'Портфель', I.briefcase], ['menu', 'Меню', I.menu]]
     .map(([k, l, ic, cur]) => `<button class="tab" data-tab="${k}" ${cur ? 'aria-current="page"' : ''} aria-label="${l}">${ic}<span class="lb">${l}</span></button>`).join('');
   renderSports();
