@@ -475,7 +475,10 @@ async function check(name, fn) {
         assert.ok(await page.locator('#sxCard .sx-cw .gy').count() >= 3 && await page.locator('#sxCard .sx-cw .dates span').count() === 3, 'price lines and dates');
         await page.mouse.click(plot.x + plot.width * 0.4, plot.y + plot.height / 2);
         assert.match(await page.locator('#sxCard .sx-cw .ct').innerText(), /\d[\s\S]*([а-я]{3}\.?|\d{2}:\d{2})/, 'tapping the chart shows price and date');
-        assert.match(await page.locator('#sxCard .sx-cw .ct').innerText(), /Объём \d+ акц/, 'tooltip shows the traded volume');
+        assert.match(await page.locator('#sxCard .sx-cw .ct').innerText(), /Откр[\s\S]*Закр[\s\S]*Макс[\s\S]*Мин[\s\S]*Объём\s+\d+ акц/, 'tooltip shows OHLC and the traded volume');
+        await page.locator('#sxCard [data-period="1y"]').evaluate(e => e.click());
+        assert.match(await page.locator('#sxCard .sx-cw .dates').innerText(), /20\d\d/, 'the year chart labels months with the year');
+        assert.ok(await page.locator('#sxCard [data-period="6m"]').count(), 'six months period');
         assert.match(await page.locator('#sxCard .sx-vsum').innerText(), /Объём за период[\s\S]*Оборот/); }
       await page.locator('#sxCard [data-lb]').click(); await page.waitForTimeout(450);
       assert.equal(await page.locator('#sxModal .lbr').count(), 100, 'top-100 leaderboard');
@@ -493,6 +496,22 @@ async function check(name, fn) {
       await page.locator('#sxTrade [data-tside="sell"]').click();
       assert.match(await page.locator('#sxTrade .sx-go').evaluate(e => getComputedStyle(e).backgroundImage), /255, 122, 107/, 'sell is red');
       await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+      // orders: tap opens the order, long press offers cancel / select several
+      await page.locator('[data-tab2="market"]').click(); await page.locator('[data-mkt="orders"]').click();
+      await page.locator('#stocks .sx-ord[data-ord="74"]').click(); await page.waitForTimeout(450);
+      assert.match(await page.locator('#sxOrder').innerText(), /#74[\s\S]*Покупка[\s\S]*Дата[\s\S]*Объём[\s\S]*Цена за акцию[\s\S]*Итого\s+19[\s\S]*0,5%[\s\S]*заблокировано/, 'order details: fills, total, commission, blocked coins');
+      await page.locator('#sxOrder [data-oclose]').click(); await page.waitForTimeout(400);
+      const hold = async id => { const b = await page.locator(`#stocks .sx-ord[data-ord="${id}"]`).boundingBox(); await page.mouse.move(b.x + 40, b.y + 20); await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up(); await page.waitForTimeout(150); };
+      await hold(75);
+      assert.equal(await page.locator('#sxMenu').isVisible(), true, 'long press opens the menu');
+      await page.locator('#sxMenu [data-msel]').click();
+      assert.match(await page.locator('#sxSel').innerText(), /1 заявка выбрана/);
+      await page.locator('#stocks .sx-pick[data-ord="73"]').click();
+      assert.match(await page.locator('#sxSel').innerText(), /2 заявки выбраны/);
+      assert.match(await page.locator('#sxSelGo').innerText(), /Отменить 2 заявки/);
+      await page.locator('#sxSelGo [data-selgo]').click();
+      assert.equal(await page.locator('#stocks .sx-ord.cancelled[data-ord="75"]').count() + await page.locator('#stocks .sx-ord.cancelled[data-ord="73"]').count(), 2, 'both orders cancelled');
+      assert.equal(await page.locator('#sxSel').isVisible(), false);
       await page.locator('[data-tab="cups"]').click(); await page.waitForTimeout(300);
       assert.equal(await page.locator('#stocks').isVisible(), false);
     });

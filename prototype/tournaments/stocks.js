@@ -64,6 +64,19 @@
     { id: 69, side: 'sell', club: 'Арсенал', price: 12600, done: 0, qty: 30, st: 'cancelled', date: day(-6) },
     { id: 68, side: 'buy', club: 'Барселона', price: 11800, done: 120, qty: 120, st: 'done', date: day(-9) },
   ];
+  // executed parts of an order: deterministic fills within the limit price
+  const fills = o => {
+    if (!o.done) return [];
+    const r = rng('fill' + o.id), out = [];
+    let left = o.done, t = Date.parse(`${o.date}T09:40:00+03:00`);
+    while (left > 0) {
+      const n = Math.min(left, 1 + Math.floor(r() * Math.max(1, o.done / 2)));
+      left -= n; t += (15 + Math.floor(r() * 120)) * 60000;
+      out.push({ t, n, p: Math.round(o.price * (o.side === 'buy' ? 1 - r() * 0.006 : 1 + r() * 0.006)) });
+    }
+    return out;
+  };
+  const plural = (n, one, few, many) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? one : m >= 2 && m <= 4 && (h < 12 || h > 14) ? few : many; };
   const reserved = club => ORDERS.filter(o => o.club === club && o.side === 'sell' && o.st === 'active').reduce((s, o) => s + o.qty - o.done, 0);
   const DIV = {
     month: { t: 'Месячные дивиденды', sub: '4 недели', rows: [['Барселона', 0, 12, 21340, 'Ла Лига, места 1–4', 5.5], ['Астон Вилла', 0, 5, 5772, 'АПЛ, места 5–8', 4.4], ['Спортинг', 0, 1, 475, 'Португалия, места 1–2', 4.2], ['Манчестер Юнайтед', 0, 1, 96, 'АПЛ, места 9–12', 3.9]] },
@@ -99,7 +112,7 @@
   /* ---------- state ---------- */
   const S = { tab: 'portfolio', sum: 'most', lg: 'all', mkt: 'stocks', side: 'all', st: 'all', pf: 'stocks', div: 'all',
     sort: { pf: { k: 'val', d: -1 }, mkt: { k: 'r', d: 1 }, lb: { k: 'pct', d: -1 }, other: { k: 'val', d: -1 } },
-    open: new Set(), club: null, dTab: 'chart', period: '3m', dside: 'all', dst: 'all', trade: null, player: null };
+    open: new Set(), club: null, dTab: 'chart', period: '3m', dside: 'all', dst: 'all', trade: null, player: null, order: null, sel: null, selCtx: '', menu: null };
 
   /* ---------- small builders ---------- */
   const crestBox = c => `<span class="sx-crest">${crest(c.n)}<b class="num">${c.r}</b></span>`;
@@ -142,9 +155,11 @@
     const rows = Object.keys(groups).sort().reverse().map(d => `<h3 class="sx-h">${new Date(d + 'T12:00:00Z').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</h3>`
       + groups[d].map(o => {
         const c = CLUB[o.club], prog = Math.round(o.done / o.qty * 100);
-        return `<div class="sx-ord glass ${o.side} ${o.st}"><div class="o1"><span class="oi">${o.side === 'buy' ? ICO.buy : ICO.sell}</span><span>Лимитная заявка <em class="num">#${o.id}</em></span><span class="od">${o.st === 'cancelled' ? 'Отменена' : o.st === 'done' ? 'Исполнена' : 'Активна'}</span></div>
+        const pick = S.sel && S.selCtx === pre, can = o.st === 'active', on = pick && S.sel.has(o.id);
+        const card = `<div class="sx-ord glass ${o.side} ${o.st}" data-ord="${o.id}" role="button" tabindex="0"><div class="o1"><span class="oi">${o.side === 'buy' ? ICO.buy : ICO.sell}</span><span>Лимитная заявка <em class="num">#${o.id}</em></span><span class="od">${o.st === 'cancelled' ? 'Отменена' : o.st === 'done' ? 'Исполнена' : 'Активна'}</span></div>
           <div class="o2">${crest(c.n)}<b>${esc(c.n)}</b><span class="num">${o.side === 'buy' ? 'до' : 'от'} ${fmt(o.price)}${COIN()}</span><span class="oq num"><b>${o.done}</b> / ${o.qty}</span></div>
           <div class="ob"><i style="width:${prog}%"></i>${o.st === 'done' ? `<span class="ok">${ICO.check}</span>` : ''}</div></div>`;
+        return pick ? `<div class="sx-pick${on ? ' on' : ''}${can ? '' : ' dis'}" data-ord="${o.id}"><span class="ck${can ? '' : ' dis'}">${on ? ICO.check : ''}</span>${card}</div>` : card;
       }).join('')).join('');
     return `<div class="sx-chips2">${chips(pre + 'side', [['all', 'Все'], ['buy', 'Покупка'], ['sell', 'Продажа']], S[pre + 'side'], 'mini')}<span class="sep"></span>
       ${chips(pre + 'st', [['all', 'Все'], ['active', 'Активные', activeN ? `<i class="badge num">${activeN}</i>` : ''], ['done', 'Исполненные'], ['cancelled', 'Отменённые']], S[pre + 'st'], 'mini')}</div>`
@@ -194,18 +209,23 @@
 
   /* ---------- stock card ---------- */
   /* full chart: price grid on the right, dates below, tap or drag to read any point */
-  const PERIODS = { live: [40, 3 * 60e3], '1d': [48, 30 * 60e3], '1w': [56, 3 * 3600e3], '1m': [30, 864e5], '3m': [60, 1.5 * 864e5] };
+  const PERIODS = { live: [40, 3 * 60e3], '1d': [48, 30 * 60e3], '1w': [56, 3 * 3600e3], '1m': [30, 864e5], '3m': [60, 1.5 * 864e5], '6m': [60, 3 * 864e5], '1y': [52, 7 * 864e5] };
   let SERIES = null;
   function series(c) {
     const [n, step] = PERIODS[S.period], r = rng(c.n + S.period), end = Date.parse(`${TODAY}T21:10:00+03:00`);
-    const vol = { live: 0.002, '1d': 0.004, '1w': 0.009, '1m': 0.018, '3m': 0.03 }[S.period];
+    const vol = { live: 0.002, '1d': 0.004, '1w': 0.009, '1m': 0.018, '3m': 0.03, '6m': 0.04, '1y': 0.05 }[S.period];
     const v = [c.p];
     for (let i = 1; i < n; i++) v.unshift(v[0] * (1 + (r() - 0.5) * vol * 2));
-    return v.map((p, i) => ({ t: end - (n - 1 - i) * step, p: Math.round(p), vol: 1 + Math.floor(r() * 40) }));
+    // each point is one interval: open = first trade, close (the line) = last trade, high / low, volume
+    return v.map((p, i) => {
+      const c = Math.round(p), o = Math.round(i ? v[i - 1] : p * (1 + (r() - 0.5) * vol));
+      return { t: end - (n - 1 - i) * step, p: c, o, h: Math.round(Math.max(o, c) * (1 + r() * vol * 0.5)), l: Math.round(Math.min(o, c) * (1 - r() * vol * 0.5)), vol: 1 + Math.floor(r() * 40) };
+    });
   }
   const tLabel = (t, long) => new Date(t).toLocaleString('ru-RU', S.period === 'live' || S.period === '1d'
     ? { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow', ...(long ? { day: 'numeric', month: 'short' } : {}) }
-    : { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow', ...(long ? { weekday: 'short' } : {}) });
+    : S.period === '1y' && !long ? { month: 'short', year: 'numeric', timeZone: 'Europe/Moscow' }
+    : { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow', ...(long ? { weekday: 'short', ...(S.period === '6m' || S.period === '1y' ? { year: 'numeric' } : {}) } : {}) }).replace(' г.', '');
   const fmtBig = v => v >= 1e6 ? `${fmt(v / 1e6, 1)} М` : v >= 1e3 ? `${fmt(v / 1e3, 0)} к` : fmt(v);
   function chartSVG(c) {
     const pts = SERIES = series(c), n = pts.length;
@@ -228,7 +248,7 @@
         <div class="vols"><span class="vl">Объём</span><span class="vy num">${fmt(vmax)}</span><span class="vy0 num">0</span>${pts.map((x, i) => `<i class="${i && x.p < pts[i - 1].p ? 'r' : 'g'}" style="height:${x.vol / vmax * 100}%"></i>`).join('')}</div>
         <div class="dates num">${ticks.map(i => `<span style="left:${i / (n - 1) * 100}%">${tLabel(pts[i].t)}</span>`).join('')}</div>
       </div><div class="sx-vsum num"><span>Объём за период <b>${fmt(pts.reduce((a, x) => a + x.vol, 0))} акц.</b></span><span>Оборот <b>${fmtBig(pts.reduce((a, x) => a + x.vol * x.p, 0))}</b>${COIN()}</span></div>
-      <p class="sx-hintc">Нажмите или проведите по графику: цена, объём и оборот в любой момент</p>`;
+      <p class="sx-hintc">Линия — цена закрытия интервала (последняя сделка). Нажмите или проведите по графику: открытие, закрытие, максимум, минимум и объём</p>`;
   }
   function pointAt(wrap, clientX) {
     const plot = wrap.querySelector('.plot'), r = plot.getBoundingClientRect(), n = SERIES.length;
@@ -239,9 +259,9 @@
     const [cx, cd, ct] = ['.cx', '.cd', '.ct'].map(s2 => plot.querySelector(s2));
     cx.hidden = cd.hidden = ct.hidden = false;
     cx.style.left = cd.style.left = `${left}%`; cd.style.top = `${top}%`;
-    ct.innerHTML = `<b class="num">${fmt(x.p)}</b><span>${tLabel(x.t, true)}</span><span class="v num">Объём ${fmt(x.vol)} акц. · ${fmtBig(x.vol * x.p)}</span>`;
+    ct.innerHTML = `<div class="ctd">${tLabel(x.t, true)}</div><div class="ohlc num">${[['Откр.', fmt(x.o)], ['Закр.', fmt(x.p)], ['Макс.', fmt(x.h)], ['Мин.', fmt(x.l)], ['Объём', `${fmt(x.vol)} акц.`]].map(([l, v]) => `<span><small>${l}</small><b>${v}</b></span>`).join('')}</div><div class="v num">Оборот ${fmtBig(x.vol * x.p)}${COIN()}</div>`;
+    ct.classList.toggle('low', top < 55);
     wrap.querySelectorAll('.vols i').forEach((b, k) => b.classList.toggle('on', k === i));
-    ct.style.left = `${Math.min(Math.max(left, 18), 82)}%`;
   }
   function bookHTML(c) {
     const qt = quotes(c), step = Math.max(1, Math.round(c.p * 0.0015)), r = rng('ob' + c.n);
@@ -262,7 +282,7 @@
     const tabs = [['chart', 'График'], ['book', 'Стакан'], ['trades', 'Сделки'], ['orders', 'Заявки']];
     const mineOrders = ORDERS.filter(o => o.club === c.n);
     let pane = '';
-    if (S.dTab === 'chart') pane = `<div class="sx-per">${chips('period', [['live', 'Live'], ['1d', '1 день'], ['1w', 'Неделя'], ['1m', 'Месяц'], ['3m', '3 месяца']], S.period, 'mini')}</div>${chartSVG(c)}`;
+    if (S.dTab === 'chart') pane = `<div class="sx-per">${chips('period', [['live', 'Live'], ['1d', '1 день'], ['1w', 'Неделя'], ['1m', 'Месяц'], ['3m', '3 месяца'], ['6m', '6 месяцев'], ['1y', 'Год']], S.period, 'mini')}</div>${chartSVG(c)}`;
     else if (S.dTab === 'book') pane = bookHTML(c);
     else if (S.dTab === 'trades') pane = tradesHTML(c);
     else pane = ordersHTML(mineOrders, 'd');
@@ -283,7 +303,7 @@
       <div class="sx-cta"><button class="b buy" data-trade="buy">${ICO.buy}Купить</button><button class="b sell" data-trade="sell">${ICO.sell}Продать</button></div>`;
   }
   function openCard(name) { S.club = name; S.dTab = 'chart'; detail(); q('#sxCard').classList.add('show'); q('#sxCard').setAttribute('aria-hidden', 'false'); }
-  function closeCard() { q('#sxCard').classList.remove('show'); q('#sxCard').setAttribute('aria-hidden', 'true'); S.club = null; }
+  function closeCard() { if (S.sel && S.selCtx === 'd') { S.sel = null; selUI(); } q('#sxCard').classList.remove('show'); q('#sxCard').setAttribute('aria-hidden', 'true'); S.club = null; }
 
   /* ---------- shareholders leaderboard + player profile ---------- */
   function leaderboard() {
@@ -342,6 +362,69 @@
     closeTrade(); detail(); keepScroll(render);
   }
 
+  /* ---------- order: details sheet, long-press menu, multi-select cancel ---------- */
+  const refresh = () => { keepScroll(render); if (S.club) keepScroll(detail, '#sxCard', '#sxCardBody'); };
+  const longDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  function orderSheet() {
+    const o = ORDERS.find(x => x.id === S.order), c = CLUB[o.club], fl = fills(o);
+    const tq = fl.reduce((a, x) => a + x.n, 0), tv = fl.reduce((a, x) => a + x.n * x.p, 0), left = o.qty - o.done;
+    const st = { active: 'Активна', done: 'Исполнена', cancelled: 'Отменена' }[o.st];
+    const lock = o.st !== 'active' ? (o.st === 'cancelled' ? `Заявка отменена. ${o.side === 'buy' ? 'Заблокированные коины возвращены на баланс' : 'Зарезервированные акции возвращены в портфель'}.` : 'Заявка исполнена полностью.')
+      : o.side === 'buy' ? `<b>${fmt(left * o.price)}</b>${COIN()} заблокировано на Вашем балансе для этой заявки. При отмене они вернутся на баланс.`
+      : `<b>${fmt(left)}</b> ${plural(left, 'акция зарезервирована', 'акции зарезервированы', 'акций зарезервировано')} для этой заявки. При отмене они вернутся в портфель.`;
+    q('#sxOrder').innerHTML = `<div class="sx-mh"><span class="ttl num">#${o.id}<small style="margin-left:auto;font-size:13px;font-weight:600;color:var(--text-3)">${longDate(o.date)}</small></span><button class="ib" data-oclose aria-label="Закрыть">${ICO.close}</button></div>
+      <div class="sx-osb"><div class="sx-os ${o.st}">
+        <div class="oh ${o.side}"><span class="oi">${o.side === 'buy' ? ICO.buy : ICO.sell}</span><span><b>${o.side === 'buy' ? 'Покупка' : 'Продажа'}</b>, лимитная заявка</span><span class="st ${o.st}">${st}</span></div>
+        <div class="o2">${crest(c.n)}<b>${esc(c.n)}</b><span class="num">${o.side === 'buy' ? 'до' : 'от'} ${fmt(o.price)}${COIN()}</span><span class="oq num"><b>${o.done}</b> / ${o.qty}</span></div>
+        <div class="ob"><i style="width:${Math.round(o.done / o.qty * 100)}%"></i></div>
+        <div class="ft"><div class="fr fh"><span>Дата</span><span>Объём</span><span>Цена за акцию</span></div>
+          ${fl.length ? fl.map(x => `<div class="fr num"><span>${new Date(x.t).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' })}</span><span>${x.n}</span><span>${fmt(x.p)}</span></div>`).join('') : '<p class="fe">Сделок пока нет</p>'}
+          <div class="fr tot num"><span>Итого</span><span>${tq}</span><span>${tq ? `${fmt(tv)}` : '—'}</span></div></div>
+        <div class="sx-info"><p>Со всех сделок по заявке взимается комиссия 0,5%${tq ? `: <b>${fmt(tv * FEE, 2)}</b>${COIN()}` : ''}.</p><p>${lock}</p></div>
+      </div></div>
+      ${o.st === 'active' ? '<button class="sx-ocancel" data-ocancel>Отменить заявку</button>' : ''}`;
+  }
+  function openOrder(id) { S.order = +id; orderSheet(); q('#sxOrder').classList.add('show'); q('#sxScrim').classList.add('show'); }
+  function closeOrder() { if (S.order == null) return; q('#sxOrder').classList.remove('show'); q('#sxScrim').classList.remove('show'); S.order = null; }
+  function cancelOrders(ids) {
+    ids.forEach(id => { const o = ORDERS.find(x => x.id === id); if (o && o.st === 'active') o.st = 'cancelled'; });
+    toast(ids.length === 1 ? `Заявка #${ids[0]} отменена` : `Отменено ${ids.length} ${plural(ids.length, 'заявка', 'заявки', 'заявок')}`);
+  }
+  function selUI() {
+    const on = !!S.sel, n = on ? S.sel.size : 0;
+    document.documentElement.classList.toggle('sx-selecting', on);
+    q('#sxSel').hidden = q('#sxSelGo').hidden = !on;
+    if (!on) return;
+    q('#sxSel').innerHTML = `<button data-selx>Отмена</button><b>${n} ${plural(n, 'заявка выбрана', 'заявки выбраны', 'заявок выбрано')}</b><span></span>`;
+    q('#sxSelGo').innerHTML = `<button data-selgo ${n ? '' : 'disabled'}>Отменить ${n ? `${n} ${plural(n, 'заявку', 'заявки', 'заявок')}` : 'заявки'}</button>`;
+  }
+  function startSelect(ctx, id) { S.sel = new Set(id != null && ORDERS.find(o => o.id === id).st === 'active' ? [id] : []); S.selCtx = ctx; selUI(); refresh(); }
+  function endSelect() { if (!S.sel) return; S.sel = null; selUI(); refresh(); }
+  function toggleSel(id) {
+    const o = ORDERS.find(x => x.id === id);
+    if (!o || o.st !== 'active') return toast('Отменить можно только активную заявку');
+    S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); selUI(); refresh();
+  }
+  function closeMenu() { q('#sxMenu').hidden = true; document.querySelectorAll('.sx-ord.held').forEach(e => e.classList.remove('held')); }
+  function openMenu(el) {
+    if (S.sel) return;
+    const id = +el.dataset.ord, o = ORDERS.find(x => x.id === id), r = el.getBoundingClientRect();
+    S.menu = { id, ctx: el.closest('#sxCard') ? 'd' : '' };
+    el.classList.add('held');
+    const m = q('#sxMenu');
+    m.innerHTML = `<div class="mb" role="menu">${o.st === 'active' ? `<button class="x" role="menuitem" data-mcan>${ICO.close}Отменить заявку</button>` : `<button role="menuitem" data-mopen>${ICO.chev}Открыть заявку</button>`}<button role="menuitem" data-msel>${ICO.check}Выбрать несколько</button></div>`;
+    m.hidden = false;
+    const mb = m.firstElementChild, h = mb.offsetHeight, w = mb.offsetWidth;
+    const top = r.bottom - 14 + h > innerHeight - 12 ? Math.max(12, r.top - h + 14) : r.bottom - 14;
+    mb.style.top = `${top}px`; mb.style.left = `${Math.min(innerWidth - w - 12, r.left + 40)}px`;
+  }
+  // a tap on an order opens it, or ticks it while selecting several
+  function orderTap(e) {
+    const el = e.target.closest('[data-ord]'); if (!el) return false;
+    if (S.sel) toggleSel(+el.dataset.ord); else openOrder(el.dataset.ord);
+    return true;
+  }
+
   /* ---------- show / hide with the footer ---------- */
   function show(on) {
     q('#stocks').hidden = !on;
@@ -349,7 +432,7 @@
     document.querySelectorAll('#tabbar .tab').forEach(b => b.toggleAttribute('aria-current', false));
     const cur = q(`#tabbar [data-tab="${on ? 'wallet' : 'cups'}"]`);
     if (cur) cur.setAttribute('aria-current', 'page');
-    if (on) render(); else { closeCard(); closeModal(); closeTrade(); closePlayer(); }
+    if (on) render(); else { closeMenu(); S.sel = null; selUI(); closeOrder(); closeCard(); closeModal(); closeTrade(); closePlayer(); }
   }
 
   function bind() {
@@ -361,6 +444,7 @@
     });
     const root = q('#stocks');
     root.addEventListener('click', e => {
+      if (orderTap(e)) return;
       const t = e.target.closest('[data-tab2],[data-sum],[data-lg],[data-mkt],[data-side],[data-st],[data-pf],[data-div],[data-sort],[data-dopen],[data-club]');
       if (!t) return;
       const d = t.dataset;
@@ -376,6 +460,7 @@
     card.addEventListener('pointermove', e => { const w = e.target.closest('[data-chart]'); if (w && (dragging || e.pointerType === 'mouse')) pointAt(w, e.clientX); });
     window.addEventListener('pointerup', () => { dragging = false; });
     q('#sxCard').addEventListener('click', e => {
+      if (orderTap(e)) return;
       const t = e.target.closest('button'); if (!t) return;
       const d = t.dataset;
       if (d.cclose != null) return closeCard();
@@ -415,10 +500,29 @@
       else if (d.tp) tr.price = Math.max(1, tr.price + +d.tp * Math.max(1, Math.round(CLUB[S.club].p * 0.001)));
       tradeSheet();
     });
-    q('#sxScrim').addEventListener('click', () => { closeTrade(); closeModal(); });
+    q('#sxScrim').addEventListener('click', () => { closeTrade(); closeModal(); closeOrder(); });
+    q('#sxOrder').addEventListener('click', e => {
+      const t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.oclose != null) return closeOrder();
+      if (t.dataset.ocancel != null) { const id = S.order; cancelOrders([id]); orderSheet(); refresh(); }
+    });
+    longPress(root, '.sx-ord', openMenu);
+    longPress(card, '.sx-ord', openMenu);
+    q('#sxMenu').addEventListener('click', e => {
+      const t = e.target.closest('button'), { id, ctx } = S.menu || {};
+      closeMenu(); if (!t) return;
+      if (t.dataset.mcan != null) { cancelOrders([id]); refresh(); }
+      else if (t.dataset.mopen != null) openOrder(id);
+      else if (t.dataset.msel != null) startSelect(ctx, id);
+    });
+    q('#sxSel').addEventListener('click', e => { if (e.target.closest('[data-selx]')) endSelect(); });
+    q('#sxSelGo').addEventListener('click', e => {
+      if (!e.target.closest('[data-selgo]') || !S.sel.size) return;
+      const ids = [...S.sel]; S.sel = null; cancelOrders(ids); selUI(); refresh();
+    });
     document.addEventListener('keydown', e => {
       if (e.key !== 'Escape' || q('#stocks').hidden) return;
-      if (S.trade) closeTrade(); else if (q('#sxModal').classList.contains('show')) closeModal(); else if (S.player) closePlayer(); else if (S.club) closeCard();
+      if (!q('#sxMenu').hidden) closeMenu(); else if (S.order != null) closeOrder(); else if (S.sel) endSelect(); else if (S.trade) closeTrade(); else if (q('#sxModal').classList.contains('show')) closeModal(); else if (S.player) closePlayer(); else if (S.club) closeCard();
     });
   }
 
@@ -427,6 +531,6 @@
     if (typeof I === 'undefined' || typeof crest !== 'function' || !document.querySelector('#tabbar .tab') || !q('#stocks')) return;
     clearInterval(wait);
     bind();
-    window.Stocks = { show, openCard, S };
+    window.Stocks = { show, openCard, openOrder, S };
   }, 50);
 })();
