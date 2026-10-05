@@ -634,7 +634,7 @@ function cardHTML(t, day) {
   }
   const act = actionOf(t, day);
   return `<article class="t ${t.type === 'custom' ? 'plain' : 'glass'} ${t.mineTeam ? 'mine' : ''} ${open ? 'open' : ''} ${real ? '' : 'series'} ${act === 'squad' ? 'alarm' : ''}" data-id="${t.id}" ${act ? `data-action="${act}"` : ''}>
-    ${t.mineTeam ? '<span class="ring" aria-hidden="true"></span>' : ''}
+    ${t.mineTeam ? '<span class="ring" aria-hidden="true"></span>' : ''}${act === 'squad' ? '<span class="t-run" aria-hidden="true"></span>' : ''}
     ${art ? `<div class="t-art" aria-hidden="true">${art}</div>` : ''}
     <div class="t-head" data-toggle>
       <button class="t-icon ${t.flagIcon ? 'is-flag' : ''}" data-screen aria-label="Открыть турнир ${esc(t.name)}">${icon}</button>
@@ -784,7 +784,7 @@ const CATALOG = {
       { t: 'Альянс Еврокубки', icon: I.shield, kids: ['Alliance Champions League', 'Alliance Europa League', 'Alliance Conference League'] },
       { t: 'УЕФА Еврокубки', flag: 'eu', kids: ['UEFA Champions League', 'UEFA Europa League', 'UEFA Conference League', 'UEFA Super Cup'] },
     ] },
-    { g: 'Конференции', items: [
+    { g: 'Фан Клубы', items: [
       { t: 'Англия', flag: 'gb-eng', kids: ['АПЛ', 'Кубок Англии', 'Кубок Лиги', 'Суперкубок'] },
       { t: 'Испания', flag: 'es', kids: ['Ла Лига', 'Кубок Короля', 'Суперкубок'] },
       { t: 'Германия', flag: 'de', kids: ['Бундеслига', 'Кубок Германии'] },
@@ -981,8 +981,8 @@ function bind() {
     if (more) { const k = more.dataset.more; state.more.has(k) ? state.more.delete(k) : state.more.add(k); rerenderCard(id); return; }
     const act = e.target.closest('[data-act]');
     if (act) { toast(act.dataset.act === 'predict' ? 'Откроется ввод прогноза на ваш матч' : act.dataset.act === 'join' ? `Вступление в турнир за ${(+act.dataset.price).toLocaleString('ru-RU')} монет` : 'Откроется аукцион: выкупите место в составе до дедлайна'); return; }
-    if (e.target.closest('[data-screen]')) { toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
-    if (e.target.closest('[data-go]')) { toast('Переход на страницу аукциона'); return; }
+    if (e.target.closest('[data-screen]')) { if (!(window.TN && TN.openCard(findCard(id)))) toast(`Откроется экран турнира «${findCard(id).name}»`); return; }
+    if (e.target.closest('[data-go]')) { if (!(window.TN && TN.openCard(findCard(id), 'auction'))) toast('Переход на страницу аукциона'); return; }
     if (e.target.closest('[data-sw]')) { state.mode[id] = !modeOf(findCard(id)); rerenderCard(id); return; }
     const node = e.target.closest('[data-stage]');
     if (node) { const k = +node.dataset.stage; state.stage[id] = state.stage[id] === k ? undefined : k; rerenderCard(id); return; }
@@ -996,7 +996,13 @@ function bind() {
       lg.setAttribute('aria-expanded', !isOpen);
       return;
     }
-    if (e.target.closest('[data-table]')) { toast('Таблица турнира — отдельный экран'); return; }
+    const tb = e.target.closest('[data-table]');
+    if (tb) {
+      // a BIG 5 league row opens its own league
+      const lgKey = tb.closest('.lg') && tb.closest('.lg').querySelector('[data-lg]').dataset.lg.split('|');
+      if (!(window.TN && TN.openCard(findCard(id), 'table', lgKey ? { side: lgKey[1], liga: +lgKey[2] } : {}))) toast('Таблица турнира — отдельный экран');
+      return;
+    }
     if (e.target.closest('[data-toggle]')) { state.open.has(id) ? state.open.delete(id) : state.open.add(id); delete state.stage[id]; rerenderCard(id, true); }
   });
 
@@ -1016,7 +1022,7 @@ function bind() {
     const rk = e.target.closest('[data-rank]');
     if (rk) { toast(`Откроется «${rk.querySelector('.nm').textContent}»`); return; }
     const leaf = e.target.closest('[data-leaf]');
-    if (leaf) toast(`Откроется экран турнира «${leaf.querySelector('.nm').textContent}»`);
+    if (leaf) { if (window.TN && TN.openPath(leaf.dataset.path.split(' · '))) setDrawer(false); else toast(`Откроется экран турнира «${leaf.querySelector('.nm').textContent}»`); }
   });
 
   $('#tabbar').addEventListener('click', e => {
@@ -1027,7 +1033,8 @@ function bind() {
     clearTimeout(b._anim); b._anim = setTimeout(() => b.classList.remove('play'), 1200);
     if (b.dataset.tab !== 'cups' && b.dataset.tab !== 'wallet') toast(`«${b.getAttribute('aria-label')}» — отдельный экран`);
   });
-  $('#searchBtn').addEventListener('click', () => toast('Глобальный поиск — заглушка'));
+  // the wallet is a separate screen, not built yet
+  document.addEventListener('click', e => { if (e.target.closest('.balance')) toast('Переход в кошелёк — заглушка'); });
   $('#drawer').addEventListener('input', e => { if (e.target.id === 'drQ') { state.drQ = e.target.value; $('#drHits').innerHTML = searchHTML(state.drQ); } });
   $('#drawer').addEventListener('keydown', e => { if (e.target.id === 'drQ' && e.key === 'Escape') { e.stopPropagation(); state.drQ = null; renderDrawer(); } });
   $('#profileBtn').addEventListener('click', () => toast('Откроется профиль'));

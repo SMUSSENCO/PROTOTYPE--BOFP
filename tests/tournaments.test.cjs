@@ -125,7 +125,7 @@ async function check(name, fn) {
       const rail = (await ucl.locator('.t-rail .cnt-wrap').innerText()).replace(/\s/g, '');
       assert.match(rail, /^\d+\d$/); assert.doesNotMatch(rail, /\//);
       assert.ok((await ucl.locator('.t-rail').boundingBox()).width <= 54.5);
-      for (const r of await page.locator('.t-rail').all()) { const b = await r.boundingBox(); if (b) assert.ok(Math.abs(b.x + 54 - vp.width) < 1.5, 'rail misaligned'); }
+      for (const r of await page.locator('.t:not(.alarm) .t-rail').all()) { const b = await r.boundingBox(); if (b) assert.ok(Math.abs(b.x + 54 - vp.width) < 1.5, 'rail misaligned'); }
     });
 
     await check(`[${tag}] domestic leagues show a square flag as their icon`, async () => {
@@ -278,7 +278,7 @@ async function check(name, fn) {
       const txt = await page.locator('#drawer').innerText();
       assert.match(txt, /Рейтинг альянсов[\s\S]*Рейтинг игроков \/ отбор в сборные альянсов[\s\S]*BofP Series/i);
       assert.match(txt, /Сборные Альянсов[\s\S]*BofP Еврокубки[\s\S]*Альянс Еврокубки[\s\S]*УЕФА Еврокубки/);
-      assert.match(txt, /Конференции\s[\s\S]*Конфедерации — сборные/i);
+      assert.match(txt, /Фан Клубы\s[\s\S]*Конфедерации — сборные/i);
       const body = page.locator('#drawer .dr-body');
       const bfp = page.locator('#drawer [data-dnode]', { hasText: 'BofP Еврокубки' });
       await bfp.click();
@@ -435,8 +435,69 @@ async function check(name, fn) {
       await page.locator('[data-qclose]').click();
       assert.equal(await page.locator('#drawer h2').innerText(), 'Все турниры');
       await page.keyboard.press('Escape'); await page.waitForTimeout(450);
+      // the header magnifier opens the global search: categories, recent picks, results
       await page.locator('#searchBtn').click(); await page.waitForTimeout(300);
-      assert.match(await page.locator('#toast').innerText(), /Глобальный поиск/, 'header search is a stub for the global search');
+      assert.equal(await page.locator('#srch').isVisible(), true);
+      assert.deepEqual(await page.locator('.sr-cats button').allInnerTexts(), ['Все', 'Турниры', 'Игроки', 'Команды', 'Фан Клубы', 'Нац. сборные', 'Сборные альянсов']);
+      assert.match(await page.locator('#srRes').innerText(), /Недавние[\s\S]*Очистить[\s\S]*Alliance Champions League/);
+      await page.locator('#srQ').fill('Премьер');
+      await page.locator('[data-scat="nat"]').click();
+      assert.match(await page.locator('#srRes').innerText(), /Ничего не найдено/);
+      await page.locator('[data-scat="tour"]').click(); await page.locator('#srQ').fill('АПЛ');
+      await page.locator('#srRes [data-pick]').first().click(); await page.waitForTimeout(300);
+      assert.equal(await page.locator('#tn').isVisible(), true, 'a tournament from the search opens its screen');
+      assert.match(await page.locator('.tn-hero h1').innerText(), /Премьер-лига/);
+      await page.locator('[data-tback]').click();
+      assert.equal(await page.locator('#tn').isVisible() || await page.locator('#srch').isVisible(), false);
+    });
+
+    await check(`[${tag}] tournament screen: hero, sticky tabs, table, calendar, players, auction, summary`, async () => {
+      await page.locator('.t[data-id="g5"] [data-screen]').click(); await page.waitForTimeout(300);
+      assert.equal(await page.locator('#tn').isVisible(), true, 'the card logo opens the tournament screen');
+      assert.match(await page.locator('.tn-crumb').innerText(), /BofP Series[\s\S]*BIG 5/i);
+      assert.deepEqual(await page.locator('.tn-tabs button').allInnerTexts(), ['ТАБЛИЦА', 'КАЛЕНДАРЬ', 'ИГРОКИ', 'АУКЦИОН', 'СВОДКА']);
+      assert.equal(await page.locator('.tn-side [aria-selected="true"]').innerText(), 'Запад');
+      assert.equal(await page.locator('.tn-tb, .tb tbody tr').count(), 20, '20 teams in a league');
+      assert.equal(await page.locator('.tb tr.me').count(), 1, 'your team is marked');
+      assert.ok(await page.locator('.tn-hero .tl').count(), 'the timeline is in the hero');
+      // the hero scrolls away, the tabs stick under the bar
+      await page.locator('#tnScroll').evaluate(e => (e.scrollTop = 900));
+      const bar = await box('.tn-bar'), tabs = await box('.tn-tabs');
+      assert.ok(Math.abs(tabs.y - (bar.y + bar.height)) < 3, `tabs stick: ${tabs.y} vs ${bar.y + bar.height}`);
+      // the table swipes sideways to wins, draws, losses and xG
+      assert.match(await page.locator('.tb thead').innerText(), /В[\s\S]*Н[\s\S]*П[\s\S]*xG/);
+      await page.locator('[data-tcolor="Red"]').evaluate(e => e.click());
+      assert.match(await page.locator('.tn-hero h1').innerText(), /Red BIG 5/);
+      await page.locator('[data-dd="liga"]').evaluate(e => e.click()); await page.waitForTimeout(400);
+      await page.locator('#tnSheet [data-opt="1"]').click(); await page.waitForTimeout(400);
+      assert.match(await page.locator('.tn-hero p').innerText(), /Лига 1/);
+      await page.locator('[data-tcolor="Green"]').evaluate(e => e.click()); await page.locator('[data-dd="liga"]').evaluate(e => e.click()); await page.waitForTimeout(400);
+      await page.locator('#tnSheet [data-opt="2"]').click(); await page.waitForTimeout(400);
+      await page.locator('[data-ttab="cal"]').click();
+      assert.ok(await page.locator('.rd').count() === 19, '19 rounds in the month');
+      assert.match(await page.locator('.rd.open .rd-h').innerText(), /Тур 10[\s\S]*Сегодня/);
+      await page.locator('.rd-h').first().click();
+      assert.ok(await page.locator('.rd.open').count() === 2, 'rounds fold and unfold');
+      await page.locator('[data-ttab="players"]').click();
+      assert.match(await page.locator('.tb thead').innerText(), /Г\+П[\s\S]*Оценка[\s\S]*Зарплата/);
+      await page.locator('[data-pf="mine"]').click();
+      assert.equal(await page.locator('.tb tbody tr').count(), 5);
+      assert.match(await page.locator('.tb tbody').innerText(), /Юрий Смусенко\s*Вы/);
+      await page.locator('[data-ttab="auction"]').click();
+      assert.match(await page.locator('.tn-pane').innerText(), /Аукцион BIG 5[\s\S]*Ближайший аукцион[\s\S]*Прошлый аукцион[\s\S]*Рекорды/);
+      await page.locator('.tn-pane [data-bids]').first().click(); await page.waitForTimeout(400);
+      assert.match(await page.locator('#tnSheet').innerText(), /Выигравшая ставка[\s\S]*Перебитые ставки/);
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      await page.locator('[data-ttab="sum"]').click();
+      await page.locator('[data-tside="all"]').evaluate(e => e.click()); await page.locator('[data-tcolor="all"]').evaluate(e => e.click());
+      assert.equal(await page.locator('.tn-tops .top-c').count(), 8, '8 champions and 8 best players in the overall summary');
+      assert.match(await page.locator('.tn-pane').innerText(), /Больше всего титулов[\s\S]*Лучшие бомбардиры[\s\S]*Лучшие ассистенты[\s\S]*Гол \+ пас[\s\S]*средняя оценка[\s\S]*зарплаты/i);
+      await page.locator('[data-ttab="table"]').click();
+      assert.notEqual(await page.locator('.tn-side [aria-selected="true"]').innerText(), 'Все', 'the overall view is for the summary only');
+      await page.evaluate(() => TN.open({ kind: 'real', code: 'tur', tab: 'auction' })); await page.waitForTimeout(200);
+      assert.match(await page.locator('.tn-tabs').innerText(), /РЕЙТИНГ И АУКЦИОН/);
+      assert.match(await page.locator('.tn-pane').innerText(), /Выигравшие ставки[\s\S]*Перебитые ставки[\s\S]*Самая крупная ставка турнира/);
+      await page.locator('[data-tback]').click();
     });
 
     await check(`[${tag}] stocks: portfolio tab, sorting, dividends, stock card, leaderboard, player profile, trade sheet`, async () => {

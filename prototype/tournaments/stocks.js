@@ -194,7 +194,7 @@
   function render() {
     const el = q('#stocks');
     const body = S.tab === 'summary' ? summary() : S.tab === 'market' ? market() : portfolio();
-    el.innerHTML = `<div class="sx-top"><div class="sx-hd"><h1>Биржа акций</h1><div class="grp"><div class="balance glass num"><span>${fmt(BALANCE)}</span>${COIN()}</div><button class="icon-btn glass avatar" data-profile aria-label="Профиль">${AVATAR}</button></div></div>
+    el.innerHTML = `<div class="sx-top"><div class="sx-hd"><h1>Биржа акций</h1><div class="grp"><div class="balance glass num"><span>${fmt(BALANCE)}</span>${COIN()}</div><button class="icon-btn avatar" data-profile aria-label="Профиль">${AVATAR}</button></div></div>
       <div class="seg sx-seg" role="tablist">${[['summary', 'Сводка'], ['market', 'Рынок'], ['portfolio', 'Портфель']].map(([k, l]) => `<button role="tab" data-tab2="${k}" aria-selected="${k === S.tab}">${l}</button>`).join('')}</div></div>
       <div class="sx-scroll" id="sxScroll">${body}</div>`;
   }
