@@ -12,6 +12,7 @@
   // placeholder until the real art arrives: activity token
   const TKN = '<svg class="tkn" viewBox="0 0 24 24" aria-label="жетонов"><path d="M12 2.5 20.2 7v10L12 21.5 3.8 17V7z" fill="#1FB5A8" stroke="#A8F0E8" stroke-width="1.2"/><path d="M13.2 6 8.5 13h3.2l-1 5 4.8-7.2h-3.3z" fill="#fff"/></svg>';
   const ICO = {
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>',
     caret: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
@@ -59,12 +60,12 @@
     return { teams, rounds, mine: forced, color, side, liga };
   });
   const STAGE_OF = (stages, d) => (stages.find(s => d >= s.f && d <= s.t) || {}).n;
-  const bofpLeague = code => memo(`bofp|${code}`, () => {
+  const bofpLeague = code => code === 'acl' ? aclLeague() : memo(`bofp|${code}`, () => {
     const t = BOFP.find(x => x.code === code), mine = t.mine ? t.mine.team : null;
     const teams = t.pool === 'random' ? teamPool('rnd', 16, ME.team) : t.pool === 'alliance' ? ALLIANCE_TEAMS.slice(0, t.size) : pick(BOFP_TEAMS.map(x => x.name), t.code, t.size, mine);
     const rounds = t.days.map(d => { const n = (t.rounds && t.rounds[d]) || STAGE_OF(t.stages, d) || t.round || 'Плей-офф'; return { n, date: d, matches: withDate(pairUp(teams, d + t.code, ['19:45', '22:00'], t.code, n, mine), d) }; });
     const last = t.days[t.days.length - 1];
-    for (const s of t.stages) if (s.f > last) rounds.push({ n: s.n, date: s.f, matches: [], note: s.auction ? 'Аукцион мест' : 'Пары определятся после жеребьёвки' });
+    for (const s of t.stages) if (s.f > last) rounds.push({ n: s.n, date: s.f, matches: [], note: s.auction ? 'Аукцион мест' : 'Пары сформируются автоматически' });
     return { teams, rounds, mine };
   });
   const LEAGUE_ROUNDS = { epl: 38, laliga: 38, seriea: 38, bundesliga: 34, ligue1: 34 };
@@ -197,12 +198,104 @@
       <div class="tn-id"><span class="tn-logo ${d.logo ? '' : 'svg'}">${logo}</span><div class="tx"><h1>${esc(d.name)}</h1><p>${esc(sub)}</p></div></div>
       ${sel}${tl}</header>`;
   }
-  const TABS = () => [['table', 'Таблица'], ['cal', 'Календарь'], ['players', 'Игроки'], ['auction', desc().auctionName], ['sum', 'Сводка']];
+  const TABS = () => [['table', S.code === 'acl' ? 'Сетка' : 'Таблица'], ['cal', 'Календарь'], ['players', 'Игроки'], ['auction', desc().auctionName], ['sum', 'Сводка']];
+
+  /* ---------- Alliance Champions League: qualification → group stage → play-off, no draw ---------- */
+  // the qualification auction sells 4 places; the same generator gives every monthly edition
+  const aclAuction = month => memo(`aclauc|${month}`, () => {
+    const names = BOFP_TEAMS.map(x => x.name).filter(n => n !== ME.alliance), r = rng('aclauc' + month);
+    const bidders = pick(names, 'aclbid' + month, 8, null), date = `${month}-13`;
+    const n = 26 + Math.floor(r() * 24), bids = [];
+    let amount = 150 + Math.floor(r() * 10) * 5, mins = 10 * 60;
+    for (let i = 0; i < n; i++) { amount += 5 + Math.floor(r() * 3) * 5; mins += 4 + Math.floor(r() * 30); bids.push({ team: bidders[Math.floor(r() * bidders.length)], amount, date, time: `${String(Math.floor(mins / 60) % 24).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}` }); }
+    bids.sort((a, b) => b.amount - a.amount);
+    const seen = new Set(), win = [];
+    for (const b of bids) if (!seen.has(b.team) && win.length < 4) { seen.add(b.team); win.push(b); }
+    return { month, date, bids, win, beaten: bids.filter(b => !win.includes(b)) };
+  });
+  const AEL_LOGO = `${A}alliance-europe-league-avatar.webp`;
+  const aclLeague = () => memo('acl', () => {
+    const auc = aclAuction(CUR), names = BOFP_TEAMS.map(x => x.name).filter(n => n !== ME.alliance && !auc.win.some(w => w.team === n));
+    const ph = new Set(), P = n => (ph.add(n), n);
+    const info = {}; // where a team came from
+    const direct = [...pick(names, 'acl-direct', 3, null), ME.alliance];
+    ['Лига 1 · альянс №3', 'Лига 1 · альянс №5', '2-е место · альянс №1', 'Лига 1 · альянс №4'].forEach((t, i) => { info[direct[i]] = t; });
+    auc.win.forEach(w => { info[w.team] = `аукцион · ${w.amount} жетонов`; });
+    const auction = new Set(auc.win.map(w => w.team));
+    const mk = (id, home, away, date, kickoff, n) => ({ id, comp: 'acl', round: n, home, away, date, kickoff, bofp: true });
+    // qualification: one match, the winner goes to the group stage, the loser to the Alliance EL group stage
+    const qual = direct.map((d, i) => mk(`acl-q-${i}`, d, auc.win[i].team, i < 2 ? '2024-08-20' : '2024-08-21', ['19:45', '22:00'][i % 2], 'Квалификация'));
+    const decided = m => { const st = resOf(m); if (st.s !== 'done') return null; const [h, a] = st.score; if (h !== a) return h > a ? 0 : 1; m.pens = hash(m.id + 'pen') % 2 ? [4, 3] : [3, 5]; return m.pens[0] > m.pens[1] ? 0 : 1; };
+    qual.forEach(m => { m.win = decided(m); });
+    const seeded = pick(names.filter(n => !direct.includes(n)), 'acl-seed', 4, null);
+    ['Победитель Alliance CL', 'Победитель Alliance EL', 'Лига 1 · альянс №1', 'Лига 1 · альянс №2'].forEach((t, i) => { info[seeded[i]] = t; });
+    const group = [...seeded, ...qual.map((m, i) => m.win == null ? P(`Победитель пары ${i + 1}`) : [m.home, m.away][m.win])];
+    const gDates = ['2024-08-27', '2024-09-03', '2024-09-10'];
+    const gRounds = gDates.map((d, k) => ({ n: `Тур ${k + 1}`, stage: 'Групповой этап', date: d, matches: pairUp(group, 'acl-g' + k, ['19:45', '22:00'], 'acl', `Тур ${k + 1}`, null).map(m => ({ ...m, date: d })) }));
+    const place = i => P(`${i} место группы`), qfW = i => P(`Победитель 1/4 №${i}`), sfW = i => P(`Победитель 1/2 №${i}`);
+    const qf = [[1, 8], [2, 7], [3, 6], [4, 5]].map(([a, b], i) => mk(`acl-qf-${i}`, place(a), place(b), '2024-09-24', ['19:45', '22:00'][i % 2], '1/4 финала'));
+    const sf = [[1, 2], [3, 4]].map(([a, b], i) => mk(`acl-sf-${i}`, qfW(a), qfW(b), '2024-10-08', ['19:45', '22:00'][i], '1/2 финала'));
+    const fin = [mk('acl-f', sfW(1), sfW(2), '2024-10-22', '22:00', 'Финал')];
+    const rounds = [
+      { n: 'Квалификация · день 1', stage: 'Квалификация', date: '2024-08-20', matches: qual.slice(0, 2) },
+      { n: 'Квалификация · день 2', stage: 'Квалификация', date: '2024-08-21', matches: qual.slice(2) },
+      ...gRounds,
+      { n: '1/4 финала', stage: 'Плей-офф', date: '2024-09-24', matches: qf },
+      { n: '1/2 финала', stage: 'Плей-офф', date: '2024-10-08', matches: sf },
+      { n: 'Финал', stage: 'Плей-офф', date: '2024-10-22', matches: fin },
+    ];
+    return { teams: [...direct, ...auc.win.map(w => w.team), ...seeded], rounds, mine: ME.alliance, qual, group, gRounds, qf, sf, fin, ph, auction, info };
+  });
+  const isPh = n => S.code === 'acl' && aclLeague().ph.has(n);
+  const tcrest = n => isPh(n) ? `<span class="crest ph" aria-hidden="true">?</span>` : crest(n);
+  const STAGES_ACL = [['qual', 'Квалификация', '2024-08-13', '2024-08-21'], ['group', 'Групповой этап', '2024-08-22', '2024-09-10'], ['po', 'Плей-офф', '2024-09-11', '2024-10-22']];
+  const curStage = () => (STAGES_ACL.find(s => TODAY <= s[3]) || STAGES_ACL[2])[0];
+  function pairCard(m, opts = {}) {
+    const L = aclLeague(), st = resOf(m), me = mineTeam();
+    const row = k => {
+      const n = [m.home, m.away][k], lost = m.win != null && m.win !== k, won = m.win === k;
+      const tags = `${L.auction.has(n) ? `<span class="tg-auc" title="Место куплено на аукционе">${I.gavel}</span>` : ''}${opts.qual && lost ? `<span class="tg-ael" title="Переходит в групповой этап Alliance Europa League"><img src="${AEL_LOGO}" alt="">${ICO.down}</span>` : ''}`;
+      return `<div class="pr-r ${won ? 'win' : ''} ${lost ? 'lose' : ''} ${n === me ? 'me' : ''} ${isPh(n) ? 'ph' : ''}">${tcrest(n)}<span class="nm"><b>${esc(n)}</b>${opts.qual && L.info[n] ? `<small>${esc(L.info[n])}</small>` : ''}</span>${tags}<span class="sc num">${st.score ? st.score[k] : '—'}</span></div>`;
+    };
+    const foot = `${dayShort(m.date)} · ${m.kickoff}${st.s === 'live' ? ` · <b class="lv">${esc(st.min)}</b>` : ''}${m.pens ? ` · пен. ${m.pens.join(':')}` : ''}`;
+    return `<div class="pr">${row(0)}${row(1)}<div class="pr-f num">${foot}</div></div>`;
+  }
+  function stagePane() {
+    const L = aclLeague(), stg = S.stg || curStage(), cur = curStage();
+    const chips = `<div class="tn-chips stg">${STAGES_ACL.map(([k, l]) => `<button class="chip2" data-stg="${k}" aria-selected="${stg === k}">${l}${k === cur ? '<i class="now" aria-label="идёт сейчас"></i>' : ''}</button>`).join('')}</div>`;
+    if (stg === 'qual') return chips + `<p class="tn-cap">Один матч. 4 победителя выходят в групповой этап, проигравшие переходят в групповой этап Alliance Europa League</p>`
+      + `<div class="prs">${L.qual.map(m => pairCard(m, { qual: true })).join('')}</div>`
+      + `<div class="tn-legend"><span><span class="tg-auc">${I.gavel}</span>место куплено на аукционе</span><span><span class="tg-ael"><img src="${AEL_LOGO}" alt="">${ICO.down}</span>переходит в групповой этап Alliance EL</span></div>`;
+    const subs = stg === 'group' ? [['table', 'Таблица'], ...L.gRounds.map((r, i) => [`r${i}`, r.n])] : [['qf', '1/4 финала'], ['sf', '1/2 финала'], ['f', 'Финал']];
+    const sub = subs.some(s => s[0] === S.stgSub) ? S.stgSub : subs[0][0];
+    const subChips = `<div class="seg tn-sub sub${subs.length}" role="tablist">${subs.map(([k, l]) => `<button role="tab" data-stgsub="${k}" aria-selected="${sub === k}">${l}</button>`).join('')}</div>`;
+    if (stg === 'group') {
+      if (sub !== 'table') { const r = L.gRounds[+sub.slice(1)]; return chips + subChips + `<p class="tn-cap">${dayLong(r.date)} · пары составлены автоматически</p><div class="prs">${r.matches.map(m => pairCard(m)).join('')}</div>`; }
+      const rows = standings([{ teams: L.group, rounds: L.gRounds }]), me = mineTeam();
+      return chips + subChips + `<p class="tn-cap">8 команд, у каждой 3 матча. Все места дают путёвку в 1/4 финала: 1-е играет с 8-м, 2-е с 7-м</p>
+        <div class="tb"><table><thead><tr><th class="s p">#</th><th class="s n">Команда</th><th>И</th><th>Мячи</th><th>О</th><th>В</th><th>Н</th><th>П</th></tr></thead><tbody>
+        ${rows.map((r, i) => `<tr class="${r.n === me ? 'me' : ''} ${isPh(r.n) ? 'ph' : ''}"><td class="s p">${i + 1}</td><td class="s n"><span class="tm">${tcrest(r.n)}<b>${esc(r.n)}</b></span></td><td>${r.mp}</td><td>${r.gf}-${r.ga}</td><td class="pts">${r.pts}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    const list = { qf: L.qf, sf: L.sf, f: L.fin }[sub], date = list[0].date;
+    return chips + subChips + `<p class="tn-cap">${dayLong(date)} · один матч, пары составлены автоматически</p><div class="prs">${list.map(m => pairCard(m)).join('')}</div>`;
+  }
+  function aclAuctionPane() {
+    const a = aclAuction(CUR), prev = aclAuction(mAdd(CUR, -1)), days = Math.round((now() - at(a.date, '23:59')) / 864e5);
+    const winners = A0 => `<div class="au-list">${A0.win.map(b => `<div class="bid win"><span class="who">${crest(b.team)}<b>${esc(b.team)}</b></span><span class="am num">${b.amount}${TKN}</span><span class="ok">${ICO.check}</span></div>`).join('')}</div>`;
+    const card = (A0, label) => `<div class="au-card"><div class="lg"><span class="lg-l"><img src="${A}alliance-champions-league-avatar.webp" alt=""></span><span class="tx"><b>Alliance Champions League ${mShort(A0.month)}</b><small>${label}</small></span><button class="bids" data-bids="acl|${A0.month}">${A0.bids.length} ${plural(A0.bids.length, 'заявка', 'заявки', 'заявок')}${I.right}</button></div>${winners(A0).replace('class="au-list"', 'class="au-in"')}</div>`;
+    const best = HISTORY.concat(CUR).map(aclAuction).flatMap(x => x.bids.map(b => ({ ...b, month: x.month }))).sort((x, y) => y.amount - x.amount)[0];
+    return `<div class="au-h"><div><b>Аукцион Alliance Champions League</b><small>4 места в квалификации</small></div><span class="bal num">${MY_TOKENS}${TKN}</span></div>
+      <h3 class="tn-h">Аукцион <small>завершился ${days} ${plural(days, 'день', 'дня', 'дней')} назад · турнир сформирован</small></h3>${card(a, 'Квалификация · 4 места')}
+      <h3 class="tn-h">Победители аукциона прошлого сезона <small>${mName(prev.month)}</small></h3>${card(prev, 'Квалификация · 4 места')}
+      <h3 class="tn-h">Статистика</h3><p class="tn-cap">Самая высокая заявка за всё время</p>
+      <div class="au-rec"><span class="who">${crest(best.team)}<span><b>${esc(best.team)}</b><small>${mShort(best.month)}</small></span></span><span class="big num">${best.amount}</span>${TKN}</div>`;
+  }
 
   /* ---------- table ---------- */
   const zone = i => i < 3 ? ` z${i + 1}` : '';
   function tablePane() {
     if (aggregated()) return '';
+    if (S.code === 'acl') return stagePane();
     const rows = standings(leagues()), me = mineTeam();
     const played = rows.some(r => r.mp);
     return `<p class="tn-swipe">${ICO.swipe}Листайте влево — победы, ничьи, поражения и xG</p>
@@ -218,7 +311,7 @@
     const sc = st.score ? `<span class="sc num ${st.s}">${st.score[0]}<i>:</i>${st.score[1]}</span>` : `<span class="sc num tm">${esc(m.kickoff || '')}</span>`;
     const lost = k => st.s === 'done' && st.score && st.score[k] < st.score[1 - k] ? ' lose' : '';
     return `<div class="mr ${mine ? 'me' : ''} ${st.s}">${st.s === 'live' ? `<span class="lv num">${esc(st.min)}</span>` : ''}
-      <span class="h${lost(0)}"><b>${esc(m.home)}</b>${crest(m.home)}</span>${sc}<span class="a${lost(1)}">${crest(m.away)}<b>${esc(m.away)}</b></span></div>`;
+      <span class="h${lost(0)}"><b>${esc(m.home)}</b>${tcrest(m.home)}</span>${sc}<span class="a${lost(1)}">${tcrest(m.away)}<b>${esc(m.away)}</b></span></div>`;
   }
   function calPane() {
     if (aggregated()) return '';
@@ -233,7 +326,8 @@
       const s = state0(r), mineM = me ? r.matches.find(m => m.home === me || m.away === me) : null;
       const ms = S.cal === 'mine' ? r.matches.filter(m => m === mineM) : r.matches;
       const tag = s === 'done' ? 'Завершён' : s === 'today' ? 'Сегодня' : r.note ? esc(r.note) : 'Скоро';
-      return `<section class="rd ${open ? 'open' : ''} ${s}"><button class="rd-h" data-rd="${esc(key)}" aria-expanded="${open}"><span class="nm"><b>${esc(r.n)}</b><small>${dayLong(r.date)}</small></span><span class="tg ${s}">${tag}</span>${I.chevron}</button>
+      const head = r.stage && (i === 0 || rounds[i - 1].stage !== r.stage) ? `<h3 class="tn-h stg-h">${esc(r.stage)}</h3>` : '';
+      return head + `<section class="rd ${open ? 'open' : ''} ${s}"><button class="rd-h" data-rd="${esc(key)}" aria-expanded="${open}"><span class="nm"><b>${esc(r.n)}</b><small>${dayLong(r.date)}</small></span><span class="tg ${s}">${tag}</span>${I.chevron}</button>
         ${open ? `<div class="rd-b">${ms.length ? ms.map(m => matchHTML(m, me)).join('') : `<p class="tn-empty sm">${esc(r.note || 'Матчи появятся позже')}</p>`}</div>` : ''}</section>`;
     }).join('');
     return chipsHTML + (body || '<p class="tn-empty">Матчей нет</p>');
@@ -304,6 +398,7 @@
   }
   // BofP / Alliance cups: places in a stage are sold at an auction (stage flagged `auction`)
   function teamAuctionCup() {
+    if (S.code === 'acl') return aclAuctionPane();
     const d = desc(), st = (d.stages || []).find(s => s.auction);
     if (!st) return `<div class="au-next"><span class="ic">${I.gavel}</span><div><b>Аукционов в турнире пока нет</b><small>Расписание аукционов появится вместе с календарём следующего этапа</small></div></div>`;
     const places = +((/(\d+)\s+мест/.exec(st.ms.join(' ')) || [])[1] || 4);
@@ -441,6 +536,12 @@
     sheet(`<h3 class="sh-t">${title}</h3><div class="sh-l" role="listbox">${items.map(([k, l, note]) => `<button role="option" data-opt="${esc(k)}" aria-selected="${String(k) === String(cur)}">${kind === 'team' ? crest(k) : ''}<span>${esc(l)}${note ? `<small>${note}</small>` : ''}</span>${String(k) === String(cur) ? ICO.check : ''}</button>`).join('')}</div>`);
   }
   function bidsSheet(key) {
+    if (key.startsWith('acl|')) {
+      const a = aclAuction(key.slice(4)), row = (b, ok) => `<div class="bid ${ok ? 'win' : ''}"><span class="dt num">${b.time}</span><span class="who">${crest(b.team)}<b>${esc(b.team)}</b></span><span class="am num">${b.amount}${TKN}</span><span class="ok">${ok ? ICO.check : ''}</span></div>`;
+      return sheet(`<h3 class="sh-t">Alliance Champions League ${mShort(a.month)} · аукцион</h3><div class="sh-sc">
+        <h4 class="tn-h">Выигравшие заявки <i class="cnt">${a.win.length}</i></h4><div class="au-list">${a.win.map(b => row(b, true)).join('')}</div>
+        <h4 class="tn-h">Перебитые заявки <i class="cnt">${a.beaten.length}</i></h4><div class="au-list">${a.beaten.map(b => row(b, false)).join('')}</div></div>`);
+    }
     const [color, side, month] = key.split('|'), a = slotAuction(color, side, month);
     sheet(`<h3 class="sh-t">BIG 5 · Лига 1 · аукцион ${mShort(month)}</h3><div class="sh-sc">
       <h4 class="tn-h">Выигравшая ставка <i class="cnt">1</i></h4><div class="au-list">${bidRow(a.win, true)}</div>
@@ -454,7 +555,7 @@
     if (!on) closeSheet();
   }
   function open(o) {
-    Object.assign(S, { tab: o.tab || 'table', cal: 'all', pf: 'all', pteam: null, aucSub: 'auction', aucRound: 0, period: CUR, rd: {} });
+    Object.assign(S, { tab: o.tab || 'table', stg: null, stgSub: null, cal: 'all', pf: 'all', pteam: null, aucSub: 'auction', aucRound: 0, period: CUR, rd: {} });
     S.more.clear();
     if (o.kind === 'big5') {
       const b = BIG5.find(x => x.code === o.code) || MINE5(), m = b.mine;
@@ -496,6 +597,8 @@
       if (d.dd) return dropdown(d.dd);
       if (d.stage != null) { const id = 'tn-' + desc().id, k = +d.stage; state.stage[id] = state.stage[id] === k ? undefined : k; return render(true); }
       if (d.go != null) { S.tab = 'auction'; return render(true); }
+      if (d.stg) { S.stg = d.stg; S.stgSub = null; return render(true); }
+      if (d.stgsub) { S.stgSub = d.stgsub; return render(true); }
       if (d.cal) { S.cal = d.cal; S.rd = {}; return render(true); }
       if (d.rd) { const el = b.closest('.rd'); S.rd[d.rd] = !el.classList.contains('open'); return render(true); }
       if (d.pf) { S.pf = d.pf; return render(true); }

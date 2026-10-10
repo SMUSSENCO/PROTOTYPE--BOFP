@@ -494,6 +494,20 @@ async function check(name, fn) {
       assert.match(await page.locator('.tn-pane').innerText(), /Больше всего титулов[\s\S]*Лучшие бомбардиры[\s\S]*Лучшие ассистенты[\s\S]*Гол \+ пас[\s\S]*средняя оценка[\s\S]*зарплаты/i);
       await page.locator('[data-ttab="table"]').click();
       assert.notEqual(await page.locator('.tn-side [aria-selected="true"]').innerText(), 'Все', 'the overall view is for the summary only');
+      // Alliance CL: stages instead of one table, auction places marked, losers drop to the Alliance EL
+      await page.evaluate(() => TN.open({ kind: 'bofp', code: 'acl' })); await page.waitForTimeout(200);
+      assert.deepEqual(await page.locator('.tn-chips.stg button').allInnerTexts(), ['Квалификация', 'Групповой этап', 'Плей-офф']);
+      assert.equal(await page.locator('.prs .pr').count(), 4, '4 qualification pairs');
+      assert.equal(await page.locator('.prs .tg-auc').count(), 4, '4 places bought at the auction');
+      assert.ok(await page.locator('.prs .tg-ael').count() >= 2, 'losers of finished pairs go to the Alliance EL');
+      await page.locator('[data-stg="group"]').click();
+      assert.deepEqual(await page.locator('.tn-sub button').allInnerTexts(), ['Таблица', 'Тур 1', 'Тур 2', 'Тур 3']);
+      await page.locator('[data-stg="po"]').click();
+      assert.deepEqual(await page.locator('.tn-sub button').allInnerTexts(), ['1/4 финала', '1/2 финала', 'Финал']);
+      await page.locator('[data-ttab="cal"]').click();
+      assert.doesNotMatch(await page.locator('.tn-pane').innerText(), /жеребь/i, 'no draw: pairs are formed automatically');
+      await page.locator('[data-ttab="auction"]').click();
+      assert.match(await page.locator('.tn-pane').innerText(), /завершился[\s\S]*заявок[\s\S]*Победители аукциона прошлого сезона[\s\S]*Статистика[\s\S]*Самая высокая заявка/);
       await page.evaluate(() => TN.open({ kind: 'real', code: 'tur', tab: 'auction' })); await page.waitForTimeout(200);
       assert.match(await page.locator('.tn-tabs').innerText(), /РЕЙТИНГ И АУКЦИОН/);
       assert.match(await page.locator('.tn-pane').innerText(), /Выигравшие ставки[\s\S]*Перебитые ставки[\s\S]*Самая крупная ставка турнира/);

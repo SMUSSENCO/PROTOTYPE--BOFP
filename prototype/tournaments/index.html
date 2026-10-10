@@ -745,6 +745,41 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .sh-l .crest-img,.sh-l .crest{flex:none;width:26px;height:26px}
 .sh-l button[aria-selected="true"]{color:var(--text)}
 .sh-sc .tn-h{margin-top:12px}
+/* Alliance CL: stages, pair cards */
+.tn-chips.stg .chip2{position:relative}
+.tn-chips.stg .now{position:absolute;left:50%;bottom:4px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:currentColor}
+.tn-sub.sub4 {grid-template-columns:repeat(4,1fr)}.tn-sub.sub3{grid-template-columns:repeat(3,1fr)}
+.tn-sub button{font-size:13px}
+.prs{display:flex;flex-direction:column;gap:8px}
+.pr{border-radius:16px;background:var(--fill-1);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.pr-r{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 12px}
+.pr-r+.pr-r{border-top:1px solid var(--line)}
+.pr-r .crest-img,.pr-r .crest{flex:none;width:32px;height:32px}
+.pr-r .nm{flex:1;display:flex;flex-direction:column;min-width:0}
+.pr-r .nm b{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-r .nm small{font-size:11.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-r .sc{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--fill-2);font-size:16px;font-weight:800}
+.pr-r.win .sc{background:color-mix(in srgb,#3DDC97 22%,transparent);color:#3DDC97}
+.pr-r.lose .nm b{color:var(--text-2)}
+.pr-r.me{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.pr-r.me .nm b{color:var(--accent-text)}
+.pr-r.ph .nm b{color:var(--text-2);font-weight:600}
+.crest.ph{display:grid;place-items:center;border-radius:50%;background:var(--fill-2);box-shadow:inset 0 0 0 1px dashed var(--line-2);color:var(--text-3);font-weight:800;border:1px dashed var(--line-2)}
+.tb tr.ph b{color:var(--text-2);font-weight:600}
+.pr-f{padding:6px 12px 8px;font-size:11.5px;color:var(--text-3);border-top:1px solid var(--line)}
+.pr-f .lv{color:var(--live)}
+.tg-auc{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--accent);color:var(--accent-ink)}
+.tg-auc svg{width:14px;height:14px}
+.tg-ael{flex:none;display:flex;align-items:center;gap:1px;height:26px;padding:0 5px 0 3px;border-radius:9px;background:var(--fill-2);color:var(--live)}
+.tg-ael img{width:20px;height:20px;border-radius:6px;object-fit:cover}
+.tg-ael svg{width:13px;height:13px}
+.tn-legend{display:flex;flex-direction:column;gap:8px;margin:14px 2px 0;font-size:12px;color:var(--text-2)}
+.tn-legend>span{display:flex;align-items:center;gap:8px}
+.stg-h{margin-top:18px}
+.au-card .lg .tx{flex:1;display:flex;flex-direction:column;min-width:0}
+.au-card .lg .tx b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.au-card .lg .tx small{font-size:11.5px;color:var(--text-3)}
+.au-in>*+*{border-top:1px solid var(--line)}
 /* ================= global search ================= */
 .srch{position:fixed;inset:0;z-index:9;max-width:520px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg)}
 .sr-top{display:flex;align-items:center;gap:6px;padding:calc(env(safe-area-inset-top,0px) + 8px) var(--gutter) 6px 8px}
