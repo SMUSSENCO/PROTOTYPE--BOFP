@@ -491,7 +491,7 @@ async function check(name, fn) {
       await page.locator('[data-ttab="sum"]').click();
       await page.locator('[data-tside="all"]').evaluate(e => e.click()); await page.locator('[data-tcolor="all"]').evaluate(e => e.click());
       assert.equal(await page.locator('.tn-tops .top-c').count(), 8, '8 champions and 8 best players in the overall summary');
-      assert.match(await page.locator('.tn-pane').innerText(), /Больше всего титулов[\s\S]*Лучшие бомбардиры[\s\S]*Лучшие ассистенты[\s\S]*Гол \+ пас[\s\S]*средняя оценка[\s\S]*зарплаты/i);
+      assert.match(await page.locator('.tn-pane').innerText(), /Наибольшее число титулов[\s\S]*Лучшие бомбардиры[\s\S]*Лучшие ассистенты[\s\S]*Гол \+ пас[\s\S]*средняя оценка[\s\S]*зарплаты/i);
       await page.locator('[data-ttab="table"]').click();
       assert.notEqual(await page.locator('.tn-side [aria-selected="true"]').innerText(), 'Все', 'the overall view is for the summary only');
       // Alliance CL: stages instead of one table, auction places marked, losers drop to the Alliance EL
@@ -501,11 +501,24 @@ async function check(name, fn) {
       assert.equal(await page.locator('.prs .tg-auc').count(), 4, '4 places bought at the auction');
       assert.ok(await page.locator('.prs .tg-ael').count() >= 2, 'losers of finished pairs go to the Alliance EL');
       await page.locator('[data-stg="group"]').click();
-      assert.deepEqual(await page.locator('.tn-sub button').allInnerTexts(), ['Таблица', 'Тур 1', 'Тур 2', 'Тур 3']);
+      assert.equal(await page.locator('.tn-sub').count(), 0, 'the group stage is one table, no rounds');
+      assert.equal(await page.locator('.tb tbody tr').count(), 8);
       await page.locator('[data-stg="po"]').click();
       assert.deepEqual(await page.locator('.tn-sub button').allInnerTexts(), ['1/4 финала', '1/2 финала', 'Финал']);
+      assert.doesNotMatch(await page.locator('.tn-pane').innerText(), /один матч|автоматически/i, 'no captions in the play-off');
       await page.locator('[data-ttab="cal"]').click();
-      assert.doesNotMatch(await page.locator('.tn-pane').innerText(), /жеребь/i, 'no draw: pairs are formed automatically');
+      assert.doesNotMatch(await page.locator('.tn-pane').innerText(), /жеребь|день 1/i, 'no draw, no day labels');
+      assert.equal(await page.locator('.tn-pane [data-cal]').count(), 0, 'no filters in this calendar');
+      assert.deepEqual(await page.locator('.rd-h .nm b').allInnerTexts(), ['Квалификация', 'Групповой этап', '1/4 финала', '1/2 финала', 'Финал']);
+      await page.locator('[data-ttab="sum"]').click();
+      assert.match(await page.locator('.tn-pane').innerText(), /Действующий чемпион · Июль 2024[\s\S]*Наибольшее число титулов[\s\S]*Все чемпионы · 12[\s\S]*Наибольшие зарплаты/);
+      assert.doesNotMatch(await page.locator('.tn-pane').innerText(), /за 6 сезонов|ЗП\/матч/);
+      await page.locator('[data-pall="sal"]').click(); await page.waitForTimeout(400);
+      assert.ok(await page.locator('#tnSheet tbody tr').count() > 20, 'the full list opens in a sheet');
+      await page.locator('#tnSheet [data-msort="g"]').click();
+      const gs = (await page.locator('#tnSheet tbody tr td:nth-child(4)').allInnerTexts()).map(Number);
+      assert.deepEqual(gs, [...gs].sort((a, b) => b - a), 'sorted by goals');
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
       await page.locator('[data-ttab="auction"]').click();
       assert.match(await page.locator('.tn-pane').innerText(), /завершился[\s\S]*заявок[\s\S]*Победители аукциона прошлого сезона[\s\S]*Статистика[\s\S]*Самая высокая заявка/);
       await page.evaluate(() => TN.open({ kind: 'real', code: 'tur', tab: 'auction' })); await page.waitForTimeout(200);
