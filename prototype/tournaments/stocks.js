@@ -11,6 +11,8 @@
 
   /* ---------- icons ---------- */
   const ICO = {
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4 16 6-6 4 4 6-7M15 7h5v5"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4 8 6 6 4-4 6 7M15 17h5v-5"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3.2 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.6l6-.9z"/></svg>',
     starOn: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3.2 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.6l6-.9z"/></svg>',
     buy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>',
@@ -110,7 +112,7 @@
   const quotes = c => { const step = Math.max(1, Math.round(c.p * c.sp / 100 / 2)); return { bid: c.p - step, ask: c.p + step, high: Math.round(c.p * (1 + Math.abs(c.d) / 200 + 0.002)), low: Math.round(c.p * (1 - Math.abs(c.d) / 200 - 0.002)), vol: 20 + hash(c.n) % 160 }; };
 
   /* ---------- state ---------- */
-  const S = { tab: 'portfolio', sum: 'most', lg: 'all', mkt: 'stocks', side: 'all', st: 'all', pf: 'stocks', div: 'all',
+  const S = { tab: 'portfolio', sum: 'most', sv: 'vol', sper: '24h', sdir: 'up', lg: 'all', mkt: 'stocks', side: 'all', st: 'all', pf: 'stocks', div: 'all',
     sort: { pf: { k: 'val', d: -1 }, mkt: { k: 'r', d: 1 }, lb: { k: 'pct', d: -1 }, other: { k: 'val', d: -1 } },
     open: new Set(), club: null, dTab: 'chart', period: '3m', dside: 'all', dst: 'all', trade: null, player: null, order: null, sel: null, selCtx: '', menu: null };
 
@@ -122,16 +124,26 @@
   const sortHead = (key, cols) => `<div class="sx-th sx-${key}">${cols.map(([k, l, cls]) => k ? `<button class="${cls || ''} ${S.sort[key].k === k ? 'on' : ''}" data-sort="${key}:${k}">${l}<i>${S.sort[key].k === k ? (S.sort[key].d > 0 ? '↑' : '↓') : ''}</i></button>` : `<span class="${cls || ''}"></span>`).join('')}</div>`;
   const by = (key, get) => (a, b) => { const { k, d } = S.sort[key], x = get(a, k), y = get(b, k); return (typeof x === 'string' ? x.localeCompare(y, 'ru') : x - y) * d; };
 
-  function clubRow(c, sub, attr = '') {
+  function clubRow(c, sub, attr = '', ch = c.d) {
     return `<button class="sx-row glass" data-club="${esc(c.n)}" ${attr}>${crestBox(c)}<span class="sx-nm"><b>${esc(c.n)}</b><small>${sub}</small></span>
-      <span class="sx-sp num">${fmt(c.sp, 2)}%</span><span class="sx-pr num"><b>${fmt(c.p)}${COIN()}</b><small class="${tone(c.d)}">${pct(c.d)}</small></span></button>`;
+      <span class="sx-sp num">${fmt(c.sp, 2)}%</span><span class="sx-pr num"><b>${fmt(c.p)}${COIN()}</b><small class="${tone(ch)}">${pct(ch)}</small></span></button>`;
   }
+  // summary periods: shares in turnover and price change over the period (deterministic per club)
+  const SPER = [['24h', '24 ч', 1, 'За 24 часа'], ['1w', 'Неделя', 7, 'За неделю'], ['1m', 'Месяц', 30, 'За месяц'], ['3m', '3 месяца', 90, 'За 3 месяца'], ['1y', 'Год', 365, 'За год']];
+  const perOf = () => SPER.find(x => x[0] === S.sper);
+  const volOf = (c, p) => { const days = SPER.find(x => x[0] === p)[2]; return Math.round(c.tr * 3 * (p === '24h' ? 1 : days * (0.55 + rng('v' + c.n + p)() * 0.9))); };
+  const volChg = (c, p) => p === '24h' ? c.tc : Math.round((rng('vc' + c.n + p)() - 0.45) * 120 * 10) / 10;
+  const chgOf = (c, p) => p === '24h' ? c.d : Math.round((rng('c' + c.n + p)() - 0.42) * Math.sqrt(SPER.find(x => x[0] === p)[2]) * 7 * 10) / 10;
 
   /* ---------- tabs ---------- */
   function summary() {
-    const list = CLUBS.filter(inLg).sort((a, b) => S.sum === 'most' ? b.tr - a.tr : a.tr - b.tr).slice(0, 12);
-    return chips('sum', [['most', 'Самые активные'], ['least', 'Наименее активные']], S.sum) + leagueBar()
-      + `<h3 class="sx-h">За последние 24 часа</h3><div class="sx-list">${list.map(c => clubRow(c, `${fmt(c.tr)} сделок <span class="${tone(c.tc)}">${pct(c.tc)}</span>`)).join('')}</div>`;
+    const p = S.sper, vol = S.sv === 'vol';
+    const head = `<div class="seg sx-sub" role="tablist">${[['vol', 'Объём торгов'], ['chg', 'Динамика цены']].map(([k, l]) => `<button role="tab" data-sv="${k}" aria-selected="${S.sv === k}">${l}</button>`).join('')}</div>`
+      + `<div class="sx-chips2">${vol ? chips('sum', [['most', 'Больше всего'], ['least', 'Меньше всего']], S.sum, 'mini') : chips('sdir', [['up', `${ICO.up}Рост`], ['down', `${ICO.down}Падение`]], S.sdir, 'mini')}<span class="sep"></span>${chips('sper', SPER.map(([k, l]) => [k, l]), p, 'mini')}</div>`;
+    const list = CLUBS.filter(inLg).sort((a, b) => vol ? (volOf(b, p) - volOf(a, p)) * (S.sum === 'most' ? 1 : -1) : (chgOf(b, p) - chgOf(a, p)) * (S.sdir === 'up' ? 1 : -1)).slice(0, 12);
+    const rows = list.map(c => vol ? clubRow(c, `${fmt(volOf(c, p))} акций в обороте <span class="${tone(volChg(c, p))}">${pct(volChg(c, p))}</span>`, '', chgOf(c, p))
+      : clubRow(c, `было ${fmt(Math.round(c.p / (1 + chgOf(c, p) / 100)))} → стало ${fmt(c.p)}`, '', chgOf(c, p)));
+    return head + leagueBar() + `<h3 class="sx-h">${perOf()[3]}</h3><div class="sx-list">${rows.join('')}</div>`;
   }
   function market() {
     const activeN = ORDERS.filter(o => o.st === 'active').length;
@@ -157,7 +169,7 @@
         const c = CLUB[o.club], prog = Math.round(o.done / o.qty * 100);
         const pick = S.sel && S.selCtx === pre, can = o.st === 'active', on = pick && S.sel.has(o.id);
         const card = `<div class="sx-ord glass ${o.side} ${o.st}" data-ord="${o.id}" role="button" tabindex="0"><div class="o1"><span class="oi">${o.side === 'buy' ? ICO.buy : ICO.sell}</span><span>Лимитная заявка <em class="num">#${o.id}</em></span><span class="od">${o.st === 'cancelled' ? 'Отменена' : o.st === 'done' ? 'Исполнена' : 'Активна'}</span></div>
-          <div class="o2">${crest(c.n)}<b>${esc(c.n)}</b><span class="num">${o.side === 'buy' ? 'до' : 'от'} ${fmt(o.price)}${COIN()}</span><span class="oq num"><b>${o.done}</b> / ${o.qty}</span></div>
+          <div class="o2"><span class="oclub" data-oclub="${esc(c.n)}" role="link">${crest(c.n)}<b>${esc(c.n)}</b></span><span class="num">${o.side === 'buy' ? 'до' : 'от'} ${fmt(o.price)}${COIN()}</span><span class="oq num"><b>${o.done}</b> / ${o.qty}</span></div>
           <div class="ob"><i style="width:${prog}%"></i>${o.st === 'done' ? `<span class="ok">${ICO.check}</span>` : ''}</div></div>`;
         return pick ? `<div class="sx-pick${on ? ' on' : ''}${can ? '' : ' dis'}" data-ord="${o.id}"><span class="ck${can ? '' : ' dis'}">${on ? ICO.check : ''}</span>${card}</div>` : card;
       }).join('')).join('');
@@ -170,7 +182,7 @@
     items.sort(by(key, (x, k) => k === 'n' ? x.n : k === 'p' ? x.c.p : x[k]));
     const tq = items.reduce((s, x) => s + x.q, 0), tv = items.reduce((s, x) => s + x.val, 0);
     const tch = items.reduce((s, x) => s + x.ch * x.val, 0) / Math.max(1, tv);
-    return sortHead(key, [['n', 'Клуб', 'l'], ['q', 'Кол-во'], ['p', 'Цена'], ['val', 'Стоимость'], ['ch', 'Изм.']])
+    return sortHead(key, [['n', 'Клуб', 'l'], ['q', 'Кол.'], ['p', 'Цена'], ['val', 'Стоим.'], ['ch', 'Изм.']])
       + `<div class="sx-tbl">${items.map(x => `<button class="sx-tr" data-club="${esc(x.n)}"><span class="l">${crest(x.n)}<b>${esc(x.n)}</b></span><span class="num">${fmt(x.q)}</span><span class="num">${fmt(x.c.p)}</span><span class="num">${fmt(x.val)}</span><span class="num ${tone(x.ch)}">${pct(x.ch)}</span></button>`).join('')}
       <div class="sx-tr tot"><span class="l"><b>${items.length} клубов</b></span><span class="num">${fmt(tq)}</span><span></span><span class="num">${fmt(tv)}</span><span class="num ${tone(tch)}">${pct(tch)}</span></div></div>`;
   }
@@ -178,7 +190,7 @@
     const d = DIV[key], total = d.rows.reduce((s, r) => s + r[3], 0);
     return `<section class="sx-div glass"><div class="dh"><div><b>${d.t}</b><small>${d.sub}</small></div><div class="dv"><b class="num">0${COIN()}</b><small>из ${fmt(total)} возможных</small></div></div>
       <div class="dth"><span>Клуб</span><span>Сделки</span><span>Кол-во</span><span>Дивиденды</span></div>
-      ${d.rows.map(([n, done, need, sum, cond, rate]) => { const k = `${key}:${n}`, op = S.open.has(k); return `<button class="dtr" data-dopen="${esc(k)}" aria-expanded="${op}"><span class="l">${crest(n)}<b>${esc(n)}</b></span><span class="pill num"><i style="width:${Math.round(done / need * 100)}%"></i><em>${done}/${need}</em></span><span class="num">${fmt(MINE[n] ? MINE[n].q : 0)}</span><span class="num">${fmt(sum)}${ICO.chev}</span></button>
+      ${d.rows.map(([n, done, need, sum, cond, rate]) => { const k = `${key}:${n}`, op = S.open.has(k); return `<button class="dtr" data-dopen="${esc(k)}" aria-expanded="${op}"><span class="l" data-club="${esc(n)}" role="link">${crest(n)}<b>${esc(n)}</b></span><span class="pill num"><i style="width:${Math.round(done / need * 100)}%"></i><em>${done}/${need}</em></span><span class="num">${fmt(MINE[n] ? MINE[n].q : 0)}</span><span class="num">${fmt(sum)}${ICO.chev}</span></button>
         ${op ? `<div class="dcond"><span>${esc(cond)}</span><span class="num">${fmt(rate, 1)}%</span><span class="num">${fmt(sum)}</span></div>` : ''}`; }).join('')}
       <div class="dtot"><span>${d.rows.length} клуба</span><span class="num">${fmt(d.rows.reduce((s, r) => s + (MINE[r[0]] ? MINE[r[0]].q : 0), 0))}</span><span class="num">${fmt(total)}</span></div></section>`;
   }
@@ -289,9 +301,10 @@
     const top3 = h.list.slice(0, 3);
     q('#sxCard').innerHTML = `<div class="sx-ch"><button class="ib" data-cclose aria-label="Назад">${ICO.back}</button><span class="ttl">${crest(c.n)}${esc(c.n)}</span>
         <button class="ib star ${watch.has(c.n) ? 'on' : ''}" data-watch aria-label="${watch.has(c.n) ? 'Убрать из избранного' : 'В избранное'}">${watch.has(c.n) ? ICO.starOn : ICO.star}</button></div>
+      ${tasksHTML(c)}
       <div class="sx-cb" id="sxCardBody">
         <div class="sx-price"><div class="big num">${fmt(c.p)}<small>,00</small>${COIN()}</div><div class="kv"><span>Объём</span><b class="num">${qt.vol}</b></div><div class="kv"><span>24 ч</span><b class="num ${tone(c.d)}">${pct(c.d, 2)}</b></div></div>
-        <div class="sx-q4">${[['Макс.', qt.high], ['Мин.', qt.low], ['Bid', qt.bid, 'up'], ['Ask', qt.ask, 'dn']].map(([l, v, t]) => `<div><span>${l}</span><b class="num ${t || ''}">${fmt(v)}</b></div>`).join('')}</div>
+        <div class="sx-q4">${[['Макс.', qt.high], ['Мин.', qt.low], ['Покупка', qt.bid, 'up'], ['Продажа', qt.ask, 'dn']].map(([l, v, t]) => `<div><span>${l}</span><b class="num ${t || ''}">${fmt(v)}</b></div>`).join('')}</div>
         <div class="sx-own">
           <div class="col"><span class="lb">Ваши акции</span><b class="num">${fmt(mine)}</b><span class="lb">В резерве</span><b class="num sm">${fmt(res)}</b><small>в активных заявках на продажу</small></div>
           <div class="col"><span class="lb">У игроков</span><b class="num">${fmt(h.total)}</b><span class="lb">Топ-3 акционера</span>
@@ -301,6 +314,14 @@
         <div class="sx-pane">${pane}</div>
       </div>
       <div class="sx-cta"><button class="b buy" data-trade="buy">${ICO.buy}Купить</button><button class="b sell" data-trade="sell">${ICO.sell}Продать</button></div>`;
+  }
+  // unfinished dividend tasks for a stock in the portfolio: trades still to make per period
+  const DIV_N = { month: 'Месяц', quarter: 'Квартал', year: 'Год' };
+  function tasksHTML(c) {
+    if (!MINE[c.n]) return '';
+    const t = Object.entries(DIV).map(([k, d]) => { const r = d.rows.find(x => x[0] === c.n); return r && r[1] < r[2] ? { n: DIV_N[k], done: r[1], need: r[2] } : null; }).filter(Boolean);
+    if (!t.length) return '';
+    return `<div class="sx-tasks" aria-label="Невыполненные задания на дивиденды"><span class="lb">${ICO.cup}Задания</span>${t.map(x => `<span class="tk"><i style="--p:${Math.round(x.done / x.need * 100)}%"></i>${x.n}<b class="num">${x.done}/${x.need}</b></span>`).join('')}<small>сделок</small></div>`;
   }
   function openCard(name) { S.club = name; S.dTab = 'chart'; detail(); q('#sxCard').classList.add('show'); q('#sxCard').setAttribute('aria-hidden', 'false'); }
   function closeCard() { if (S.sel && S.selCtx === 'd') { S.sel = null; selUI(); } q('#sxCard').classList.remove('show'); q('#sxCard').setAttribute('aria-hidden', 'true'); S.club = null; }
@@ -333,7 +354,8 @@
     const cost = tokens ? `${fmt(sum / TOKEN_RATE, 2)} ${ACT}` : `${fmt(sum, 2)}${COIN()}`;
     const cant = t.side === 'sell' ? t.n > owned : !tokens && sum > BALANCE;
     q('#sxTrade').innerHTML = `<div class="sx-mh"><span class="ttl">${crest(c.n)}${esc(c.n)}</span><button class="ib" data-tclose aria-label="Закрыть">${ICO.close}</button></div>
-      <div class="sx-q4">${[['Bid', qt.bid, 'up'], ['Ask', qt.ask, 'dn'], ['Ваши', MINE[c.n] ? MINE[c.n].q : 0], ['Доступно', Math.max(0, owned)]].map(([l, v, tn]) => `<div><span>${l}</span><b class="num ${tn || ''}">${fmt(v)}</b></div>`).join('')}</div>
+      <div class="sx-q4">${[['Макс.', qt.high], ['Мин.', qt.low], ['Покупка', qt.bid, 'up'], ['Продажа', qt.ask, 'dn']].map(([l, v, tn]) => `<div><span>${l}</span><b class="num ${tn || ''}">${fmt(v)}</b></div>`).join('')}</div>
+      <p class="sx-hold num">Ваши акции: <b>${fmt(MINE[c.n] ? MINE[c.n].q : 0)}</b> · свободно для продажи: <b>${fmt(Math.max(0, owned))}</b></p>
       <span class="sx-lab">Тип сделки</span>
       <div class="sx-side"><button class="buy" data-tside="buy" aria-pressed="${t.side === 'buy'}">${ICO.buy}Купить</button><button class="sell" data-tside="sell" aria-pressed="${t.side === 'sell'}">${ICO.sell}Продать</button></div>
       <span class="sx-lab">Тип заявки</span>
@@ -375,7 +397,7 @@
     q('#sxOrder').innerHTML = `<div class="sx-mh"><span class="ttl num">#${o.id}<small style="margin-left:auto;font-size:13px;font-weight:600;color:var(--text-3)">${longDate(o.date)}</small></span><button class="ib" data-oclose aria-label="Закрыть">${ICO.close}</button></div>
       <div class="sx-osb"><div class="sx-os ${o.st}">
         <div class="oh ${o.side}"><span class="oi">${o.side === 'buy' ? ICO.buy : ICO.sell}</span><span><b>${o.side === 'buy' ? 'Покупка' : 'Продажа'}</b>, лимитная заявка</span><span class="st ${o.st}">${st}</span></div>
-        <div class="o2">${crest(c.n)}<b>${esc(c.n)}</b><span class="num">${o.side === 'buy' ? 'до' : 'от'} ${fmt(o.price)}${COIN()}</span><span class="oq num"><b>${o.done}</b> / ${o.qty}</span></div>
+        <div class="o2"><span class="oclub" data-oclub="${esc(c.n)}" role="link">${crest(c.n)}<b>${esc(c.n)}</b></span><span class="num">${o.side === 'buy' ? 'до' : 'от'} ${fmt(o.price)}${COIN()}</span><span class="oq num"><b>${o.done}</b> / ${o.qty}</span></div>
         <div class="ob"><i style="width:${Math.round(o.done / o.qty * 100)}%"></i></div>
         <div class="ft"><div class="fr fh"><span>Дата</span><span>Объём</span><span>Цена за акцию</span></div>
           ${fl.length ? fl.map(x => `<div class="fr num"><span>${new Date(x.t).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' })}</span><span>${x.n}</span><span>${fmt(x.p)}</span></div>`).join('') : '<p class="fe">Сделок пока нет</p>'}
@@ -420,6 +442,8 @@
   }
   // a tap on an order opens it, or ticks it while selecting several
   function orderTap(e) {
+    const oc = !S.sel && e.target.closest('[data-oclub]');
+    if (oc) { openCard(oc.dataset.oclub); return true; }
     const el = e.target.closest('[data-ord]'); if (!el) return false;
     if (S.sel) toggleSel(+el.dataset.ord); else openOrder(el.dataset.ord);
     return true;
@@ -446,14 +470,15 @@
     root.addEventListener('click', e => {
       if (orderTap(e)) return;
       if (e.target.closest('[data-profile]')) return toast('Откроется профиль');
-      const t = e.target.closest('[data-tab2],[data-sum],[data-lg],[data-mkt],[data-side],[data-st],[data-pf],[data-div],[data-sort],[data-dopen],[data-club]');
+      const t = e.target.closest('[data-tab2],[data-sum],[data-sv],[data-sper],[data-sdir],[data-lg],[data-mkt],[data-side],[data-st],[data-pf],[data-div],[data-sort],[data-dopen],[data-club]');
       if (!t) return;
       const d = t.dataset;
       if (d.club) return openCard(d.club);
       if (d.sort) { const [k, col] = d.sort.split(':'), s = S.sort[k]; s.d = s.k === col ? -s.d : (col === 'nick' || col === 'n' || col === 'r' || col === 'pos' ? 1 : -1); s.k = col; return keepScroll(render); }
       if (d.dopen) { S.open.has(d.dopen) ? S.open.delete(d.dopen) : S.open.add(d.dopen); return keepScroll(render); }
       if (d.tab2) { S.tab = d.tab2; return render(); }
-      for (const k of ['sum', 'lg', 'mkt', 'side', 'st', 'pf', 'div']) if (d[k] != null) { S[k] = d[k]; return keepScroll(render); }
+      if (d.sv) { S.sv = d.sv; const top = q('#sxScroll').scrollTop; render(); q('#sxScroll').scrollTop = top; return; } // a new strip starts from the left
+      for (const k of ['sum', 'sv', 'sper', 'sdir', 'lg', 'mkt', 'side', 'st', 'pf', 'div']) if (d[k] != null) { S[k] = d[k]; return keepScroll(render); }
     });
     const card = q('#sxCard');
     let dragging = false;
@@ -503,6 +528,7 @@
     });
     q('#sxScrim').addEventListener('click', () => { closeTrade(); closeModal(); closeOrder(); });
     q('#sxOrder').addEventListener('click', e => {
+      const oc = e.target.closest('[data-oclub]'); if (oc) { closeOrder(); return openCard(oc.dataset.oclub); }
       const t = e.target.closest('button'); if (!t) return;
       if (t.dataset.oclose != null) return closeOrder();
       if (t.dataset.ocancel != null) { const id = S.order; cancelOrders([id]); orderSheet(); refresh(); }
