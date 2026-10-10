@@ -33,7 +33,7 @@
 
   /* ---------- data ---------- */
   const LEAGUES = [['all', 'Все', null], ['epl', 'АПЛ', 'gb-eng'], ['seriea', 'Серия А', 'it'], ['laliga', 'Ла Лига', 'es'], ['ligue1', 'Лига 1', 'fr'],
-    ['bundesliga', 'Бундеслига', 'de'], ['por', 'Португалия', 'pt'], ['ned', 'Нидерланды', 'nl'], ['tur', 'Турция', 'tr']];
+    ['bundesliga', 'Бундеслига', 'de'], ['por', 'Португалия', 'pt']];
   // name, league, UEFA club ranking, price, 24h %, spread %, trades 24h, trades change %
   const RAW = [
     ['Реал Мадрид', 'laliga', 1, 14820, 0.4, 0.09, 312, 12.4], ['Арсенал', 'epl', 2, 12124, -0.2, 0.12, 205, -8.1], ['Бавария', 'bundesliga', 3, 13460, 0.8, 0.10, 288, 21.0],
@@ -44,8 +44,7 @@
     ['Порту', 'por', 16, 6215, -0.4, 1.62, 88, -14.0], ['Манчестер Юнайтед', 'epl', 17, 5605, 2.4, 1.05, 342, 51.7], ['Милан', 'seriea', 18, 8210, 0.2, 0.66, 154, 2.3],
     ['Челси', 'epl', 19, 5196, -1.9, 2.62, 488, -26.7], ['Наполи', 'seriea', 20, 7340, 1.3, 0.94, 132, 18.5], ['Ювентус', 'seriea', 21, 8030, -0.3, 0.58, 177, -3.9],
     ['Лацио', 'seriea', 22, 5476, 3.4, 1.88, 116, 64.2], ['Аталанта', 'seriea', 23, 5355, -1.4, 3.44, 616, 8.7], ['Спортинг', 'por', 24, 5992, 0.7, 1.21, 74, -9.8],
-    ['Фейеноорд', 'ned', 25, 4410, -0.8, 2.05, 61, -31.2], ['ПСВ', 'ned', 26, 4675, 1.0, 1.74, 69, 11.4], ['Галатасарай', 'tur', 27, 4120, 2.2, 2.31, 145, 40.3],
-    ['Фенербахче', 'tur', 28, 3890, -2.6, 2.77, 101, -17.6], ['Марсель', 'ligue1', 29, 5020, 0.1, 1.49, 58, -40.0], ['Лион', 'ligue1', 30, 4380, -0.5, 1.96, 33, -55.1],
+    ['Марсель', 'ligue1', 29, 5020, 0.1, 1.49, 58, -40.0], ['Лион', 'ligue1', 30, 4380, -0.5, 1.96, 33, -55.1],
     ['РБ Лейпциг', 'bundesliga', 33, 7120, 0.6, 0.97, 84, 4.4], ['Ньюкасл Юнайтед', 'epl', 34, 6640, 1.4, 1.33, 143, 27.9],
   ];
   const CLUBS = RAW.map(([n, lg, r, p, d, sp, tr, tc]) => ({ n, lg, r, p, d, sp, tr, tc }));
@@ -139,7 +138,7 @@
   function summary() {
     const p = S.sper, vol = S.sv === 'vol';
     const head = `<div class="seg sx-sub" role="tablist">${[['vol', 'Объём торгов'], ['chg', 'Динамика цены']].map(([k, l]) => `<button role="tab" data-sv="${k}" aria-selected="${S.sv === k}">${l}</button>`).join('')}</div>`
-      + `<div class="sx-chips2">${vol ? chips('sum', [['most', 'Больше всего'], ['least', 'Меньше всего']], S.sum, 'mini') : chips('sdir', [['up', `${ICO.up}Рост`], ['down', `${ICO.down}Падение`]], S.sdir, 'mini')}<span class="sep"></span>${chips('sper', SPER.map(([k, l]) => [k, l]), p, 'mini')}</div>`;
+      + `<div class="sx-srow">${vol ? chips('sum', [['most', 'Больше'], ['least', 'Меньше']], S.sum, 'mini') : chips('sdir', [['up', `${ICO.up}Рост`], ['down', `${ICO.down}Падение`]], S.sdir, 'mini')}${chips('sper', SPER.map(([k, l]) => [k, l]), p, 'mini per')}</div>`;
     const list = CLUBS.filter(inLg).sort((a, b) => vol ? (volOf(b, p) - volOf(a, p)) * (S.sum === 'most' ? 1 : -1) : (chgOf(b, p) - chgOf(a, p)) * (S.sdir === 'up' ? 1 : -1)).slice(0, 12);
     const rows = list.map(c => vol ? clubRow(c, `${fmt(volOf(c, p))} акций в обороте <span class="${tone(volChg(c, p))}">${pct(volChg(c, p))}</span>`, '', chgOf(c, p))
       : clubRow(c, `было ${fmt(Math.round(c.p / (1 + chgOf(c, p) / 100)))} → стало ${fmt(c.p)}`, '', chgOf(c, p)));
