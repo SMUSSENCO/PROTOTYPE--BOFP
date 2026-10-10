@@ -129,6 +129,7 @@
   }
   // summary periods: shares in turnover and price change over the period (deterministic per club)
   const SPER = [['24h', '24 ч', 1, 'За 24 часа'], ['1w', 'Неделя', 7, 'За неделю'], ['1m', 'Месяц', 30, 'За месяц'], ['3m', '3 месяца', 90, 'За 3 месяца'], ['1y', 'Год', 365, 'За год']];
+  const fmtShares = v => v >= 1e6 ? `${fmt(v / 1e6, 1)} млн` : v >= 1e4 ? `${fmt(v / 1e3, 0)} тыс.` : fmt(v);
   const perOf = () => SPER.find(x => x[0] === S.sper);
   const volOf = (c, p) => { const days = SPER.find(x => x[0] === p)[2]; return Math.round(c.tr * 3 * (p === '24h' ? 1 : days * (0.55 + rng('v' + c.n + p)() * 0.9))); };
   const volChg = (c, p) => p === '24h' ? c.tc : Math.round((rng('vc' + c.n + p)() - 0.45) * 120 * 10) / 10;
@@ -140,8 +141,8 @@
     const head = `<div class="seg sx-sub" role="tablist">${[['vol', 'Объём торгов'], ['chg', 'Динамика цены']].map(([k, l]) => `<button role="tab" data-sv="${k}" aria-selected="${S.sv === k}">${l}</button>`).join('')}</div>`
       + `<div class="sx-srow">${vol ? chips('sum', [['most', 'Больше'], ['least', 'Меньше']], S.sum, 'mini') : chips('sdir', [['up', `${ICO.up}Рост`], ['down', `${ICO.down}Падение`]], S.sdir, 'mini')}${chips('sper', SPER.map(([k, l]) => [k, l]), p, 'mini per')}</div>`;
     const list = CLUBS.filter(inLg).sort((a, b) => vol ? (volOf(b, p) - volOf(a, p)) * (S.sum === 'most' ? 1 : -1) : (chgOf(b, p) - chgOf(a, p)) * (S.sdir === 'up' ? 1 : -1)).slice(0, 12);
-    const rows = list.map(c => vol ? clubRow(c, `${fmt(volOf(c, p))} акций в обороте <span class="${tone(volChg(c, p))}">${pct(volChg(c, p))}</span>`, '', chgOf(c, p))
-      : clubRow(c, `было ${fmt(Math.round(c.p / (1 + chgOf(c, p) / 100)))} → стало ${fmt(c.p)}`, '', chgOf(c, p)));
+    const rows = list.map(c => vol ? clubRow(c, `${fmtShares(volOf(c, p))} акц. · <span class="${tone(volChg(c, p))}">${pct(volChg(c, p))}</span>`, '', chgOf(c, p))
+      : clubRow(c, `${fmt(Math.round(c.p / (1 + chgOf(c, p) / 100)))} → ${fmt(c.p)}`, '', chgOf(c, p)));
     return head + leagueBar() + `<h3 class="sx-h">${perOf()[3]}</h3><div class="sx-list">${rows.join('')}</div>`;
   }
   function market() {
@@ -150,10 +151,10 @@
     if (S.mkt === 'stocks') {
       const list = CLUBS.filter(inLg).sort(by('mkt', (c, k) => c[k]));
       body = leagueBar() + sortHead('mkt', [['r', 'Рейтинг УЕФА', 'l'], ['sp', 'Спред'], ['p', 'Цена']])
-        + `<div class="sx-list">${list.map(c => clubRow(c, MINE[c.n] ? `${fmt(MINE[c.n].q)} акций в портфеле` : '—')).join('')}</div>`;
+        + `<div class="sx-list">${list.map(c => clubRow(c, MINE[c.n] ? `В портфеле: ${fmt(MINE[c.n].q)}` : '—')).join('')}</div>`;
     } else if (S.mkt === 'watch') {
       const list = CLUBS.filter(c => watch.has(c.n));
-      body = list.length ? `<div class="sx-list">${list.map(c => clubRow(c, MINE[c.n] ? `${fmt(MINE[c.n].q)} акций в портфеле` : '—')).join('')}</div>`
+      body = list.length ? `<div class="sx-list">${list.map(c => clubRow(c, MINE[c.n] ? `В портфеле: ${fmt(MINE[c.n].q)}` : '—')).join('')}</div>`
         : '<p class="sx-empty">Добавьте акции звёздочкой в карточке клуба — они появятся здесь.</p>';
     } else body = ordersHTML(ORDERS);
     return chips('mkt', [['stocks', 'Акции'], ['watch', 'Избранное'], ['orders', 'Заявки', activeN ? `<i class="badge num">${activeN}</i>` : '']], S.mkt) + body;
